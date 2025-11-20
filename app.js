@@ -4726,6 +4726,14 @@ app.get('/api/v2/reevaluation/examiner-papersds', reevaluationctlrds.getReevalua
 app.post('/api/v2/reevaluation/submit-marksds', reevaluationctlrds.submitExaminerMarksds);
 
 
+// vss donation route
+const vssdonationdsctlr = require("./controllers/vssdonationdsctlr.js");
+
+app.post("/api/v2/createdonationreceiptds", vssdonationdsctlr.createdonationreceiptds);
+app.get("/api/v2/getdonationreceiptsds", vssdonationdsctlr.getdonationreceiptsds);
+app.get("/api/v2/getdonationreceiptds", vssdonationdsctlr.getdonationreceiptds);
+
+
 const aidynamiccontroller=require('./controllers/aidynamiccontroller');
 
 app.post('/api/v2/getdynamicresult',  aidynamiccontroller.getdynamicresult);
