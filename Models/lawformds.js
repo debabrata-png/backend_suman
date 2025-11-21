@@ -1,26 +1,32 @@
 const mongoose = require('mongoose');
 
-// Case Schema
 const lawformschema = new mongoose.Schema({
   slno: { type: String, required: true },
   userid: { type: mongoose.Schema.Types.ObjectId, ref: 'lawuserds', required: true },
-  useremail: { type: String, required: true }, 
+  useremail: { type: String, required: true },
+  courtname: { type: String, required: true },
   caseregtype: { type: String, required: true },
-  caseno: { type: String, required: true },
-  partyname: { type: String, required: true },
-  plaintiffname: { type: String, required: true },
-  defendantname: { type: String, required: true },
-  clientphnop: { type: String, required: true },
+  caseno: { type: String },
+  partyname: { type: String },
+  plaintiffname: { type: String },
+  defendantname: { type: String },
+  jrlawyer: [{
+    name: { type: String },
+    email: { type: String },
+    phno: { type: String }
+  }],
+  clientphnop: { type: String },
   clientphnos: { type: String },
   cisno: { type: String },
   cnrno: { type: String },
-  nextdateforhearing: { type: Date, required: true },
+  nextdateforhearing: { type: Date },
   nextdateforhearingtime: { type: String },
-  datefor: { type: Date, required: true },
-  lawclerkname: { type: String, required: true },
-  lawclerkphno: { type: String, required: true },
-  rackno: { type: String, required: true },
-  colid: {type: Number, required: true},
+  datefor: { type: String },
+  lawclerkname: { type: String },
+  lawclerkemail: { type: String },
+  lawclerkphno: { type: String },
+  rackno: { type: String },
+  colid: { type: Number, required: true }
 }, {
   timestamps: true
 });

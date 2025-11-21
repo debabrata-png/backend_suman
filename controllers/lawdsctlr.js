@@ -1,5 +1,7 @@
 const lawuserds = require('../Models/lawuserds');
 const lawformds = require('../Models/lawformds');
+const laweditlogds = require('../Models/laweditlogds');
+
 // ======================
 // USER AUTHENTICATION CONTROLLERS
 // ======================
@@ -9,6 +11,7 @@ exports.registeruser = async (req, res) => {
   try {
     const { email } = req.body;
     const existingUser = await lawuserds.findOne({ email });
+    
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -17,7 +20,7 @@ exports.registeruser = async (req, res) => {
     }
 
     const newUser = await lawuserds.create(req.body);
-
+    
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
@@ -27,11 +30,17 @@ exports.registeruser = async (req, res) => {
           fullname: newUser.fullname,
           email: newUser.email,
           phone: newUser.phone,
-          colid: newUser.colid
+          colid: newUser.colid,
+          role: newUser.role
         }
       }
     });
   } catch (error) {
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error registering user',
+    //   error: error.message
+    // });
   }
 };
 
@@ -39,8 +48,8 @@ exports.registeruser = async (req, res) => {
 exports.loginuser = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const user = await lawuserds.findOne({ email, password });
+    
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -48,7 +57,7 @@ exports.loginuser = async (req, res) => {
       });
     }
 
-    res.json({
+    res.status(200).json({
       success: true,
       message: 'Login successful',
       data: {
@@ -57,36 +66,55 @@ exports.loginuser = async (req, res) => {
           fullname: user.fullname,
           email: user.email,
           phone: user.phone,
-          colid: user.colid
+          colid: user.colid,
+          role: user.role
         }
       }
     });
   } catch (error) {
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error during login',
+    //   error: error.message
+    // });
   }
 };
 
 // Get User Profile
 exports.getuserprofile = async (req, res) => {
   try {
-    const user = await lawuserds.findById(req.userId).select('-password');
+    const { userid } = req.query;
+    const user = await lawuserds.findById(userid).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
 
-    res.json({
+    res.status(200).json({
       success: true,
       data: user
     });
   } catch (error) {
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error fetching user profile',
+    //   error: error.message
+    // });
   }
 };
 
 // Update User Profile
 exports.updateuserprofile = async (req, res) => {
   try {
-    const { fullname, phone, colid } = req.body;
+    const { userid, fullname, phone } = req.body;
     
     const updatedUser = await lawuserds.findByIdAndUpdate(
-      req.userId,
-      { fullname, phone, colid },
-      { new: true, runValidators: true }
+      userid,
+      { fullname, phone },
+      { new: true }
     ).select('-password');
 
     if (!updatedUser) {
@@ -96,267 +124,119 @@ exports.updateuserprofile = async (req, res) => {
       });
     }
 
-    res.json({
+    res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
       data: updatedUser
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    });
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error updating profile',
+    //   error: error.message
+    // });
   }
 };
 
 // Change Password
 exports.changepassword = async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
-
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'Current password and new password are required'
-      });
-    }
-
-    const user = await lawuserds.findById(req.userId);
+    const { userid, oldpassword, newpassword } = req.body;
+    
+    const user = await lawuserds.findById(userid);
+    
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    if (user.password !== currentPassword) {
-      return res.status(401).json({
+
+    if (user.password !== oldpassword) {
+      return res.status(400).json({
         success: false,
-        message: 'Current password is incorrect'
+        message: 'Old password is incorrect'
       });
     }
-    await lawuserds.findByIdAndUpdate(req.userId, { password: newPassword }, { new: true });
 
-    res.json({
+    user.password = newpassword;
+    await user.save();
+
+    res.status(200).json({
       success: true,
       message: 'Password changed successfully'
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    });
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error changing password',
+    //   error: error.message
+    // });
   }
 };
+
 // ======================
-// LEGAL CASE MANAGEMENT CONTROLLERS
+// CASE MANAGEMENT CONTROLLERS
 // ======================
 
-// Create New Case
+// Create Case
 exports.createcase = async (req, res) => {
   try {
-    const { useremail, userid, colid } = req.body;
-
-    if (!useremail || !userid || !colid) {
-      return res.status(400).json({
-        success: false,
-        message: 'User email, user ID, and college ID are required'
-      });
-    }
-
-    // Check if case with same case number already exists for this college
-    const existingCase = await lawformds.findOne({ 
-      caseno: req.body.caseno, 
-      colid: colid
-    });
+    const caseData = req.body;
+    const newCase = await lawformds.create(caseData);
     
-    if (existingCase) {
-      return res.status(400).json({
-        success: false,
-        message: 'Case with this case number already exists in this college'
-      });
-    }
-
-    // Find the highest slno for this user and college to auto-increment
-    const lastCase = await lawformds.findOne({ 
-      useremail: useremail,
-      colid: colid
-    })
-      .sort({ slno: -1 })
-      .select('slno');
-
-    const nextSlno = lastCase ? (parseInt(lastCase.slno) + 1).toString() : "1";
-
-    // Create new case
-    const newCase = await lawformds.create({
-      ...req.body,
-      slno: nextSlno,
-      userid: userid,
-      useremail: useremail,
-      colid: colid
-    });
-
     res.status(201).json({
       success: true,
       message: 'Case created successfully',
       data: newCase
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    });
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error creating case',
+    //   error: error.message
+    // });
   }
 };
 
-// Get All Cases with Single Filter API (Default: colid filter, get userid/useremail from req.query)
+// Get All Cases (with access control using existing fields)
 exports.getallcases = async (req, res) => {
   try {
-    const { 
-      page, 
-      limit, 
-      startdate, 
-      enddate, 
-      rackno,
-      caseregtype,
-      search,
-      lawclerkname,
-      partyname,
-      useremail,
-      userid,
-      colid
-    } = req.query;
-
-    if (!colid) {
-      return res.status(400).json({
-        success: false,
-        message: 'College ID is required'
-      });
+    const { colid, useremail, userrole } = req.query;
+    
+    let query = { colid: parseInt(colid) };
+    
+    // If user is Jr Lawyer, filter by jrlawyer array email
+    if (userrole === 'Jr. Lawyer') {
+      query['jrlawyer.email'] = useremail;
+    } 
+    // If user is Law Clerk, filter by lawclerkemail
+    else if (userrole === 'Law Clerk') {
+      query.lawclerkemail = useremail;
     }
-
-    // Base filter - always filter by colid (default)
-    const filter = { 
-      colid: parseInt(colid)
-    };
-
-    // Optional user-specific filtering (if useremail provided from req.query)
-    if (useremail) {
-      filter.useremail = useremail;
-    }
-
-    // Optional user ID filtering (if userid provided from req.query)
-    if (userid) {
-      filter.userid = userid;
-    }
-
-    // Filter by date range using datefor field
-    if (startdate && enddate) {
-      filter.datefor = {
-        $gte: new Date(startdate),
-        $lte: new Date(enddate + 'T23:59:59.999Z')
-      };
-    } else if (startdate) {
-      filter.datefor = { $gte: new Date(startdate) };
-    } else if (enddate) {
-      filter.datefor = { $lte: new Date(enddate + 'T23:59:59.999Z') };
-    }
-
-    // Filter by rack number
-    if (rackno) {
-      filter.rackno = { $regex: rackno, $options: 'i' };
-    }
-
-    // Filter by case registration type
-    if (caseregtype) {
-      filter.caseregtype = caseregtype;
-    }
-
-    // Filter by law clerk name
-    if (lawclerkname) {
-      filter.lawclerkname = { $regex: lawclerkname, $options: 'i' };
-    }
-
-    // Filter by party name
-    if (partyname) {
-      filter.partyname = { $regex: partyname, $options: 'i' };
-    }
-
-    // General search across multiple fields
-    if (search) {
-      filter.$or = [
-        { caseno: { $regex: search, $options: 'i' } },
-        { partyname: { $regex: search, $options: 'i' } },
-        { plaintiffname: { $regex: search, $options: 'i' } },
-        { defendantname: { $regex: search, $options: 'i' } },
-        { lawclerkname: { $regex: search, $options: 'i' } },
-        { rackno: { $regex: search, $options: 'i' } }
-      ];
-    }
-
-    let query = lawformds.find(filter).sort({ createdAt: -1 });
-
-    // Pagination if provided
-    if (page && limit) {
-      const skip = (parseInt(page) - 1) * parseInt(limit);
-      query = query.skip(skip).limit(parseInt(limit));
-      
-      const total = await lawformds.countDocuments(filter);
-      const cases = await query;
-      
-      res.json({
-        success: true,
-        data: cases,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total,
-          totalPages: Math.ceil(total / parseInt(limit))
-        },
-        appliedFilters: filter
-      });
-    } else {
-      const cases = await query;
-      res.json({
-        success: true,
-        data: cases,
-        appliedFilters: filter
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
+    // Sr. Lawyer can see all cases (no additional filter)
+    
+    const cases = await lawformds.find(query).sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      data: cases
     });
+  } catch (error) {
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error fetching cases',
+    //   error: error.message
+    // });
   }
 };
 
-// Get Single Case by ID (College-specific)
+// Get Case By ID (with access control using existing fields)
 exports.getcasebyid = async (req, res) => {
   try {
-    const { id } = req.query;
-    const { colid, useremail, userid } = req.query;
-
-    if (!colid) {
-      return res.status(400).json({
-        success: false,
-        message: 'College ID is required'
-      });
-    }
-
-    // Build filter based on available parameters from req.query
-    const filter = { 
-      _id: id, 
-      colid: parseInt(colid)
-    };
-
-    // Add user-specific filters if provided from req.query
-    if (useremail) filter.useremail = useremail;
-    if (userid) filter.userid = userid;
+    const { id, useremail, userrole } = req.query;
     
-    const caseData = await lawformds.findOne(filter);
+    const caseData = await lawformds.findById(id);
     
     if (!caseData) {
       return res.status(404).json({
@@ -364,150 +244,168 @@ exports.getcasebyid = async (req, res) => {
         message: 'Case not found'
       });
     }
-
-    res.json({
+    
+    // Check access permissions
+    if (userrole === 'Jr. Lawyer') {
+      const hasAccess = caseData.jrlawyer.some(lawyer => lawyer.email === useremail);
+      if (!hasAccess) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have access to this case'
+        });
+      }
+    }
+    
+    if (userrole === 'Law Clerk' && caseData.lawclerkemail !== useremail) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have access to this case'
+      });
+    }
+    
+    res.status(200).json({
       success: true,
       data: caseData
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    });
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error fetching case',
+    //   error: error.message
+    // });
   }
 };
 
-// Update Case (College-specific)
+// Update Case (with edit logging)
 exports.updatecase = async (req, res) => {
   try {
-    const { id } = req.query;
-    const { colid, useremail, userid } = req.body;
-    const updateData = req.body;
-
-    if (!colid) {
-      return res.status(400).json({
-        success: false,
-        message: 'College ID is required'
-      });
-    }
-
-    // Remove system fields that shouldn't be updated
-    delete updateData._id;
-    delete updateData.__v;
-    delete updateData.userid;
-    delete updateData.useremail;
-    delete updateData.colid;
-    delete updateData.slno; // Prevent slno modification
-
-    // Build filter based on available parameters
-    const filter = { 
-      _id: id, 
-      colid: parseInt(colid)
-    };
-
-    // Add user-specific filters if provided
-    if (useremail) filter.useremail = useremail;
-    if (userid) filter.userid = userid;
-
-    const updatedCase = await lawformds.findOneAndUpdate(
-      filter,
-      updateData,
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedCase) {
+    const { id, editedby, editedbyemail, editeduserid, ...updateData } = req.body;
+    
+    // Get old data for logging
+    const oldCase = await lawformds.findById(id);
+    
+    if (!oldCase) {
       return res.status(404).json({
         success: false,
         message: 'Case not found'
       });
     }
-
-    res.json({
+    
+    // Update the case
+    const updatedCase = await lawformds.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+    
+    // Create edit log entry
+    await laweditlogds.create({
+      caseid: id,
+      caseno: updatedCase.caseno,
+      editedby,
+      editedbyemail,
+      editeduserid,
+      edittype: 'update',
+      changedsummary: 'Case updated',
+      olddatajson: oldCase.toObject(),
+      newdatajson: updatedCase.toObject(),
+      colid: updatedCase.colid
+    });
+    
+    res.status(200).json({
       success: true,
       message: 'Case updated successfully',
       data: updatedCase
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    });
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error updating case',
+    //   error: error.message
+    // });
   }
 };
 
-// Delete Case (College-specific)
+// Delete Case (with edit logging)
 exports.deletecase = async (req, res) => {
   try {
-    const { id } = req.query;
-    const { colid, useremail, userid } = req.query;
-
-    if (!colid) {
-      return res.status(400).json({
-        success: false,
-        message: 'College ID is required'
-      });
-    }
-
-    // Build filter based on available parameters from req.query
-    const filter = { 
-      _id: id, 
-      colid: parseInt(colid)
-    };
-
-    // Add user-specific filters if provided from req.query
-    if (useremail) filter.useremail = useremail;
-    if (userid) filter.userid = userid;
+    const { id, editedby, editedbyemail, editeduserid } = req.query;
     
-    const deletedCase = await lawformds.findOneAndDelete(filter);
+    // Get case data before deletion for logging
+    const caseData = await lawformds.findById(id);
     
-    if (!deletedCase) {
+    if (!caseData) {
       return res.status(404).json({
         success: false,
         message: 'Case not found'
       });
     }
-
-    res.json({
+    
+    // Delete the case
+    await lawformds.findByIdAndDelete(id);
+    
+    // Create edit log entry
+    await laweditlogds.create({
+      caseid: id,
+      caseno: caseData.caseno,
+      editedby,
+      editedbyemail,
+      editeduserid,
+      edittype: 'delete',
+      changedsummary: 'Case deleted',
+      olddatajson: caseData.toObject(),
+      newdatajson: null,
+      colid: caseData.colid
+    });
+    
+    res.status(200).json({
       success: true,
-      message: 'Case deleted successfully',
-      data: deletedCase
+      message: 'Case deleted successfully'
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    });
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error deleting case',
+    //   error: error.message
+    // });
   }
 };
 
-// Get Dashboard Statistics (College-specific)
+// Get Dashboard Statistics
 exports.getdashboardstats = async (req, res) => {
   try {
-    const { colid, useremail, userid } = req.query;
-
-    if (!colid) {
-      return res.status(400).json({
-        success: false,
-        message: 'College ID is required'
-      });
-    }
-
-    // Base filter for college-specific data
-    const userFilter = { 
-      colid: parseInt(colid)
-    };
-
-    // Add user-specific filters if provided from req.query
-    if (useremail) userFilter.useremail = useremail;
-    if (userid) userFilter.userid = userid;
-
-    const totalCases = await lawformds.countDocuments(userFilter);
+    const { colid, useremail, userrole } = req.query;
     
+    let query = { colid: parseInt(colid) };
+    
+    // Apply role-based access control using existing fields
+    if (userrole === 'Jr. Lawyer') {
+      query['jrlawyer.email'] = useremail;
+    } else if (userrole === 'Law Clerk') {
+      query.lawclerkemail = useremail;
+    }
+    
+    // Total cases count
+    const totalCases = await lawformds.countDocuments(query);
+    
+    // Upcoming hearings (next 30 days)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const thirtyDaysLater = new Date();
+    thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
+    
+    const upcomingHearings = await lawformds.countDocuments({
+      ...query,
+      nextdateforhearing: {
+        $gte: today,
+        $lte: thirtyDaysLater
+      }
+    });
+    
+    // Cases by type
     const casesByType = await lawformds.aggregate([
-      { $match: userFilter },
+      { $match: query },
       {
         $group: {
           _id: '$caseregtype',
@@ -515,45 +413,164 @@ exports.getdashboardstats = async (req, res) => {
         }
       }
     ]);
-
-    const casesByRack = await lawformds.aggregate([
-      { $match: userFilter },
+    
+    // Cases by court
+    const casesByCourt = await lawformds.aggregate([
+      { $match: query },
       {
         $group: {
-          _id: '$rackno',
+          _id: '$courtname',
           count: { $sum: 1 }
         }
-      },
-      { $sort: { count: -1 } },
-      { $limit: 10 }
-    ]);
-
-    const upcomingHearings = await lawformds.find({
-      ...userFilter,
-      nextdateforhearing: {
-        $gte: new Date(),
-        $lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       }
-    })
-    .sort({ nextdateforhearing: 1 })
-    .limit(10);
-
-    res.json({
+    ]);
+    
+    res.status(200).json({
       success: true,
       data: {
         totalCases,
+        upcomingHearings,
         casesByType,
-        casesByRack,
-        upcomingHearings: upcomingHearings.length,
-        upcomingHearingsList: upcomingHearings
+        casesByCourt
       }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    });
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error fetching dashboard statistics',
+    //   error: error.message
+    // });
   }
 };
 
+// Search Cases with Filters (using existing fields for access control)
+exports.searchcases = async (req, res) => {
+  try {
+    const { 
+      colid, 
+      useremail, 
+      userrole,
+      caseno, 
+      partyname, 
+      courtname, 
+      caseregtype, 
+      rackno,
+      startdate,
+      enddate,
+      plaintiffname,
+      defendantname
+    } = req.query;
+    
+    // Base query with colid
+    let query = { colid: parseInt(colid) };
+    
+    // Apply role-based access control using existing fields
+    if (userrole === 'Jr. Lawyer') {
+      query['jrlawyer.email'] = useremail;
+    } else if (userrole === 'Law Clerk') {
+      query.lawclerkemail = useremail;
+    }
+    
+    // Add search filters
+    if (caseno) {
+      query.caseno = { $regex: caseno, $options: 'i' };
+    }
+    
+    if (partyname) {
+      query.partyname = { $regex: partyname, $options: 'i' };
+    }
+    
+    if (courtname) {
+      query.courtname = { $regex: courtname, $options: 'i' };
+    }
+    
+    if (caseregtype) {
+      query.caseregtype = { $regex: caseregtype, $options: 'i' };
+    }
+    
+    if (rackno) {
+      query.rackno = { $regex: rackno, $options: 'i' };
+    }
+    
+    if (plaintiffname) {
+      query.plaintiffname = { $regex: plaintiffname, $options: 'i' };
+    }
+    
+    if (defendantname) {
+      query.defendantname = { $regex: defendantname, $options: 'i' };
+    }
+    
+    // Date range filter for next hearing date
+    if (startdate || enddate) {
+      query.nextdateforhearing = {};
+      if (startdate) {
+        query.nextdateforhearing.$gte = new Date(startdate);
+      }
+      if (enddate) {
+        query.nextdateforhearing.$lte = new Date(enddate);
+      }
+    }
+    
+    const cases = await lawformds.find(query).sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      data: cases,
+      count: cases.length
+    });
+  } catch (error) {
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error searching cases',
+    //   error: error.message
+    // });
+  }
+};
+
+// Get Upcoming Cases (Next Hearings) - using existing fields for access control
+exports.getupcomingcases = async (req, res) => {
+  try {
+    const { colid, useremail, userrole, days } = req.query;
+    
+    // Calculate date range (default 30 days if not specified)
+    const daysAhead = days ? parseInt(days) : 30;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + daysAhead);
+    futureDate.setHours(23, 59, 59, 999);
+    
+    // Base query
+    let query = {
+      colid: parseInt(colid),
+      nextdateforhearing: {
+        $gte: today,
+        $lte: futureDate
+      }
+    };
+    
+    // Apply role-based access control using existing fields
+    if (userrole === 'Jr. Lawyer') {
+      query['jrlawyer.email'] = useremail;
+    } else if (userrole === 'Law Clerk') {
+      query.lawclerkemail = useremail;
+    }
+    
+    const upcomingCases = await lawformds
+      .find(query)
+      .sort({ nextdateforhearing: 1 });
+    
+    res.status(200).json({
+      success: true,
+      data: upcomingCases,
+      count: upcomingCases.length
+    });
+  } catch (error) {
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Error fetching upcoming cases',
+    //   error: error.message
+    // });
+  }
+};

@@ -4005,6 +4005,11 @@ app.delete("/api/v2/deletedeductionj",salarycontlr.deletedeductionj);
 app.get("/api/v2/getipj",salarycontlr.getipj);
 
 const lawdsctlr = require("./controllers/lawdsctlr.js");
+const lawcourtdsctlr = require("./controllers/lawcourtdsctlr.js");
+const lawcasetypedsctlr = require("./controllers/lawcasetypedsctlr.js");
+const lawclerkdsctlr = require("./controllers/lawclerkdsctlr.js");
+const lawjrlawyerdsctlr = require("./controllers/lawjrlawyerdsctlr.js");
+const laweditlogdsctlr = require("./controllers/laweditlogdsctlr.js");
 
 // User Authentication Endpoints
 app.post("/api/v2/registeruser", lawdsctlr.registeruser);
@@ -4019,9 +4024,70 @@ app.get("/api/v2/getallcases", lawdsctlr.getallcases);
 app.get("/api/v2/getcasebyid", lawdsctlr.getcasebyid);
 app.post("/api/v2/updatecase", lawdsctlr.updatecase);
 app.get("/api/v2/deletecase", lawdsctlr.deletecase);
-
-// Dashboard Endpoint
 app.get("/api/v2/getdashboardstats", lawdsctlr.getdashboardstats);
+app.get("/api/v2/searchcases", lawdsctlr.searchcases);
+app.get("/api/v2/getupcomingcases", lawdsctlr.getupcomingcases);
+
+// ======================
+// SETTINGS - COURT MANAGEMENT
+// ======================
+app.post("/api/v2/createlawcourtds", lawcourtdsctlr.createlawcourtds);
+app.get("/api/v2/getalllawcourtds", lawcourtdsctlr.getalllawcourtds);
+app.get("/api/v2/getlawcourtdsbyid", lawcourtdsctlr.getlawcourtdsbyid);
+app.post("/api/v2/updatelawcourtds", lawcourtdsctlr.updatelawcourtds);
+app.get("/api/v2/deletelawcourtds", lawcourtdsctlr.deletelawcourtds);
+
+// ======================
+// SETTINGS - CASE TYPE MANAGEMENT
+// ======================
+app.post("/api/v2/createlawcasetypeds", lawcasetypedsctlr.createlawcasetypeds);
+app.get("/api/v2/getalllawcasetypeds", lawcasetypedsctlr.getalllawcasetypeds);
+app.get("/api/v2/getlawcasetypedsbyid", lawcasetypedsctlr.getlawcasetypedsbyid);
+app.post("/api/v2/updatelawcasetypeds", lawcasetypedsctlr.updatelawcasetypeds);
+app.get("/api/v2/deletelawcasetypeds", lawcasetypedsctlr.deletelawcasetypeds);
+
+// ======================
+// SETTINGS - LAW CLERK MANAGEMENT
+// ======================
+app.post("/api/v2/createlawclerkds", lawclerkdsctlr.createlawclerkds);
+app.get("/api/v2/getalllawclerkds", lawclerkdsctlr.getalllawclerkds);
+app.get("/api/v2/getlawclerkdsbyid", lawclerkdsctlr.getlawclerkdsbyid);
+app.post("/api/v2/updatelawclerkds", lawclerkdsctlr.updatelawclerkds);
+app.get("/api/v2/deletelawclerkds", lawclerkdsctlr.deletelawclerkds);
+
+// ======================
+// SETTINGS - JR LAWYER MANAGEMENT
+// ======================
+app.post("/api/v2/createlawjrlawyerds", lawjrlawyerdsctlr.createlawjrlawyerds);
+app.get("/api/v2/getalllawjrlawyerds", lawjrlawyerdsctlr.getalllawjrlawyerds);
+app.get("/api/v2/getlawjrlawyerdsbyid", lawjrlawyerdsctlr.getlawjrlawyerdsbyid);
+app.post("/api/v2/updatelawjrlawyerds", lawjrlawyerdsctlr.updatelawjrlawyerds);
+app.get("/api/v2/deletelawjrlawyerds", lawjrlawyerdsctlr.deletelawjrlawyerds);
+
+// ======================
+// EDIT LOG HISTORY
+// ======================
+app.post("/api/v2/createlaweditlogds", laweditlogdsctlr.createlaweditlogds);
+app.get("/api/v2/getlaweditlogdsbycaseid", laweditlogdsctlr.getlaweditlogdsbycaseid);
+app.get("/api/v2/getalllaweditlogds", laweditlogdsctlr.getalllaweditlogds);
+
+
+// // User Authentication Endpoints
+// app.post("/api/v2/registeruser", lawdsctlr.registeruser);
+// app.post("/api/v2/loginuser", lawdsctlr.loginuser);
+// app.get("/api/v2/getuserprofile", lawdsctlr.getuserprofile);
+// app.post("/api/v2/updateuserprofile", lawdsctlr.updateuserprofile);
+// app.post("/api/v2/changepassword", lawdsctlr.changepassword);
+
+// // Case Management Endpoints
+// app.post("/api/v2/createcase", lawdsctlr.createcase);
+// app.get("/api/v2/getallcases", lawdsctlr.getallcases);
+// app.get("/api/v2/getcasebyid", lawdsctlr.getcasebyid);
+// app.post("/api/v2/updatecase", lawdsctlr.updatecase);
+// app.get("/api/v2/deletecase", lawdsctlr.deletecase);
+
+// // Dashboard Endpoint
+// app.get("/api/v2/getdashboardstats", lawdsctlr.getdashboardstats);
 
 
 // // User Authentication Endpoints
@@ -4738,6 +4804,8 @@ const aidynamiccontroller=require('./controllers/aidynamiccontroller');
 
 app.post('/api/v2/getdynamicresult',  aidynamiccontroller.getdynamicresult);
 app.post('/api/v2/bulkuploadtblds', aidynamiccontroller.bulkuploadtblds);
+app.post('/api/v2/bulkupdatetblds', aidynamiccontroller.bulkupdatetblds);
+app.post('/api/v2/bulkdeletetblds', aidynamiccontroller.bulkdeletetblds);
 
 const aimatcontroller=require('./controllers/aimatcontroller');
 
