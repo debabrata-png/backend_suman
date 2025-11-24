@@ -4777,6 +4777,7 @@ app.get("/api/v2/dashboardsummaryds", studalloc1reportds.getdashboardsummaryds);
 
 const examinerconfigctlrds = require('./controllers/examinerconfigctlrds');
 const reevaluationctlrds = require('./controllers/reevaluationctlrds');
+const reevaluationctlrds2 = require('./controllers/reevaluationctlrds2.js');
 
 // Examiner Config Routes
 app.post('/api/v2/examinerconfig/createds', examinerconfigctlrds.createexaminerconfigds);
@@ -4791,6 +4792,22 @@ app.get('/api/v2/reevaluation/listds', reevaluationctlrds.listReevaluationsds);
 app.get('/api/v2/reevaluation/examiner-papersds', reevaluationctlrds.getReevaluationForExaminerds);
 app.post('/api/v2/reevaluation/submit-marksds', reevaluationctlrds.submitExaminerMarksds);
 
+// Student Routes
+app.post('/api/v2/reevaluationnew/applyreevaluationds1', reevaluationctlrds2.applyreevaluationds1);
+app.get('/api/v2/reevaluationnew/getallpapersforstudentds1', reevaluationctlrds2.getallpapersforstudentds1);
+app.get('/api/v2/reevaluationnew/getmyapplicationsds1', reevaluationctlrds2.getmyapplicationsds1);
+app.get('/api/v2/reevaluationnew/getfilteroptionsforstudentds1', reevaluationctlrds2.getfilteroptionsforstudentds1);
+
+// Admin Routes
+app.get('/api/v2/reevaluationnew/getapplicationsforadminds1', reevaluationctlrds2.getapplicationsforadminds1);
+app.get('/api/v2/reevaluationnew/getapplicationswithfiltersds1', reevaluationctlrds2.getapplicationswithfiltersds1);
+app.get('/api/v2/reevaluationnew/getfilteroptionsforadminds1', reevaluationctlrds2.getfilteroptionsforadminds1);
+app.post('/api/v2/reevaluationnew/bulkallocateexaminerds1', reevaluationctlrds2.bulkallocateexaminerds1);
+app.get('/api/v2/reevaluationnew/getapplicationsforexaminer3ds1', reevaluationctlrds2.getapplicationsforexaminer3ds1);
+
+// Examiner Routes
+app.get('/api/v2/reevaluationnew/getexaminerassignedapplicationsds1', reevaluationctlrds2.getexaminerassignedapplicationsds1);
+app.post('/api/v2/reevaluationnew/submitexaminermarksds1', reevaluationctlrds2.submitexaminermarksds1);
 
 // vss donation route
 const vssdonationdsctlr = require("./controllers/vssdonationdsctlr.js");

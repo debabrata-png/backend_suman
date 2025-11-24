@@ -1,0 +1,385 @@
+const reevaluationds1 = require('../Models/reevaluationds1.js');
+const exammarks2ds = require('../Models/exammarks2ds.js');
+const examinerconfigds = require('../Models/examinerconfigds.js');
+
+// Helper to calculate percentage increase
+function calculateincrementds(original, newmark) {
+  if (original === 0) return 0;
+  return ((newmark - original) / original) * 100;
+}
+
+// ==================== STUDENT FUNCTIONS ====================
+
+// Apply for reevaluation - max 2 papers limit
+exports.applyreevaluationds1 = async (req, res) => {
+  try {
+    const { student, regno, papers, program } = req.body;
+
+    // Check current application count for student for this program/year/semester
+    const currentcount = await reevaluationds1.countDocuments({ 
+      student,
+      program: program || papers[0]?.program,
+      year: papers[0]?.year,
+      semester: papers[0]?.semester
+    });
+    
+    if (currentcount + papers.length > 2) {
+      return res.status(400).json({ error: 'cannot apply for more than 2 papers for reevaluation.' });
+    }
+
+    // Create applications for each paper requested
+    for (const paper of papers) {
+      const existing = await reevaluationds1.findOne({
+        student,
+        papercode: paper.papercode,
+        examcode: paper.examcode,
+        year: paper.year,
+        semester: paper.semester,
+      });
+      
+      if (!existing) {
+        const newapp = new reevaluationds1({
+          student,
+          regno,
+          name: req.body.name,
+          user: req.body.user,
+          colid: req.body.colid,
+          program: paper.program || program,
+          examcode: paper.examcode,
+          month: paper.month,
+          year: paper.year,
+          regulation: paper.regulation,
+          semester: paper.semester,
+          branch: paper.branch,
+          papercode: paper.papercode,
+          papername: paper.papername,
+          originalmarks: paper.originalmarks,
+          maxmarks: paper.maxmarks,
+          examiner1status: 'pending',
+          examiner2status: 'pending',
+          examiner3status: 'pending',
+          status: 'pending',
+          applieddate: new Date()
+        });
+        await newapp.save();
+      }
+    }
+
+    res.status(200).json({ message: 'reevaluation applications submitted successfully.' });
+  } catch (err) {
+    // res.status(500).json({ error: err.message });
+  }
+};
+
+// Get all papers for a student from exammarks2ds
+exports.getallpapersforstudentds1 = async (req, res) => {
+  try {
+    const { regno, program, branch, regulation, semester, year } = req.query;
+
+    const filter = {};
+    if (regno) filter.regno = regno;
+    if (program) filter.program = program;
+    if (branch) filter.branch = branch;
+    if (regulation) filter.regulation = regulation;
+    if (semester) filter.semester = semester;
+    if (year) filter.year = year;
+    filter.thmax = { $gt: 0 }; // Only papers with theory component
+
+    const papers = await exammarks2ds.find(filter);
+    res.status(200).json(papers);
+  } catch (err) {
+    // res.status(500).json({ error: err.message });
+  }
+};
+
+// Get student's own applications
+exports.getmyapplicationsds1 = async (req, res) => {
+  try {
+    const { regno } = req.query;
+    const applications = await reevaluationds1.find({ regno }).sort({ applieddate: -1 });
+    res.status(200).json(applications);
+  } catch (err) {
+    // res.status(500).json({ error: err.message });
+  }
+};
+
+// Get filter options for STUDENT (from exammarks2ds)
+exports.getfilteroptionsforstudentds1 = async (req, res) => {
+  try {
+    const programs = await exammarks2ds.distinct('program');
+    const branches = await exammarks2ds.distinct('branch');
+    const regulations = await exammarks2ds.distinct('regulation');
+    const semesters = await exammarks2ds.distinct('semester');
+    const years = await exammarks2ds.distinct('year');
+
+    res.status(200).json({
+      programs,
+      years,
+      semesters,
+      branches,
+      regulations
+    });
+  } catch (err) {
+    // res.status(500).json({ error: err.message });
+  }
+};
+
+// ==================== ADMIN FUNCTIONS ====================
+
+// Get all applications for admin with calculations
+exports.getapplicationsforadminds1 = async (req, res) => {
+  try {
+    const applications = await reevaluationds1.find().sort({ applieddate: -1 });
+
+    const datawithcalcs = applications.map(app => {
+      const incr1 = app.examiner1marks ? calculateincrementds(app.originalmarks, app.examiner1marks) : null;
+      const incr2 = app.examiner2marks ? calculateincrementds(app.originalmarks, app.examiner2marks) : null;
+      const avgmarks = app.examiner1marks && app.examiner2marks
+        ? (app.examiner1marks + app.examiner2marks) / 2
+        : null;
+      const avgincr = avgmarks ? calculateincrementds(app.originalmarks, avgmarks) : null;
+
+      return {
+        ...app.toObject(),
+        examiner1incrementpercent: incr1,
+        examiner2incrementpercent: incr2,
+        averagemarks: avgmarks,
+        averageincrementpercent: avgincr,
+      };
+    });
+
+    res.status(200).json(datawithcalcs);
+  } catch (err) {
+    // res.status(500).json({ error: err.message });
+  }
+};
+
+// Get applications with filters
+exports.getapplicationswithfiltersds1 = async (req, res) => {
+  try {
+    const filter = {};
+
+    if (req.query.papercode) filter.papercode = req.query.papercode;
+    if (req.query.examcode) filter.examcode = req.query.examcode;
+    if (req.query.program) filter.program = req.query.program;
+    if (req.query.year) filter.year = req.query.year;
+    if (req.query.semester) filter.semester = req.query.semester;
+    if (req.query.branch) filter.branch = req.query.branch;
+    if (req.query.regulation) filter.regulation = req.query.regulation;
+
+    const applications = await reevaluationds1.find(filter).sort({ applieddate: -1 });
+
+    const datawithcalcs = applications.map(app => {
+      const incr1 = app.examiner1marks ? calculateincrementds(app.originalmarks, app.examiner1marks) : null;
+      const incr2 = app.examiner2marks ? calculateincrementds(app.originalmarks, app.examiner2marks) : null;
+      const avgmarks = app.examiner1marks && app.examiner2marks
+        ? (app.examiner1marks + app.examiner2marks) / 2
+        : null;
+      const avgincr = avgmarks ? calculateincrementds(app.originalmarks, avgmarks) : null;
+
+      return {
+        ...app.toObject(),
+        examiner1incrementpercent: incr1,
+        examiner2incrementpercent: incr2,
+        averagemarks: avgmarks,
+        averageincrementpercent: avgincr,
+      };
+    });
+
+    res.status(200).json(datawithcalcs);
+  } catch (err) {
+    // res.status(500).json({ error: err.message });
+  }
+};
+
+// Get filter options for ADMIN (from reevaluationds1)
+exports.getfilteroptionsforadminds1 = async (req, res) => {
+  try {
+    const papercodes = await reevaluationds1.distinct('papercode');
+    const examcodes = await reevaluationds1.distinct('examcode');
+    const programs = await reevaluationds1.distinct('program');
+    const branches = await reevaluationds1.distinct('branch');
+    const regulations = await reevaluationds1.distinct('regulation');
+    const semesters = await reevaluationds1.distinct('semester');
+    const years = await reevaluationds1.distinct('year');
+
+    res.status(200).json({
+      papercodes,
+      examcodes,
+      programs,
+      years,
+      semesters,
+      branches,
+      regulations
+    });
+  } catch (err) {
+    // res.status(500).json({ error: err.message });
+  }
+};
+
+// Admin bulk allocation with random assignment from examinerconfigds
+exports.bulkallocateexaminerds1 = async (req, res) => {
+  try {
+    const { applicationids, examinernumber } = req.body;
+    const examinerkey = `examiner${examinernumber}`;
+
+    if (![1, 2, 3].includes(examinernumber)) {
+      return res.status(400).json({ error: 'invalid examiner number' });
+    }
+
+    const apps = await reevaluationds1.find({ _id: { $in: applicationids } });
+    let successcount = 0;
+    let failcount = 0;
+
+    for (const app of apps) {
+      // Find matching examiner configs
+      const configs = await examinerconfigds.find({
+        papercode: app.papercode,
+        examcode: app.examcode,
+        program: app.program,
+        branch: app.branch,
+        semester: app.semester,
+        regulation: app.regulation,
+      });
+
+      // Get all available examiners of this type
+      const availableexaminers = configs
+        .map(config => config[examinerkey])
+        .filter(examiner => examiner && examiner !== '');
+
+      if (availableexaminers.length === 0) {
+        failcount++;
+        continue;
+      }
+
+      // Random assignment
+      const randomexaminer = availableexaminers[Math.floor(Math.random() * availableexaminers.length)];
+      
+      app[`${examinerkey}id`] = randomexaminer;
+      app[`${examinerkey}status`] = 'allocated';
+      
+      if (examinernumber === 1 || examinernumber === 2) {
+        app.status = 'stage1';
+      }
+      
+      await app.save();
+      successcount++;
+    }
+
+    res.status(200).json({ 
+      message: 'bulk allocation completed',
+      success: successcount,
+      failed: failcount
+    });
+  } catch (err) {
+    // res.status(500).json({ error: err.message });
+  }
+};
+
+// Get applications requiring examiner 3 (increment > 20%)
+exports.getapplicationsforexaminer3ds1 = async (req, res) => {
+  try {
+    const applications = await reevaluationds1.find({
+      examiner1status: 'completed',
+      examiner2status: 'completed',
+      status: 'stage2',
+      examiner3status: 'pending',
+    });
+
+    const datawithcalcs = applications.map(app => {
+      const avgmarks = (app.examiner1marks + app.examiner2marks) / 2;
+      const avgincr = calculateincrementds(app.originalmarks, avgmarks);
+      
+      return {
+        ...app.toObject(),
+        averagemarks: avgmarks,
+        averageincrementpercent: avgincr,
+      };
+    }).filter(app => app.averageincrementpercent > 20);
+
+    res.status(200).json(datawithcalcs);
+  } catch (err) {
+    // res.status(500).json({ error: err.message });
+  }
+};
+
+// ==================== EXAMINER FUNCTIONS ====================
+
+// Get applications assigned to specific examiner
+exports.getexaminerassignedapplicationsds1 = async (req, res) => {
+  try {
+    const { examineremail, examinernumber } = req.query;
+    const examinerkey = `examiner${examinernumber}`;
+    
+    // Direct query using examiner id field
+    const applications = await reevaluationds1.find({
+      [`${examinerkey}id`]: examineremail,
+      [`${examinerkey}status`]: 'allocated'
+    });
+
+    res.status(200).json(applications);
+  } catch (err) {
+    // res.status(500).json({ error: err.message });
+  }
+};
+
+// Examiner submits marks for reevaluation
+exports.submitexaminermarksds1 = async (req, res) => {
+  try {
+    const { applicationid, examinernumber, marks } = req.body;
+    const examinerkey = `examiner${examinernumber}`;
+
+    const application = await reevaluationds1.findById(applicationid);
+    if (!application) {
+      return res.status(404).json({ error: 'application not found' });
+    }
+
+    // Set marks and status
+    application[`${examinerkey}marks`] = marks;
+    application[`${examinerkey}status`] = 'completed';
+
+    // Logic after examiner 2 submits (both examiner 1 and 2 completed)
+    if (examinernumber === 2 && application.examiner1status === 'completed') {
+      const avgmarks = (application.examiner1marks + application.examiner2marks) / 2;
+      const incrementpercent = calculateincrementds(application.originalmarks, avgmarks);
+
+      if (incrementpercent < 10) {
+        // No change
+        application.finalmarks = application.originalmarks;
+        application.remarksds = 'no change - increment less than 10%';
+        application.status = 'completed';
+        application.completeddate = new Date();
+      } else if (incrementpercent >= 10 && incrementpercent <= 20) {
+        // Average of examiner 1 and 2
+        application.finalmarks = avgmarks;
+        application.remarksds = 'average marks applied - increment between 10-20%';
+        application.status = 'completed';
+        application.completeddate = new Date();
+      } else {
+        // Greater than 20% - needs examiner 3
+        application.examiner3status = 'pending';
+        application.status = 'stage2';
+        application.remarksds = 'increment greater than 20% - needs examiner 3 evaluation';
+      }
+    }
+
+    // If examiner 1 submits (just mark as completed, wait for examiner 2)
+    if (examinernumber === 1) {
+      application.status = 'stage1';
+    }
+
+    // If examiner 3 submits
+    if (examinernumber === 3) {
+      application.finalmarks = marks;
+      application.remarksds = 'examiner 3 evaluation completed';
+      application.status = 'completed';
+      application.completeddate = new Date();
+      application.examiner3status = 'completed';
+    }
+
+    await application.save();
+    res.status(200).json({ message: 'marks submitted successfully', application });
+  } catch (err) {
+    // res.status(500).json({ error: err.message });
+  }
+};
