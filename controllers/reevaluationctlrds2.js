@@ -338,43 +338,64 @@ exports.submitexaminermarksds1 = async (req, res) => {
     application[`${examinerkey}marks`] = marks;
     application[`${examinerkey}status`] = 'completed';
 
-    // Logic after examiner 2 submits (both examiner 1 and 2 completed)
-    if (examinernumber === 2 && application.examiner1status === 'completed') {
-      const avgmarks = (application.examiner1marks + application.examiner2marks) / 2;
-      const incrementpercent = calculateincrementds(application.originalmarks, avgmarks);
+   // Logic after examiner 2 submits (both examiner 1 and 2 completed)
+if (examinernumber === 2 && application.examiner1status === 'completed') {
+  const avgmarks = (application.examiner1marks + application.examiner2marks) / 2;
+  const incrementpercent = calculateincrementds(application.originalmarks, avgmarks);
 
-      if (incrementpercent < 10) {
-        // No change
-        application.finalmarks = application.originalmarks;
-        application.remarksds = 'no change - increment less than 10%';
-        application.status = 'completed';
-        application.completeddate = new Date();
-      } else if (incrementpercent >= 10 && incrementpercent <= 20) {
-        // Average of examiner 1 and 2
-        application.finalmarks = avgmarks;
-        application.remarksds = 'average marks applied - increment between 10-20%';
-        application.status = 'completed';
-        application.completeddate = new Date();
-      } else {
-        // Greater than 20% - needs examiner 3
-        application.examiner3status = 'pending';
-        application.status = 'stage2';
-        application.remarksds = 'increment greater than 20% - needs examiner 3 evaluation';
-      }
-    }
+  if (incrementpercent >= 0 && incrementpercent < 10) {
+    // Increment 0-10% - Keep original marks
+    application.finalmarks = application.originalmarks;
+    application.remarksds = 'no change - increment less than 10%';
+    application.status = 'completed';
+    application.completeddate = new Date();
+    
+    await updateexammarks2ds(application, application.originalmarks);
+    
+  } else if (incrementpercent < 0) {
+    // Marks decreased - Use average marks
+    application.finalmarks = avgmarks;
+    application.remarksds = 'marks decreased - average marks applied';
+    application.status = 'completed';
+    application.completeddate = new Date();
+    
+    await updateexammarks2ds(application, avgmarks);
+    
+  } else if (incrementpercent >= 10 && incrementpercent <= 20) {
+    // Increment 10-20% - Use average marks
+    application.finalmarks = avgmarks;
+    application.remarksds = 'average marks applied - increment between 10-20%';
+    application.status = 'completed';
+    application.completeddate = new Date();
+    
+    await updateexammarks2ds(application, avgmarks);
+    
+  } else {
+    // Increment > 20% - needs examiner 3
+    application.examiner3status = 'pending';
+    application.status = 'stage2';
+    application.remarksds = 'increment greater than 20% - needs examiner 3 evaluation';
+  }
+}
+
 
     // If examiner 1 submits (just mark as completed, wait for examiner 2)
     if (examinernumber === 1) {
       application.status = 'stage1';
     }
 
-    // If examiner 3 submits
+    // If examiner 3 submits - Calculate average of all 3 examiners
     if (examinernumber === 3) {
-      application.finalmarks = marks;
-      application.remarksds = 'examiner 3 evaluation completed';
+      // CHANGE 3: Average of examiner 1, 2, and 3
+      const avgmarks = (application.examiner1marks + application.examiner2marks + marks) / 3;
+      application.finalmarks = avgmarks;
+      application.remarksds = 'examiner 3 evaluation completed - average of all 3 examiners';
       application.status = 'completed';
       application.completeddate = new Date();
       application.examiner3status = 'completed';
+      
+      // Update exammarks2ds with new marks
+      await updateexammarks2ds(application, avgmarks);
     }
 
     await application.save();
@@ -383,3 +404,71 @@ exports.submitexaminermarksds1 = async (req, res) => {
     // res.status(500).json({ error: err.message });
   }
 };
+
+// CHANGE 1 & 2: Helper function to update exammarks2ds
+async function updateexammarks2ds(application, newmarks) {
+  try {
+    // Find the student's marks record
+    const marksrecord = await exammarks2ds.findOne({
+      regno: application.regno,
+      papercode: application.papercode,
+      examcode: application.examcode,
+      program: application.program,
+      branch: application.branch,
+      semester: application.semester,
+      regulation: application.regulation,
+      year: application.year,
+    });
+
+    if (!marksrecord) {
+      // console.log('marks record not found for update');
+      return;
+    }
+
+    // Get all mark components
+    const originalTheoryMarks = marksrecord.thobtained || 0;
+    const thmax = marksrecord.thmax || 0;
+    const probtained = marksrecord.probtained || 0;
+    const prmax = marksrecord.prmax || 0;
+    const iatobtained = marksrecord.iatobtained || 0;
+    const iatmax = marksrecord.iatmax || 0;
+    const iapobtained = marksrecord.iapobtained || 0;
+    const iapmax = marksrecord.iapmax || 0;
+    
+    // Calculate original total marks and percentage
+    const originalTotal = originalTheoryMarks + probtained + iatobtained + iapobtained;
+    const maxTotal = thmax + prmax + iatmax + iapmax;
+    const originalPercentage = maxTotal > 0 ? (originalTotal / maxTotal) * 100 : 0;
+    
+    // Check if student PASSED originally (>= 36% as per UGC grading)
+    const isPassed = originalPercentage >= 36;
+    
+    // console.log(`Student ${application.regno} - ${application.papercode}:`);
+    // console.log(`Original: ${originalTheoryMarks}, New: ${newmarks}, Max: ${thmax}`);
+    // console.log(`Original Total: ${originalTotal}/${maxTotal} = ${originalPercentage.toFixed(2)}%`);
+    // console.log(`Status: ${isPassed ? 'PASSED' : 'FAILED'}`);
+    
+    // CHANGE 2: Apply mark update logic
+    if (newmarks < originalTheoryMarks) {
+      // Marks decreased
+      if (isPassed) {
+        // Student PASSED originally - UPDATE with decreased marks
+        marksrecord.thobtained = Math.round(newmarks);
+        await marksrecord.save();
+        // console.log(`✅ Marks updated (decreased) for PASSED student: ${Math.round(newmarks)}`);
+      } else {
+        // Student FAILED originally - NO CHANGE
+        // console.log(`❌ No update - Student FAILED originally`);
+      }
+    } else {
+      // Marks increased or same - ALWAYS UPDATE
+      marksrecord.thobtained = Math.round(newmarks);
+      await marksrecord.save();
+      // console.log(`✅ Marks updated (increased): ${Math.round(newmarks)}`);
+    }
+  } catch (err) {
+    // console.error('error updating exammarks2ds:', err);
+  }
+}
+
+
