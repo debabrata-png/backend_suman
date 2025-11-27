@@ -55,6 +55,12 @@ status1: {
     },
     comments: {
         type: String
+    },
+    type: {
+        type: String
+    },
+    reason: {
+        type: String
     }
 })
 //

@@ -3768,6 +3768,13 @@ app.post("/api/v2/createenrollment", classattendancectlr.createenrollment);
 app.post("/api/v2/markclassattendance", classattendancectlr.markclassattendance);
 app.get("/api/v2/getattendancebyclass", classattendancectlr.getattendancebyclass);
 
+const classattendanceds2 = require("./controllers/classattendanceds2.js");
+
+app.get("/api/v2/getabsentstudents", classattendanceds2.getabsentstudentsds);
+app.get("/api/v2/getstudentattendance", classattendanceds2.getstudentattendanceds);
+app.get("/api/v2/getrequestedattendance", classattendanceds2.getrequestedattendanceds);
+app.post("/api/v2/updateattendancerequest", classattendanceds2.updateattendancerequestds);
+app.post("/api/v2/marksupplementaryattendance", classattendanceds2.marksupplementaryattendanceds);
 
 const rubricmodulectlr = require("./controllers/rubricmodulectlr");
 
