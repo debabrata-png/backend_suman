@@ -7,7 +7,7 @@ exports.createexammarks2ds = async (req, res) => {
     const entry = await ExamMarks2.create(req.body);
     res.status(201).json(entry);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    // res.status(400).json({ error: err.message });
   }
 };
 
@@ -17,7 +17,7 @@ exports.listexammarks2ds = async (req, res) => {
     const list = await ExamMarks2.find(req.query);
     res.status(200).json(list);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    // res.status(500).json({ error: err.message });
   }
 };
 
@@ -28,7 +28,7 @@ exports.editexammarks2ds = async (req, res) => {
     const updated = await ExamMarks2.findByIdAndUpdate(_id, updateFields, { new: true });
     res.status(200).json(updated);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    // res.status(400).json({ error: err.message });
   }
 };
 
@@ -39,7 +39,7 @@ exports.deleteexammarks2ds = async (req, res) => {
     await ExamMarks2.findByIdAndDelete(_id);
     res.status(200).json({ success: true });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    // res.status(400).json({ error: err.message });
   }
 };
 
@@ -51,6 +51,6 @@ exports.getstudentds = async (req, res) => {
     if (!student) return res.status(404).json({ error: "Student not found" });
     res.status(200).json(student);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    // res.status(500).json({ error: err.message });
   }
 }

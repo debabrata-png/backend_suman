@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const exammarks2dsschema = new mongoose.Schema({
     name: { type: String, required: true },
     user: {type: String, required: true },
-    colid: { type: String, required: true },
+    colid: { type: Number, required: true },
     student: { type: String, required: true },
     regno: { type: String, required: true },
     mothername: { type: String},

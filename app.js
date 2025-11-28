@@ -4816,6 +4816,17 @@ app.get('/api/v2/reevaluationnew/getapplicationsforexaminer3ds1', reevaluationct
 app.get('/api/v2/reevaluationnew/getexaminerassignedapplicationsds1', reevaluationctlrds2.getexaminerassignedapplicationsds1);
 app.post('/api/v2/reevaluationnew/submitexaminermarksds1', reevaluationctlrds2.submitexaminermarksds1);
 
+const answersheetevaluationctlrds = require('./controllers/answersheetevaluationctlrds');
+
+// Answer Sheet Evaluation Routes
+app.get("/api/v2/getunevaluatedanswersheetsds", answersheetevaluationctlrds.getunevaluatedanswersheetsds);
+app.get("/api/v2/getquestionbanksforevaluationds", answersheetevaluationctlrds.getquestionbanksforevaluationds);
+app.get("/api/v2/getquestionsfrombankds", answersheetevaluationctlrds.getquestionsfrombankds);
+app.post("/api/v2/submitquestionwisemarksds", answersheetevaluationctlrds.submitquestionwisemarksds);
+app.get("/api/v2/getquestionwisemarksforreevaluationds", answersheetevaluationctlrds.getquestionwisemarksforreevaluationds);
+app.post("/api/v2/updatequestionwisemarksforreevaluationds", answersheetevaluationctlrds.updatequestionwisemarksforreevaluationds);
+app.get("/api/v2/getstudentadditionalinfods", answersheetevaluationctlrds.getstudentadditionalinfods);
+
 // vss donation route
 const vssdonationdsctlr = require("./controllers/vssdonationdsctlr.js");
 

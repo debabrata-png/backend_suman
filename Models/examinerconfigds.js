@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const examinerconfigdsschema = new mongoose.Schema({
   name: { type: String, required: true },
   user: { type: String, required: true },
-  colid: { type: String, required: true },
+  colid: { type: Number, required: true },
   program: { type: String },
   examcode: { type: String },
   month: { type: String },

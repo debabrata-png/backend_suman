@@ -27,8 +27,8 @@ exports.getStudentInfoForTabulation = async (req, res) => {
   try {
     const { colid, regno } = req.query;
 
-    const student = await User.findOne({ colid: colid, regno });
-    const examRecord = await ExamMarks2.findOne({ colid: colid, regno }).select('fathername mothername gender');
+    const student = await User.findOne({ colid: Number(colid), regno });
+    const examRecord = await ExamMarks2.findOne({ colid: Number(colid), regno }).select('fathername mothername gender');
 
     if (!student && !examRecord) {
       return res.status(404).json({ success: false, message: 'Student not found' });
@@ -51,7 +51,7 @@ exports.getStudentInfoForTabulation = async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    // res.status(500).json({ success: false, error: err.message });
   }
 };
 
@@ -65,7 +65,7 @@ exports.getCurrentSemesterMarks = async (req, res) => {
 
     // Get structure from ExamMarks1 to know max marks
     const allRecords = await ExamMarks1.find({
-      colid: colid,
+      colid: Number(colid),
       program: program,
       semester: semesterNum,
       regulation: regulation,
@@ -81,7 +81,7 @@ exports.getCurrentSemesterMarks = async (req, res) => {
 
     // Get student marks from ExamMarks2
     const studentMarks = await ExamMarks2.find({
-      colid: colid,
+      colid: Number(colid),
       regno: regno,
       semester: semesterNum,
       year: yearNum
@@ -212,7 +212,7 @@ exports.getAllSemesterSummary = async (req, res) => {
     const { colid, regno, program } = req.query;
 
     const studentMarks = await ExamMarks2.find({
-      colid: colid,
+      colid: Number(colid),
       regno: regno
     }).lean().sort({ year: 1, semester: 1 });
 
@@ -259,7 +259,7 @@ exports.getAllSemesterSummary = async (req, res) => {
 
       // Get structure from ExamMarks1
       const allSemRecords = await ExamMarks1.find({
-        colid: colid,
+        colid: Number(colid),
         semester: semData.semester,
         regulation: firstMark.regulation,
         branch: firstMark.branch,
@@ -339,7 +339,7 @@ exports.getAvailableData = async (req, res) => {
     const { colid, program, branch, regulation } = req.query;
 
     const allRecords = await ExamMarks2.find({
-      colid: colid,
+      colid: Number(colid),
       program: program,
       branch: branch,
       regulation: regulation
@@ -387,7 +387,7 @@ exports.getTranscript = async (req, res) => {
       // Stage 1: Match student's marks
       {
         $match: {
-          colid,
+          colid: Number(colid),
           regno,
         },
       },
@@ -610,7 +610,7 @@ exports.getBulkTabulationData = async (req, res) => {
 
     // Get all unique students from ExamMarks2 for this semester/year
     const allMarks = await ExamMarks2.find({
-      colid: colid,
+      colid: Number(colid),
       program: program,
       branch: branch,
       regulation: regulation,
@@ -635,7 +635,7 @@ exports.getBulkTabulationData = async (req, res) => {
     for (let regno of uniqueRegno) {
       // Get all marks for this student in this semester
       const studentSemMarks = await ExamMarks2.find({
-        colid: colid,
+        colid: Number(colid),
         regno: regno,
         semester: parseInt(semester),
         year: parseInt(year),
@@ -656,7 +656,7 @@ exports.getBulkTabulationData = async (req, res) => {
 
       // Get structure
       const allSemRecords = await ExamMarks1.find({
-        colid: colid,
+        colid: Number(colid),
         semester: parseInt(semester),
         regulation: firstMark.regulation,
         branch: firstMark.branch,
@@ -733,7 +733,7 @@ exports.getBulkTabulationData = async (req, res) => {
 
       // Get all semesters data for CGPA calculation
       const allStudentMarks = await ExamMarks2.find({
-        colid: colid,
+        colid: Number(colid),
         regno: regno,
       })
         .lean()
@@ -770,7 +770,7 @@ exports.getBulkTabulationData = async (req, res) => {
 
         const semFirstMark = semMarks[0];
         const semRecords = await ExamMarks1.find({
-          colid: colid,
+          colid: Number(colid),
           semester: semData.semester,
           regulation: semFirstMark.regulation,
           branch: semFirstMark.branch,
@@ -830,7 +830,7 @@ exports.getBulkTabulationData = async (req, res) => {
 
         const semFirstMark = semMarks[0];
         const semRecords = await ExamMarks1.find({
-          colid: colid,
+          colid: Number(colid),
           semester: sem.semester,
           regulation: semFirstMark.regulation,
           branch: semFirstMark.branch,
