@@ -4386,6 +4386,52 @@ app.get("/api/v2/ds1getmissingfieldsreport", ds1datareportctlr.ds1getmissingfiel
 app.get("/api/v2/ds1getstudentswithoutphotos", ds1datareportctlr.ds1getstudentswithoutphotos);
 app.post("/api/v2/ds1bulkupdatephotosfromurl", ds1datareportctlr.ds1bulkupdatephotosfromurl);
 
+// payment gateway
+
+const paymentgatewaydsctlr = require("./controllers/paymentgatewaydsctlr.js");
+const platformchargesdsctlr = require("./controllers/platformchargesdsctlr.js");
+const coupondsctlr = require("./controllers/coupondsctlr.js");
+const paymentorderdsctlr = require("./controllers/paymentorderdsctlr.js");
+
+// Payment Gateway Routes
+app.post("/api/v2/paymentgatewayds/create", paymentgatewaydsctlr.createpaymentgatewaydsdatabyds);
+app.post("/api/v2/paymentgatewayds/get", paymentgatewaydsctlr.getpaymentgatewaydsdatabyds);
+app.post("/api/v2/paymentgatewayds/getall", paymentgatewaydsctlr.getallpaymentgatewaydsdatabyds);
+app.post("/api/v2/paymentgatewayds/update", paymentgatewaydsctlr.updatepaymentgatewaydsdatabyds);
+app.get("/api/v2/paymentgatewayds/delete", paymentgatewaydsctlr.deletepaymentgatewaydsdatabyds);
+app.post("/api/v2/paymentgatewayds/toggle", paymentgatewaydsctlr.togglepaymentgatewaydsdatabyds);
+
+// Platform Charges Routes
+app.post("/api/v2/platformchargesds/create", platformchargesdsctlr.createplatformchargesdsdatabyds);
+app.post("/api/v2/platformchargesds/get", platformchargesdsctlr.getplatformchargesdsdatabyds);
+app.post("/api/v2/platformchargesds/getactive", platformchargesdsctlr.getactiveplatformchargesdsdatabyds);
+app.post("/api/v2/platformchargesds/calculate", platformchargesdsctlr.calculateplatformchargesdsdatabyds);
+app.post("/api/v2/platformchargesds/getall", platformchargesdsctlr.getallplatformchargesdsdatabyds);
+app.post("/api/v2/platformchargesds/update", platformchargesdsctlr.updateplatformchargesdsdatabyds);
+app.get("/api/v2/platformchargesds/delete", platformchargesdsctlr.deleteplatformchargesdsdatabyds);
+
+// Coupon Routes
+app.post("/api/v2/coupondsdata/create", coupondsctlr.createcoupondsdatabyds);
+app.post("/api/v2/coupondsdata/get", coupondsctlr.getcoupondsdatabyds);
+app.post("/api/v2/coupondsdata/getall", coupondsctlr.getallcoupondsdatabyds);
+app.post("/api/v2/coupondsdata/getvalid", coupondsctlr.getvalidcoupondsdatabyds);
+app.post("/api/v2/coupondsdata/validate", coupondsctlr.validatecoupondsdatabyds);
+app.post("/api/v2/coupondsdata/update", coupondsctlr.updatecoupondsdatabyds);
+app.get("/api/v2/coupondsdata/delete", coupondsctlr.deletecoupondsdatabyds);
+app.post("/api/v2/coupondsdata/toggle", coupondsctlr.togglecoupondsdatabyds);
+app.post("/api/v2/coupondsdata/stats", coupondsctlr.getcouponstatsdsdatabyds);
+
+// Payment Order Routes
+
+app.post("/api/v2/paymentorderds/create", paymentorderdsctlr.createpaymentorderdsdatabyds);
+app.get("/api/v2/paymentorderds/get", paymentorderdsctlr.getpaymentorderdsdatabyds);
+app.post("/api/v2/paymentorderds/getall", paymentorderdsctlr.getallpaymentorderdsdatabyds);
+app.post("/api/v2/paymentorderds/update", paymentorderdsctlr.updatepaymentorderdsdatabyds);
+app.get("/api/v2/paymentorderds/delete", paymentorderdsctlr.deletepaymentorderdsdatabyds);
+app.get("/api/v2/paymentorderds/checkstatus", paymentorderdsctlr.checkpaymentstatusbyds);
+app.post("/api/v2/paymentorderds/webhook", paymentorderdsctlr.webhookhandler);
+
+
 
 
 // // ==========================================
