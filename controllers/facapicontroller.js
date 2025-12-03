@@ -1593,9 +1593,9 @@ exports.loginapif= async (req,res) => {
             }
           });
     } catch(err) {
-        // res.status(201).json({
-        //     status:'Error ' + err,
-        // });
+        res.status(201).json({
+            status:'Error ' + err,
+        });
 
     }  
 };
