@@ -4828,6 +4828,119 @@ app.get("/api/v2/coursecompletionstatusds", studalloc1reportds.getcoursecompleti
 app.get("/api/v2/facultycoursestudentdetailsds", studalloc1reportds.getfacultycoursestudentdetailsds);
 app.get("/api/v2/dashboardsummaryds", studalloc1reportds.getdashboardsummaryds);
 
+// crm routes
+// Import controllers
+const categoryctlrds = require('./controllers/categoryctlrds.js');
+const crmh1ctlrds = require('./controllers/crmh1ctlrds.js');
+const leadactivityctlrds = require('./controllers/leadactivityctlrds.js');
+const programmasterctlrds = require('./controllers/programmasterctlrds.js');
+const dripcampaignctlrds = require('./controllers/dripcampaignctlrds.js');
+const communicationlogctlrds = require('./controllers/communicationlogctlrds.js');
+const landingpagectlrds = require('./controllers/landingpagectlrds.js');
+const webhookctlrds = require('./controllers/webhookctlrds.js');
+const apikeyctlrds1 = require('./controllers/apikeyctlrds1.js');
+const settingsctlrds = require('./controllers/settingsctlrds.js');
+
+// ==================== USER ROUTES ====================
+app.get('/api/v2/searchusersds', crmh1ctlrds.searchusersds);
+
+// ==================== CATEGORY ROUTES ====================
+app.post('/api/v2/createcategoryds', categoryctlrds.createcategoryds);
+app.get('/api/v2/getallcategoriesds', categoryctlrds.getallcategoriesds);
+app.get('/api/v2/getcategorybyidds/:id', categoryctlrds.getcategorybyidds);
+app.post('/api/v2/updatecategoryds', categoryctlrds.updatecategoryds); // Uses req.query.id
+app.get('/api/v2/deletecategoryds/:id', categoryctlrds.deletecategoryds);
+app.post('/api/v2/addcounsellortocategoryds', categoryctlrds.addcounsellortocategoryds); // Uses req.query.id
+app.post('/api/v2/removecounsellorfromcategoryds/:id', categoryctlrds.removecounsellorfromcategoryds); // Changed to POST
+app.get('/api/v2/getactivecategorieswithcounsellorsds', categoryctlrds.getactivecategorieswithcounsellorsds);
+
+// ==================== LEAD MANAGEMENT ROUTES ====================
+app.post('/api/v2/createleadds', crmh1ctlrds.createleadds);
+app.get('/api/v2/getallleadsds', crmh1ctlrds.getallleadsds);
+app.get('/api/v2/getleadbyidds/:id', crmh1ctlrds.getleadbyidds);
+app.post('/api/v2/updateleadds', crmh1ctlrds.updateleadds); // Uses req.query.id
+app.post('/api/v2/updatepipelinestage', crmh1ctlrds.updatepipelinestage); // Uses req.query.id
+app.post('/api/v2/reassignleadds', crmh1ctlrds.reassignleadds); // Uses req.query.id
+app.post('/api/v2/bulkassignleadsds', crmh1ctlrds.bulkassignleadsds);
+app.get('/api/v2/gethotleadsds', crmh1ctlrds.gethotleadsds);
+app.get('/api/v2/gettodayfollowupsds', crmh1ctlrds.gettodayfollowupsds);
+app.get('/api/v2/getoverduefollowupsds', crmh1ctlrds.getoverduefollowupsds);
+app.get('/api/v2/getleadanalyticsds', crmh1ctlrds.getleadanalyticsds);
+
+// ==================== ACTIVITY ROUTES ====================
+app.post('/api/v2/createactivityds', leadactivityctlrds.createactivityds);
+app.get('/api/v2/getleadactivitiesds/:lead_id', leadactivityctlrds.getleadactivitiesds);
+app.get('/api/v2/getcounselloractivitiesds', leadactivityctlrds.getcounselloractivitiesds);
+app.post('/api/v2/updateactivityds', leadactivityctlrds.updateactivityds); // Uses req.query.id
+app.get('/api/v2/deleteactivityds/:id', leadactivityctlrds.deleteactivityds);
+app.post('/api/v2/logcallactivityds', leadactivityctlrds.logcallactivityds);
+app.post('/api/v2/logmeetingactivityds', leadactivityctlrds.logmeetingactivityds);
+
+// ==================== PROGRAM MASTER ROUTES ====================
+app.post('/api/v2/createprogrammasterds', programmasterctlrds.createprogrammasterds);
+app.get('/api/v2/getallprogramsds', programmasterctlrds.getallprogramsds);
+app.get('/api/v2/getprogrambyidds/:id', programmasterctlrds.getprogrambyidds);
+app.get('/api/v2/getprogramsbycategoryds/:category', programmasterctlrds.getprogramsbycategoryds);
+app.post('/api/v2/updateprogrammasterds', programmasterctlrds.updateprogrammasterds); // Uses req.query.id
+app.get('/api/v2/deleteprogrammasterds/:id', programmasterctlrds.deleteprogrammasterds);
+
+// ==================== DRIP CAMPAIGN ROUTES ====================
+app.post('/api/v2/createdripcampaignds', dripcampaignctlrds.createdripcampaignds);
+app.get('/api/v2/getallcampaignsds', dripcampaignctlrds.getallcampaignsds);
+app.get('/api/v2/getcampaignbyidds/:id', dripcampaignctlrds.getcampaignbyidds);
+app.post('/api/v2/updatedripcampaignds', dripcampaignctlrds.updatedripcampaignds); // Uses req.query.id
+app.get('/api/v2/deletedripcampaignds/:id', dripcampaignctlrds.deletedripcampaignds);
+app.post('/api/v2/enrollleadincampaignds', dripcampaignctlrds.enrollleadincampaignds);
+app.get('/api/v2/getleadsincampaignds/:campaign_id', dripcampaignctlrds.getleadsincampaignds);
+app.get('/api/v2/processdripcampaignds', dripcampaignctlrds.processdripcampaignds);
+
+// ==================== COMMUNICATION ROUTES ====================
+app.post('/api/v2/sendemailds', communicationlogctlrds.sendemailds);
+app.post('/api/v2/sendsmsds', communicationlogctlrds.sendsmsds);
+app.post('/api/v2/sendwhatsappds', communicationlogctlrds.sendwhatsappds);
+app.get('/api/v2/getcommunicationlogsds/:lead_id', communicationlogctlrds.getcommunicationlogsds);
+app.get('/api/v2/getallcommunicationsds', communicationlogctlrds.getallcommunicationsds);
+
+// ==================== LANDING PAGE ROUTES ====================
+app.post('/api/v2/createlandingpageds', landingpagectlrds.createlandingpageds);
+app.get('/api/v2/getalllandingpagesds', landingpagectlrds.getalllandingpagesds);
+app.get('/api/v2/getlandingpagebyslugds/:slug', landingpagectlrds.getlandingpagebyslugds);
+app.get('/api/v2/getlandingpagebyidds/:id', landingpagectlrds.getlandingpagebyidds);
+app.post('/api/v2/updatelandingpageds', landingpagectlrds.updatelandingpageds);
+app.get('/api/v2/deletelandingpageds/:id', landingpagectlrds.deletelandingpageds);
+app.post('/api/v2/addqrcodeds', landingpagectlrds.addqrcodeds);
+app.delete('/api/v2/deleteqrcodeds', landingpagectlrds.deleteqrcodeds);
+// REMOVED: app.get('/api/v2/getlandingpageanalyticsds/:id', landingpagectlrds.getlandingpageanalyticsds);
+
+
+// ==================== WEBHOOK ROUTES (Protected by API Key) ====================
+app.post('/api/v2/webhookleadcaptureds', webhookctlrds.validateapikey, webhookctlrds.webhookleadcaptureds);
+app.post('/api/v2/calltrackingwebhookds', webhookctlrds.validateapikey, webhookctlrds.calltrackingwebhookds);
+app.post('/api/v2/googleadswebhookds', webhookctlrds.validateapikey, webhookctlrds.googleadswebhookds);
+app.post('/api/v2/facebookleadwebhookds', webhookctlrds.validateapikey, webhookctlrds.facebookleadwebhookds);
+
+// ==================== SOURCE ROUTES ====================
+const sourcectlrds = require('./controllers/sourcectlrds.js');
+app.post('/api/v2/createsourceds', sourcectlrds.createsourceds);
+app.get('/api/v2/getallsourcesds', sourcectlrds.getallsourcesds);
+app.post('/api/v2/updatesourceds', sourcectlrds.updatesourceds);
+app.get('/api/v2/deletesourceds/:id', sourcectlrds.deletesourceds);
+
+// ==================== SETTINGS ROUTES ====================
+app.get('/api/v2/getsettingsds', settingsctlrds.getsettingsds);
+app.post('/api/v2/updatesettingsds', settingsctlrds.updatesettingsds);
+
+// ==================== API KEY MANAGEMENT ROUTES ====================
+app.post('/api/v2/createapikeyds1', apikeyctlrds1.createapikeyds1);
+app.get('/api/v2/getallapikeysds1', apikeyctlrds1.getallapikeysds1);
+app.get('/api/v2/getapikeybyidds1/:id', apikeyctlrds1.getapikeybyidds1);
+app.post('/api/v2/updateapikeyds1', apikeyctlrds1.updateapikeyds1); // Uses req.query.id
+app.get('/api/v2/deleteapikeyds1/:id', apikeyctlrds1.deleteapikeyds1);
+app.post('/api/v2/regenerateapikeyds1', apikeyctlrds1.regenerateapikeyds1); // Uses req.query.id
+app.post('/api/v2/revokeapikeyds1', apikeyctlrds1.revokeapikeyds1); // Uses req.query.id
+app.get('/api/v2/getapikeyusagestatistics/:id', apikeyctlrds1.getapikeyusagestatistics);
+
+
 const examinerconfigctlrds = require('./controllers/examinerconfigctlrds');
 const reevaluationctlrds = require('./controllers/reevaluationctlrds');
 const reevaluationctlrds2 = require('./controllers/reevaluationctlrds2.js');
