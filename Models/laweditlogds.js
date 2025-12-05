@@ -7,7 +7,11 @@ const laweditlogdsschema = new mongoose.Schema({
   editedbyemail: { type: String, required: true },
   editeduserid: { type: mongoose.Schema.Types.ObjectId, ref: 'lawuserds', required: true },
   edittype: { type: String, required: true }, // 'update' or 'delete'
+  edittype: { type: String, required: true }, // 'update' or 'delete'
   changedsummary: { type: String },
+  nextdateforhearing: { type: Date },
+  nextdateforhearingtime: { type: String },
+  datefor: { type: String },
   olddatajson: { type: Object },
   newdatajson: { type: Object },
   colid: { type: Number, required: true }

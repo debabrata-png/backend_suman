@@ -22,9 +22,18 @@ const lawformschema = new mongoose.Schema({
   nextdateforhearing: { type: Date },
   nextdateforhearingtime: { type: String },
   datefor: { type: String },
+  ispetitionhearing: { type: Boolean, default: false },
+  petitionhearingdate: { type: Date },
+  petitionhearingtime: { type: String },
   lawclerkname: { type: String },
   lawclerkemail: { type: String },
   lawclerkphno: { type: String },
+  opponentlawyername: { type: String },
+  opponentlawyeremail: { type: String },
+  opponentlawyerphone: { type: String },
+  opponentclerkname: { type: String },
+  opponentclerkemail: { type: String },
+  opponentclerkphone: { type: String },
   rackno: { type: String },
   colid: { type: Number, required: true }
 }, {

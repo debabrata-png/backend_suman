@@ -4,21 +4,21 @@ const lawjrlawyerds = require('../Models/lawjrlawyerds');
 exports.createlawjrlawyerds = async (req, res) => {
   try {
     const { jrlawyername, jrlawyeremail, jrlawyerphone, colid, createduserid, createduseremail } = req.body;
-    
+
     // Check if jr lawyer email already exists for this college
-    const existingLawyer = await lawjrlawyerds.findOne({ 
-      jrlawyeremail, 
+    const existingLawyer = await lawjrlawyerds.findOne({
+      jrlawyeremail,
       colid: parseInt(colid),
-      isactive: true 
+      isactive: true
     });
-    
+
     if (existingLawyer) {
       return res.status(400).json({
         success: false,
         message: 'Jr lawyer with this email already exists'
       });
     }
-    
+
     const newLawyer = await lawjrlawyerds.create({
       jrlawyername,
       jrlawyeremail,
@@ -46,10 +46,10 @@ exports.createlawjrlawyerds = async (req, res) => {
 exports.getalllawjrlawyerds = async (req, res) => {
   try {
     const { colid } = req.query;
-    
-    const lawyers = await lawjrlawyerds.find({ 
+
+    const lawyers = await lawjrlawyerds.find({
       colid: parseInt(colid),
-      isactive: true 
+      isactive: true
     }).sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -69,7 +69,7 @@ exports.getalllawjrlawyerds = async (req, res) => {
 exports.getlawjrlawyerdsbyid = async (req, res) => {
   try {
     const { id } = req.query;
-    
+
     const lawyer = await lawjrlawyerds.findById(id);
 
     if (!lawyer) {
@@ -96,24 +96,48 @@ exports.getlawjrlawyerdsbyid = async (req, res) => {
 exports.updatelawjrlawyerds = async (req, res) => {
   try {
     const { id, jrlawyername, jrlawyeremail, jrlawyerphone } = req.body;
-    
-    const updatedLawyer = await lawjrlawyerds.findByIdAndUpdate(
-      id,
-      { jrlawyername, jrlawyeremail, jrlawyerphone },
-      { new: true }
-    );
 
-    if (!updatedLawyer) {
+    // Get old email BEFORE updating
+    const oldLawyer = await lawjrlawyerds.findById(id).select('jrlawyeremail colid');
+
+    if (!oldLawyer) {
       return res.status(404).json({
         success: false,
         message: 'Jr lawyer not found'
       });
     }
 
+    const updatedLawyer = await lawjrlawyerds.findByIdAndUpdate(
+      id,
+      { jrlawyername, jrlawyeremail, jrlawyerphone },
+      { new: true }
+    );
+
+    // Cascade update to all cases with this Jr Lawyer (match by email in array)
+    const lawformds = require('../Models/lawformds');
+
+    const updateResult = await lawformds.updateMany(
+      {
+        'jrlawyer.email': oldLawyer.jrlawyeremail,
+        colid: parseInt(oldLawyer.colid)
+      },
+      {
+        $set: {
+          'jrlawyer.$[elem].name': jrlawyername,
+          'jrlawyer.$[elem].email': jrlawyeremail,
+          'jrlawyer.$[elem].phno': jrlawyerphone
+        }
+      },
+      {
+        arrayFilters: [{ 'elem.email': oldLawyer.jrlawyeremail }]
+      }
+    );
+
     res.status(200).json({
       success: true,
       message: 'Jr lawyer updated successfully',
-      data: updatedLawyer
+      data: updatedLawyer,
+      casesUpdated: updateResult.modifiedCount
     });
   } catch (error) {
     res.status(500).json({
@@ -128,7 +152,7 @@ exports.updatelawjrlawyerds = async (req, res) => {
 exports.deletelawjrlawyerds = async (req, res) => {
   try {
     const { id } = req.query;
-    
+
     const deletedLawyer = await lawjrlawyerds.findByIdAndUpdate(
       id,
       { isactive: false },
