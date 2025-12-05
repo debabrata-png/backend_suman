@@ -60,12 +60,12 @@ exports.createplatformchargesdsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in createplatformchargesdsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create platform charges configuration',
-      error: error.message
-    });
+    // console.error('Error in createplatformchargesdsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to create platform charges configuration',
+    //   error: error.message
+    // });
   }
 };
 
@@ -96,12 +96,12 @@ exports.getplatformchargesdsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in getplatformchargesdsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch platform charges configuration',
-      error: error.message
-    });
+    // console.error('Error in getplatformchargesdsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to fetch platform charges configuration',
+    //   error: error.message
+    // });
   }
 };
 
@@ -132,12 +132,12 @@ exports.getactiveplatformchargesdsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in getactiveplatformchargesdsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch active platform charges',
-      error: error.message
-    });
+    // console.error('Error in getactiveplatformchargesdsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to fetch active platform charges',
+    //   error: error.message
+    // });
   }
 };
 
@@ -199,12 +199,12 @@ exports.getallplatformchargesdsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in getallplatformchargesdsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch platform charges configurations',
-      error: error.message
-    });
+    // console.error('Error in getallplatformchargesdsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to fetch platform charges configurations',
+    //   error: error.message
+    // });
   }
 };
 
@@ -241,12 +241,12 @@ exports.updateplatformchargesdsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in updateplatformchargesdsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update platform charges configuration',
-      error: error.message
-    });
+    // console.error('Error in updateplatformchargesdsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to update platform charges configuration',
+    //   error: error.message
+    // });
   }
 };
 
@@ -282,11 +282,11 @@ exports.deleteplatformchargesdsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in deleteplatformchargesdsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to deactivate platform charges configuration',
-      error: error.message
-    });
+    // console.error('Error in deleteplatformchargesdsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to deactivate platform charges configuration',
+    //   error: error.message
+    // });
   }
 };

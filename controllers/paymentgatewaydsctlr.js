@@ -59,12 +59,12 @@ exports.createpaymentgatewaydsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in createpaymentgatewaydsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create payment gateway configuration',
-      error: error.message
-    });
+    // console.error('Error in createpaymentgatewaydsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to create payment gateway configuration',
+    //   error: error.message
+    // });
   }
 };
 
@@ -95,12 +95,12 @@ exports.getpaymentgatewaydsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in getpaymentgatewaydsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch payment gateway configuration',
-      error: error.message
-    });
+    // console.error('Error in getpaymentgatewaydsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to fetch payment gateway configuration',
+    //   error: error.message
+    // });
   }
 };
 
@@ -116,12 +116,12 @@ exports.getallpaymentgatewaydsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in getallpaymentgatewaydsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch payment gateway configurations',
-      error: error.message
-    });
+    // console.error('Error in getallpaymentgatewaydsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to fetch payment gateway configurations',
+    //   error: error.message
+    // });
   }
 };
 
@@ -183,12 +183,12 @@ exports.updatepaymentgatewaydsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in updatepaymentgatewaydsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update payment gateway configuration',
-      error: error.message
-    });
+    // console.error('Error in updatepaymentgatewaydsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to update payment gateway configuration',
+    //   error: error.message
+    // });
   }
 };
 
@@ -219,12 +219,12 @@ exports.deletepaymentgatewaydsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in deletepaymentgatewaydsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete payment gateway configuration',
-      error: error.message
-    });
+    // console.error('Error in deletepaymentgatewaydsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to delete payment gateway configuration',
+    //   error: error.message
+    // });
   }
 };
 
@@ -259,11 +259,11 @@ exports.togglepaymentgatewaydsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in togglepaymentgatewaydsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to toggle payment gateway status',
-      error: error.message
-    });
+    // console.error('Error in togglepaymentgatewaydsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to toggle payment gateway status',
+    //   error: error.message
+    // });
   }
 };

@@ -86,12 +86,12 @@ exports.createcoupondsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in createcoupondsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create coupon',
-      error: error.message
-    });
+    // console.error('Error in createcoupondsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to create coupon',
+    //   error: error.message
+    // });
   }
 };
 
@@ -127,12 +127,12 @@ exports.getcoupondsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in getcoupondsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch coupon',
-      error: error.message
-    });
+    // console.error('Error in getcoupondsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to fetch coupon',
+    //   error: error.message
+    // });
   }
 };
 
@@ -162,12 +162,12 @@ exports.getallcoupondsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in getallcoupondsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch coupons',
-      error: error.message
-    });
+    // console.error('Error in getallcoupondsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to fetch coupons',
+    //   error: error.message
+    // });
   }
 };
 
@@ -192,12 +192,12 @@ exports.getvalidcoupondsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in getvalidcoupondsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch valid coupons',
-      error: error.message
-    });
+    // console.error('Error in getvalidcoupondsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to fetch valid coupons',
+    //   error: error.message
+    // });
   }
 };
 
@@ -265,12 +265,12 @@ exports.validatecoupondsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in validatecoupondsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to validate coupon',
-      error: error.message
-    });
+    // console.error('Error in validatecoupondsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to validate coupon',
+    //   error: error.message
+    // });
   }
 };
 // Update coupon
@@ -311,12 +311,12 @@ exports.updatecoupondsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in updatecoupondsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update coupon',
-      error: error.message
-    });
+    // console.error('Error in updatecoupondsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to update coupon',
+    //   error: error.message
+    // });
   }
 };
 
@@ -352,12 +352,12 @@ exports.deletecoupondsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in deletecoupondsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to deactivate coupon',
-      error: error.message
-    });
+    // console.error('Error in deletecoupondsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to deactivate coupon',
+    //   error: error.message
+    // });
   }
 };
 
@@ -392,12 +392,12 @@ exports.togglecoupondsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in togglecoupondsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to toggle coupon status',
-      error: error.message
-    });
+    // console.error('Error in togglecoupondsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to toggle coupon status',
+    //   error: error.message
+    // });
   }
 };
 
@@ -441,11 +441,11 @@ exports.getcouponstatsdsdatabyds = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in getcouponstatsdsdatabyds:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch coupon statistics',
-      error: error.message
-    });
+    // console.error('Error in getcouponstatsdsdatabyds:', error);
+    // res.status(500).json({
+    //   success: false,
+    //   message: 'Failed to fetch coupon statistics',
+    //   error: error.message
+    // });
   }
 };
