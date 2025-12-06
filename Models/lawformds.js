@@ -21,10 +21,13 @@ const lawformschema = new mongoose.Schema({
   cnrno: { type: String },
   nextdateforhearing: { type: Date },
   nextdateforhearingtime: { type: String },
-  datefor: { type: String },
+  datefor: [{
+    dateforid: { type: String },
+    datefor: { type: String }
+  }],
+  datefornotes: { type: String },
   ispetitionhearing: { type: Boolean, default: false },
-  petitionhearingdate: { type: Date },
-  petitionhearingtime: { type: String },
+  petitionhearingdates: [{ type: Date }],
   lawclerkname: { type: String },
   lawclerkemail: { type: String },
   lawclerkphno: { type: String },

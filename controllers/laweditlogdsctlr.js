@@ -4,8 +4,22 @@ const lawformds = require('../Models/lawformds');
 // Create Edit Log Entry
 exports.createlaweditlogds = async (req, res) => {
   try {
-    const { caseid, caseno, editedby, editedbyemail, editeduserid, edittype, changedsummary, olddatajson, newdatajson, colid } = req.body;
-    
+    const {
+      caseid,
+      caseno,
+      editedby,
+      editedbyemail,
+      editeduserid,
+      edittype,
+      changedsummary,
+      olddatajson,
+      newdatajson,
+      colid,
+      datefor,
+      nextdateforhearing,
+      nextdateforhearingtime
+    } = req.body;
+
     const newLog = await laweditlogds.create({
       caseid,
       caseno,
@@ -16,7 +30,10 @@ exports.createlaweditlogds = async (req, res) => {
       changedsummary,
       olddatajson,
       newdatajson,
-      colid
+      colid,
+      datefor,
+      nextdateforhearing,
+      nextdateforhearingtime
     });
 
     res.status(201).json({
@@ -37,7 +54,7 @@ exports.createlaweditlogds = async (req, res) => {
 exports.getlaweditlogdsbycaseid = async (req, res) => {
   try {
     const { caseid } = req.query;
-    
+
     const logs = await laweditlogds.find({ caseid }).sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -57,13 +74,13 @@ exports.getlaweditlogdsbycaseid = async (req, res) => {
 exports.getalllaweditlogds = async (req, res) => {
   try {
     const { colid, caseno } = req.query;
-    
+
     let query = { colid: parseInt(colid) };
-    
+
     if (caseno) {
       query.caseno = { $regex: caseno, $options: 'i' };
     }
-    
+
     const logs = await laweditlogds.find(query).sort({ createdAt: -1 });
 
     res.status(200).json({

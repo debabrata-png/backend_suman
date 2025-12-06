@@ -83,9 +83,14 @@ exports.updatedatefords = async (req, res) => {
 
         // Cascade update to all cases with this date for option
         const lawformds = require('../Models/lawformds');
+        /* 
+           We need to update the 'datefor' field which is an array of objects.
+           We want to set 'datefor.$.datefor' = newName
+           where 'datefor.dateforid' == id
+        */
         const updateResult = await lawformds.updateMany(
-            { datefor: oldDateFor.dateforname, colid: oldDateFor.colid },
-            { $set: { datefor: dateforname } }
+            { "datefor.dateforid": id, colid: oldDateFor.colid },
+            { $set: { "datefor.$.datefor": dateforname } }
         );
 
         res.status(200).json({

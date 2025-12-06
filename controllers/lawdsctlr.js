@@ -318,9 +318,32 @@ exports.updatecase = async (req, res) => {
       changes.push(`Hearing Time changed from '${oldData.nextdateforhearingtime || ''}' to '${newData.nextdateforhearingtime || ''}'`);
     }
 
-    if (oldData.datefor !== newData.datefor) {
-      changes.push(`Date For changed from '${oldData.datefor || ''}' to '${newData.datefor || ''}'`);
+    // Date For Changes
+    const oldDateFor = oldData.datefor || [];
+    const newDateFor = newData.datefor || [];
+
+    // Find added
+    const addedDateFor = newDateFor.filter(nd => !oldDateFor.some(od => od.dateforid === nd.dateforid));
+    addedDateFor.forEach(d => changes.push(`Added Date For: '${d.datefor}'`));
+
+    // Find removed
+    const removedDateFor = oldDateFor.filter(od => !newDateFor.some(nd => nd.dateforid === od.dateforid));
+    removedDateFor.forEach(d => changes.push(`Removed Date For: '${d.datefor}'`));
+
+    // Find date for notes changes
+    if (oldData.datefornotes !== newData.datefornotes) {
+      changes.push(`Date For Notes changed`);
     }
+
+    // Petition Hearing Dates Changes
+    const oldPetitionDates = (oldData.petitionhearingdates || []).map(d => formatDate(d));
+    const newPetitionDates = (newData.petitionhearingdates || []).map(d => formatDate(d));
+
+    const addedPetitionDates = newPetitionDates.filter(nd => !oldPetitionDates.includes(nd));
+    addedPetitionDates.forEach(d => changes.push(`Added Petition Hearing Date: '${d}'`));
+
+    const removedPetitionDates = oldPetitionDates.filter(od => !newPetitionDates.includes(nd));
+    removedPetitionDates.forEach(d => changes.push(`Removed Petition Hearing Date: '${d}'`));
 
     if (oldData.courtname !== newData.courtname) {
       changes.push(`Court changed from '${oldData.courtname || ''}' to '${newData.courtname || ''}'`);

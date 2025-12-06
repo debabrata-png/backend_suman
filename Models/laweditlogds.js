@@ -11,7 +11,7 @@ const laweditlogdsschema = new mongoose.Schema({
   changedsummary: { type: String },
   nextdateforhearing: { type: Date },
   nextdateforhearingtime: { type: String },
-  datefor: { type: String },
+  datefor: { type: Array },
   olddatajson: { type: Object },
   newdatajson: { type: Object },
   colid: { type: Number, required: true }
