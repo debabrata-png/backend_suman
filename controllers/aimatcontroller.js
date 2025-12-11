@@ -281,6 +281,7 @@ const tall=require('./../Models/tall');
 const tfields=require('./../Models/tfields');
 
 const tbcolumnsall=require('./../Models/tbcolumnsall');
+const { log } = require("console");
 
 
 
@@ -23737,6 +23738,7 @@ exports.createuserbyfac = async (req, res) => {
 
 exports.createuserbyrole1 = async (req, res) => {
   try {
+    console.log("API Called")
     //const token=req.query.token;
     //console.log(token);
     let jwtuser = "";
@@ -23780,6 +23782,14 @@ exports.createuserbyrole1 = async (req, res) => {
       status1: "Submitted",
       comments: "NA",
     });
+
+     if(!pub1) {
+      console.log("User not created");
+      return res.status(400).json({
+        status: "Failed",
+        message: "User not created successfully",
+      });
+     }
 
     //res.status(200).send('Hello world for all the tours through db new router');
     return res.status(200).json({

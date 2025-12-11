@@ -717,8 +717,6 @@ passport.use(
 
 
 
-
-
 // app.get('/pug1', (req,res) => {
 //     res.status(200).render('v12',{
 //         course: 'Quantum mechanics',
@@ -5114,6 +5112,32 @@ const vssdonationdsctlr = require("./controllers/vssdonationdsctlr.js");
 app.post("/api/v2/createdonationreceiptds", vssdonationdsctlr.createdonationreceiptds);
 app.get("/api/v2/getdonationreceiptsds", vssdonationdsctlr.getdonationreceiptsds);
 app.get("/api/v2/getdonationreceiptds", vssdonationdsctlr.getdonationreceiptds);
+
+
+// API routes
+
+const apidsController = require('./controllers/apidscontroller');
+
+// API Configuration Routes
+app.get('/api/v2/createapids', apidsController.createapids);
+app.get('/api/v2/getapidsbyuser', apidsController.getapidsbyuser);
+app.get('/api/v2/searchapis', apidsController.searchapis);
+app.get('/api/v2/getapiconfig', apidsController.getapiconfig);
+app.get('/api/v2/updateapids', apidsController.updateapids);
+app.get('/api/v2/deleteapids', apidsController.deleteapids);
+app.get('/api/v2/duplicateapi', apidsController.duplicateapi);
+app.get('/api/v2/getallapis', apidsController.getallapis);
+
+const dataapictlr = require('./controllers/dataapids');
+
+// Data API Configuration Routes
+app.get('/api/v2/createdataapi', dataapictlr.createdataapi);
+app.get('/api/v2/getdataapis', dataapictlr.getdataapis);
+app.get('/api/v2/searchdataapis', dataapictlr.searchdataapis);
+app.get('/api/v2/getdataapibyid', dataapictlr.getdataapibyid);
+app.get('/api/v2/updatedataapi', dataapictlr.updatedataapi);
+app.get('/api/v2/deletedataapi', dataapictlr.deletedataapi);
+app.get('/api/v2/duplicatedataapi', dataapictlr.duplicatedataapi);
 
 
 const aidynamiccontroller=require('./controllers/aidynamiccontroller');
