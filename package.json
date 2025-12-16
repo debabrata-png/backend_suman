@@ -34,7 +34,7 @@
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.17.2",
     "pug": "^3.0.2",
-    "read-excel-file": "^5.1.0",
+    "read-excel-file": "^5.8.8",
     "socket.io": "^4.0.1",
     "strip": "^3.0.0",
     "stripe": "^8.149.0",

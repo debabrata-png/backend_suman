@@ -18,6 +18,12 @@ const FacebookStrategy = require('passport-facebook').Strategy;
 const dotenv=require('dotenv');
 dotenv.config({path: './config.env'});
 
+require('./controllers/listener'); // Load the listener module first
+const emitter = require('./controllers/emitter'); // Load the module that contains the emit call
+
+console.log('[APP]: Application running.');
+
+
 const DB=process.env.DATABASE.replace('<PASSWORD>',process.env.DATABASE_PASSWORD);
 const DB1=process.env.DATABASE2;
 
@@ -4986,6 +4992,9 @@ app.get('/api/v2/gethotleadsds', crmh1ctlrds.gethotleadsds);
 app.get('/api/v2/gettodayfollowupsds', crmh1ctlrds.gettodayfollowupsds);
 app.get('/api/v2/getoverduefollowupsds', crmh1ctlrds.getoverduefollowupsds);
 app.get('/api/v2/getleadanalyticsds', crmh1ctlrds.getleadanalyticsds);
+// Add this with your other lead routes
+app.get('/api/v2/deleteleadds/:id', crmh1ctlrds.deleteleadds);
+
 
 // ==================== ACTIVITY ROUTES ====================
 app.post('/api/v2/createactivityds', leadactivityctlrds.createactivityds);
@@ -5112,6 +5121,15 @@ const vssdonationdsctlr = require("./controllers/vssdonationdsctlr.js");
 app.post("/api/v2/createdonationreceiptds", vssdonationdsctlr.createdonationreceiptds);
 app.get("/api/v2/getdonationreceiptsds", vssdonationdsctlr.getdonationreceiptsds);
 app.get("/api/v2/getdonationreceiptds", vssdonationdsctlr.getdonationreceiptds);
+
+
+// ==================== Student Data API =====================
+const userdsctlr =  	require('./controllers/userdsctlr.js');
+
+// Student filter routes
+app.get('/api/v2/getstudentfilteroptions', userdsctlr.getstudentfilteroptions);
+app.get('/api/v2/getfilteredstudentsds', userdsctlr.getfilteredstudentsds);
+
 
 
 // API routes

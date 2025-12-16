@@ -19,6 +19,14 @@ const dataapiSchema = new mongoose.Schema({
     authHeader: { type: String },
     username: { type: String },
     password: { type: String },
+    paramLocation: {
+    type: String,
+    enum: ['query', 'body', 'both'],
+    default: 'body',
+    // 'query' = req.query (GET style)
+    // 'body' = req.body (POST style)
+    // 'both' = send in both places
+  },
     
     // Internal Parameters
     useColid: { type: Boolean, default: true },
