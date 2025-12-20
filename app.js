@@ -5130,6 +5130,36 @@ const userdsctlr =  	require('./controllers/userdsctlr.js');
 app.get('/api/v2/getstudentfilteroptions', userdsctlr.getstudentfilteroptions);
 app.get('/api/v2/getfilteredstudentsds', userdsctlr.getfilteredstudentsds);
 
+// AI WORKFLOW BOT ROUTES
+const aiworkflowcontrollerds = require('./controllers/aiworkflowcontrollerds');
+
+app.post('/api/v2/createworkflowds', aiworkflowcontrollerds.createworkflowds);
+app.get('/api/v2/getworkflowsds', aiworkflowcontrollerds.getworkflowsds);
+app.get('/api/v2/getworkflowds', aiworkflowcontrollerds.getworkflowds);
+app.post('/api/v2/updateworkflowds', aiworkflowcontrollerds.updateworkflowds);
+app.get('/api/v2/deleteworkflowds', aiworkflowcontrollerds.deleteworkflowds);
+
+// AI WORKFLOW BOT ROUTES
+const aiworkflowcontrollerds1 = require('./controllers/aiworkflowcontrollerds1');
+
+app.post('/api/v2/createworkflowds1', aiworkflowcontrollerds1.createworkflowds1);
+app.get('/api/v2/getworkflowsds1', aiworkflowcontrollerds1.getworkflowsds1);
+app.get('/api/v2/getworkflowds1', aiworkflowcontrollerds1.getworkflowds1);
+app.post('/api/v2/updateworkflowds1', aiworkflowcontrollerds1.updateworkflowds1);
+app.get('/api/v2/deleteworkflowds1', aiworkflowcontrollerds1.deleteworkflowds1);
+app.get('/api/v2/deleteworkflowds1', aiworkflowcontrollerds1.deleteworkflowds1);
+
+// Add after other requires
+const marksheetdatactlrds = require('./controllers/marksheetdatactlrds');
+
+// Add routes
+app.post("/api/v2/createmarksheetdatads", marksheetdatactlrds.createmarksheetdatads);
+app.get("/api/v2/listmarksheetdatads", marksheetdatactlrds.listmarksheetdatads);
+app.post("/api/v2/editmarksheetdatads", marksheetdatactlrds.editmarksheetdatads);
+app.get("/api/v2/deletemarksheetdatads", marksheetdatactlrds.deletemarksheetdatads);
+app.get("/api/v2/getmarksheetforpdfds", marksheetdatactlrds.getmarksheetforpdfds);
+app.get("/api/v2/getbulkmarksheetforpdfds", marksheetdatactlrds.getbulkmarksheetforpdfds);
+
 
 
 // API routes
