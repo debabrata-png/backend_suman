@@ -564,3 +564,23 @@ exports.ds1getfilteroptions = async (req, res) => {
     });
   }
 };
+
+
+exports.ds1getcounsellors = async (req, res) => {
+  try {
+    const counsellors = await User.find({
+      colid: parseInt(req.query.colid),
+      role: 'Counsellor',
+      status: 1
+    })
+
+    return res.status(200).json({
+      data: counsellors
+    })
+  }catch (error) {
+    res.status(500).json({
+      message: "Error fetching counsellors",
+      error: error.message
+    });
+  }
+};

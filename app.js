@@ -4480,6 +4480,9 @@ app.get("/api/v2/ds1bulkdeleteuser", ds1userctlr.ds1bulkdeleteuser);
 app.get("/api/v2/ds1getuserstats", ds1userctlr.ds1getuserstats);
 app.get("/api/v2/ds1getfilteroptions", ds1userctlr.ds1getfilteroptions);
 
+// new counsellor get api
+app.get("/api/v2/ds1getcounsellors", ds1userctlr.ds1getcounsellors);
+
 // ==========================================
 // STUDENT PROFILE ROUTES - ds1 prefix
 // ==========================================
@@ -4604,6 +4607,48 @@ const aiseatcontroller=require('./controllers/aiseatcontroller');
 
 app.post('/api/v2/allocate',  aiseatcontroller.allocate);
 app.get('/api/v2/getallocations',  aiseatcontroller.getallocations);
+
+// ==================== CLASS 9-10 MARKSHEET MODULE ROUTES ====================
+
+// Import controllers
+const subjectcomponentconfig9ctlrds = require('./controllers/subjectcomponentconfig9ctlrds');
+const studentmarks9ctlrds = require('./controllers/studentmarks9ctlrds');
+
+// ===== SUBJECT COMPONENT CONFIGURATION ROUTES (Class 9-10) =====
+
+// Create or update subject component config
+app.post('/api/v2/createorupdatesubjectconfig9ds', subjectcomponentconfig9ctlrds.createorupdatesubjectconfig9ds);
+
+// List all subject configs with filters
+app.get('/api/v2/listsubjectconfig9ds', subjectcomponentconfig9ctlrds.listsubjectconfig9ds);
+
+// Get single subject config
+app.get('/api/v2/getsubjectconfig9ds', subjectcomponentconfig9ctlrds.getsubjectconfig9ds);
+
+// Delete subject config
+app.get('/api/v2/deletesubjectconfig9ds', subjectcomponentconfig9ctlrds.deletesubjectconfig9ds);
+
+// Get active components for a specific term (for UI rendering)
+app.get('/api/v2/getactivecomponents9ds', subjectcomponentconfig9ctlrds.getactivecomponents9ds);
+
+
+// ===== STUDENT MARKS ROUTES (Class 9-10) =====
+
+// Get students and subjects for bulk marks entry (with existing marks)
+app.get('/api/v2/getstudentsandsubjectsformarks9ds', studentmarks9ctlrds.getstudentsandsubjectsformarks9ds);
+
+// Bulk save marks by component (AI-friendly bulk operation)
+app.post('/api/v2/bulksavemarksbycomponent9ds', studentmarks9ctlrds.bulksavemarksbycomponent9ds);
+
+// Get student marks (all subjects for a student)
+app.get('/api/v2/getstudentmarks9ds', studentmarks9ctlrds.getstudentmarks9ds);
+
+// Finalize student marks (change status to 'finalized')
+app.post('/api/v2/finalizestudentmarks9ds', studentmarks9ctlrds.finalizestudentmarks9ds);
+// Get distinct semesters and admission years
+app.get('/api/v2/getdistinctsemestersandyears9ds', studentmarks9ctlrds.getdistinctsemestersandyears9ds);
+
+
 
 const vendordsctlr = require("./controllers/vendordsctlr");
 const productdsctlr = require("./controllers/productdsctlr");

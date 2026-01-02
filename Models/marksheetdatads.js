@@ -5,10 +5,10 @@ const marksheetdatadsschema = new mongoose.Schema({
   user: { type: String, required: true },
   colid: { type: Number, required: true },
   regno: { type: String, required: true },
-  academicyear: { type: String, required: true }, // e.g., "2023-24"
+  academicyear: { type: String, required: true },
   semester: { type: String, required: true },
   programcode: { type: String, required: true },
-  classtype: { type: String, enum: ['IX-X', 'XI-XII'], required: true },
+  classtype: { type: String, required: true },
   
   // Scholastic subjects - array of subjects with term-wise marks
   subjects: [{

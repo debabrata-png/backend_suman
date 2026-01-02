@@ -84,8 +84,8 @@ exports.deletecategoryds = async (req, res) => {
 // Add counsellor to category
 exports.addcounsellortocategoryds = async (req, res) => {
     try {
-        const { id } = req.query;  // Changed from req.params
-        const { counsellor_email, counsellor_name } = req.body;
+        //const { id } = req.query;
+        const { counsellor_email, counsellor_name, id } = req.body;
 
         const category = await categoryds.findById(id);
 
