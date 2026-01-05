@@ -3,11 +3,11 @@ const mongoose = require("mongoose");
 
 const users = [
     {
-        name: "IET DAVV Admin",
+        name: "CGI Admin",
         password: "Password@123",
-        role:"Admin",
-        colid: 3085,
-        email: "admin@ietdavv.edu.in",
+        role:"All",
+        colid: 3000,
+        email: "admin@cgi.edu.in",
         phone: "9999999999",
         regno: "PRU0001",
         programcode: "NA",
@@ -18,38 +18,38 @@ const users = [
         status: 1,
         lastlogin: new Date('2026-12-01T10:00:00Z')
     },
-    {
-        name: "IET DAVV Faculty 1",
-        password: "Password@123",
-        role:"Faculty",
-        colid: 3085,
-        email: "faculty1@ietdavv.edu.in",
-        phone: "9999999999",
-        regno: "PRU0002",
-        programcode: "NA",
-        admissionyear: "2025-26",
-        semester: "NA",
-        section: "NA",
-        department: "Mathematics",
-        status: 1,
-        lastlogin: new Date('2026-12-01T10:00:00Z')
-    },
-    {
-        name: "IET DAVV Faculty All",
-        password: "Password@123",
-        role:"All",
-        colid: 3085,
-        email: "facultyall@ietdavv.edu.in",
-        phone: "9999999999",
-        regno: "PRU0003",
-        programcode: "NA",
-        admissionyear: "2025-26",
-        semester: "NA",
-        section: "NA",
-        department: "Mathematics",
-        status: 1,
-        lastlogin: new Date('2026-12-01T10:00:00Z')
-    }
+    // {
+    //     name: "IET DAVV Faculty 1",
+    //     password: "Password@123",
+    //     role:"Faculty",
+    //     colid: 3085,
+    //     email: "faculty1@ietdavv.edu.in",
+    //     phone: "9999999999",
+    //     regno: "PRU0002",
+    //     programcode: "NA",
+    //     admissionyear: "2025-26",
+    //     semester: "NA",
+    //     section: "NA",
+    //     department: "Mathematics",
+    //     status: 1,
+    //     lastlogin: new Date('2026-12-01T10:00:00Z')
+    // },
+    // {
+    //     name: "IET DAVV Faculty All",
+    //     password: "Password@123",
+    //     role:"All",
+    //     colid: 3085,
+    //     email: "facultyall@ietdavv.edu.in",
+    //     phone: "9999999999",
+    //     regno: "PRU0003",
+    //     programcode: "NA",
+    //     admissionyear: "2025-26",
+    //     semester: "NA",
+    //     section: "NA",
+    //     department: "Mathematics",
+    //     status: 1,
+    //     lastlogin: new Date('2026-12-01T10:00:00Z')
+    // }
 ]
 
 const connectDB = async () => {

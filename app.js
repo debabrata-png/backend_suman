@@ -4560,7 +4560,28 @@ app.get("/api/v2/paymentorderds/delete", paymentorderdsctlr.deletepaymentorderds
 app.get("/api/v2/paymentorderds/checkstatus", paymentorderdsctlr.checkpaymentstatusbyds);
 app.post("/api/v2/paymentorderds/webhook", paymentorderdsctlr.webhookhandler);
 
+// Import HDFC Controllers
+const hdfcpaymentorderdsctlr = require("./controllers/hdfcpaymentorderdsctlr.js");
+const hdfcgatewaydsctlr = require("./controllers/hdfcgatewaydsctlr.js");
 
+// ==================== HDFC Payment Order Routes ====================
+app.post("/api/v2/hdfcpaymentorderds/create", hdfcpaymentorderdsctlr.createhdfcpaymentorderdsdatabyds);
+app.get("/api/v2/hdfcpaymentorderds/get", hdfcpaymentorderdsctlr.gethdfcpaymentorderdsdatabyds);
+app.post("/api/v2/hdfcpaymentorderds/getall", hdfcpaymentorderdsctlr.getallhdfcpaymentorderdsdatabyds);
+app.post("/api/v2/hdfcpaymentorderds/update", hdfcpaymentorderdsctlr.updatehdfcpaymentorderdsdatabyds);
+app.get("/api/v2/hdfcpaymentorderds/delete", hdfcpaymentorderdsctlr.deletehdfcpaymentorderdsdatabyds);
+app.get("/api/v2/hdfcpaymentorderds/checkstatus", hdfcpaymentorderdsctlr.checkhdfcpaymentstatusbyds);
+app.post("/api/v2/hdfcpaymentorderds/refund", hdfcpaymentorderdsctlr.initiatehdfcrefundbyds);
+app.post("/api/v2/hdfcpaymentorderds/webhook", hdfcpaymentorderdsctlr.hdfcwebhookhandler);
+app.post("/api/v2/hdfcpaymentorderds/return", hdfcpaymentorderdsctlr.hdfcreturnurlhandler);
+
+// ==================== HDFC Gateway Configuration Routes ====================
+app.post("/api/v2/hdfcgatewayds/create", hdfcgatewaydsctlr.createhdfcgatewaydsdatabyds);
+app.post("/api/v2/hdfcgatewayds/get", hdfcgatewaydsctlr.gethdfcgatewaydsdatabyds);
+app.post("/api/v2/hdfcgatewayds/getall", hdfcgatewaydsctlr.getallhdfcgatewaydsdatabyds);
+app.post("/api/v2/hdfcgatewayds/update", hdfcgatewaydsctlr.updatehdfcgatewaydsdatabyds);
+app.get("/api/v2/hdfcgatewayds/delete", hdfcgatewaydsctlr.deletehdfcgatewaydsdatabyds);
+app.post("/api/v2/hdfcgatewayds/toggle", hdfcgatewaydsctlr.togglehdfcgatewaydsdatabyds);
 
 
 // // ==========================================
