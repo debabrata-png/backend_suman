@@ -25,15 +25,15 @@ const connectDB = async () => {
 const seeduser = async () => {
     await connectDB();
     try {
-        const user = await User.find({colid: colid});
+        // const user = await User.find({colid: colid});
 
-        console.log(user);
-
-        // const user = await User.updateMany(
-        //     {colid: colid},
-        //     {$set: {lastlogin: new Date('2026-12-01T10:00:00Z')}}
-        // )
         // console.log(user);
+
+        const user = await User.updateMany(
+            {email: "faculty1@ogi.com"},
+            {$set: {lastlogin: new Date('2026-12-01T10:00:00Z')}}
+        )
+        console.log(user);
         mongoose.connection.close();
     }catch (err) {
         console.error(err);
