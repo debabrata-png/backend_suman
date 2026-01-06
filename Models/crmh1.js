@@ -247,9 +247,7 @@ const crmh1schema = new mongoose.Schema({
             type: String,
             default: 'Text'  // Text, Dropdown, Date, Number
         },
-        field_options: [{
-            type: String     // For Dropdown type
-        }],
+        field_options: [String],     // For Dropdown type
         field_value: {
             type: mongoose.Schema.Types.Mixed  // Accepts any data type
         }
