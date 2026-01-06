@@ -36,7 +36,7 @@ const crmh1schema = new mongoose.Schema({
     pin: {
         type: String
     },
-    
+
     // Academic Info
     qualification: {
         type: String  // 12th pass / Graduate / Post Graduate
@@ -69,7 +69,7 @@ const crmh1schema = new mongoose.Schema({
     scholarship_interest: {
         type: String  // Yes / No
     },
-    
+
     // Lead Tracking
     source: {
         type: String,  // Platform where form was filled (Facebook / Instagram / Google Ads / Website / WhatsApp)
@@ -96,7 +96,7 @@ const crmh1schema = new mongoose.Schema({
     sourceemp: {
         type: String  // Employee who brought the lead
     },
-    
+
     // Lead Scoring (Auto-calculated)
     lead_score: {
         type: Number,
@@ -106,7 +106,7 @@ const crmh1schema = new mongoose.Schema({
         type: String,
         default: 'Cold'  // Hot (>40) / Warm (20-40) / Cold (<20)
     },
-    
+
     // Assignment (Auto-assigned to counsellor)
     assignedto: {
         type: String,  // Counsellor email (auto-assigned randomly from category)
@@ -120,7 +120,7 @@ const crmh1schema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    
+
     // Status & Pipeline
     pipeline_stage: {
         type: String,
@@ -136,7 +136,7 @@ const crmh1schema = new mongoose.Schema({
     leadtype: {
         type: String
     },
-    
+
     // Follow-up
     last_contact_date: {
         type: Date
@@ -150,7 +150,7 @@ const crmh1schema = new mongoose.Schema({
     fcomments: {
         type: String
     },
-    
+
     // Campus Visit
     campus_visit_date: {
         type: Date
@@ -163,7 +163,7 @@ const crmh1schema = new mongoose.Schema({
         type: String,
         default: 'No'  // Yes / No
     },
-    
+
     // Documents
     documents_uploaded: [{
         document_type: String,
@@ -176,7 +176,7 @@ const crmh1schema = new mongoose.Schema({
     marksheet_12th_url: {
         type: String
     },
-    
+
     // Application
     application_form_sent: {
         type: String,
@@ -192,7 +192,7 @@ const crmh1schema = new mongoose.Schema({
     application_submitted_date: {
         type: Date
     },
-    
+
     // Drip Campaign
     enrolled_drip_campaign: {
         type: String  // Campaign ID
@@ -200,7 +200,7 @@ const crmh1schema = new mongoose.Schema({
     drip_campaign_status: {
         type: String  // Active / Paused / Completed
     },
-    
+
     // Engagement Tracking (for lead scoring)
     brochure_downloaded: {
         type: String,
@@ -210,7 +210,7 @@ const crmh1schema = new mongoose.Schema({
         type: String,
         default: 'No'
     },
-    
+
     // Legacy Fields
     lead: {
         type: String
@@ -235,7 +235,25 @@ const crmh1schema = new mongoose.Schema({
     },
     comments: {
         type: String
-    }
+    },
+
+    // Custom Fields (Dynamic user-defined fields)
+    custom_fields: [{
+        field_name: {
+            type: String,
+            required: true
+        },
+        field_type: {
+            type: String,
+            default: 'Text'  // Text, Dropdown, Date, Number
+        },
+        field_options: [{
+            type: String     // For Dropdown type
+        }],
+        field_value: {
+            type: mongoose.Schema.Types.Mixed  // Accepts any data type
+        }
+    }]
 }, {
     timestamps: true
 });

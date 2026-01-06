@@ -4,64 +4,23 @@ const leadactivityds = require('../Models/leadactivityds.js');
 const dripcampaignds = require('../Models/dripcampaignds.js');
 const user = require('../Models/user.js');
 
-// Enhanced Lead Scoring with Pipeline Stage
+// Helper functions remain the same
 const calculateLeadScore = (lead) => {
   let score = 0;
-  
-  // Basic contact information
   if (lead.phone) score += 5;
   if (lead.email) score += 5;
   if (lead.course_interested) score += 10;
-  
-  // Engagement tracking
   if (lead.brochure_downloaded === 'Yes') score += 10;
   if (lead.fee_details_requested === 'Yes') score += 5;
   if (lead.counselling_session_booked === 'Yes') score += 20;
   if (lead.scholarship_interest === 'Yes') score += 10;
   if (lead.campus_visit_completed === 'Yes') score += 15;
-  
-  // **NEW: Pipeline Stage Scoring (Most Important Factor)**
-  const pipelineScores = {
-    'New Lead': 0,
-    'Contacted': 10,
-    'Qualified': 20,
-    'Counselling Scheduled': 30,
-    'Campus Visited': 40,
-    'Application Sent': 50,
-    'Application Submitted': 60,
-    'Fee Paid': 80,
-    'Admitted': 100,
-    'Lost': -50  // Negative score for lost leads
-  };
-  
-  if (lead.pipeline_stage && pipelineScores[lead.pipeline_stage] !== undefined) {
-    score += pipelineScores[lead.pipeline_stage];
-  }
-  
-  return Math.max(0, score); // Ensure score doesn't go below 0
+  return score;
 };
 
-// Enhanced Temperature Calculation based on Score and Stage
-const getLeadTemperature = (score, pipeline_stage) => {
-  // Override temperature based on critical stages
-  const hotStages = ['Application Submitted', 'Fee Paid', 'Admitted'];
-  const warmStages = ['Counselling Scheduled', 'Campus Visited', 'Application Sent'];
-  const coldStages = ['Lost'];
-  
-  // Stage-based temperature (takes priority)
-  if (hotStages.includes(pipeline_stage)) {
-    return 'Hot';
-  }
-  if (coldStages.includes(pipeline_stage)) {
-    return 'Cold';
-  }
-  if (warmStages.includes(pipeline_stage)) {
-    return 'Warm';
-  }
-  
-  // Score-based temperature (for other stages)
-  if (score >= 60) return 'Hot';
-  if (score >= 30) return 'Warm';
+const getLeadTemperature = (score) => {
+  if (score >= 40) return 'Hot';
+  if (score >= 20) return 'Warm';
   return 'Cold';
 };
 
@@ -78,7 +37,7 @@ const autoAssignCounsellor = async (category, colid) => {
     }
 
     const activeCounsellors = categoryDoc.counsellors.filter(c => c.is_active === 'Yes');
-    
+
     if (activeCounsellors.length === 0) {
       throw new Error('No active counsellors available for this category');
     }
@@ -116,7 +75,7 @@ const enrollInDripCampaign = async (lead) => {
 exports.createleadds = async (req, res) => {
   try {
     req.body.colid = Number(req.body.colid);
-    
+
     if (req.body.category && !req.body.assignedto) {
       req.body.assignedto = await autoAssignCounsellor(req.body.category, req.body.colid);
       req.body.assigned_date = new Date();
@@ -124,9 +83,10 @@ exports.createleadds = async (req, res) => {
 
     const initialScore = calculateLeadScore(req.body);
     req.body.lead_score = initialScore;
-    req.body.lead_temperature = getLeadTemperature(initialScore, req.body.pipeline_stage || 'New Lead');
+    req.body.lead_temperature = getLeadTemperature(initialScore);
 
     const lead = await crmh1.create(req.body);
+
     await enrollInDripCampaign(lead);
     await lead.save();
 
@@ -141,8 +101,7 @@ exports.createleadds = async (req, res) => {
 
     res.status(201).json({ success: true, data: lead });
   } catch (err) {
-    console.error('Error in createleadds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -151,14 +110,18 @@ exports.getallleadsds = async (req, res) => {
   try {
     const { colid, user, pipeline_stage, lead_temperature, source, search } = req.query;
 
+    // Base query: Match leads where:
+    // 1. Lead belongs to this organization (colid matches)
+    // 2. Either lead.user === user (admin/owner) OR lead.assignedto === user (counsellor)
     let query = {
       colid: Number(colid),
       $or: [
-        { user: user },
-        { assignedto: user }
+        { user: user },        // Admin/Owner sees all their organization's leads
+        { assignedto: user }   // Counsellor sees leads assigned to them
       ]
     };
 
+    // Apply filters
     if (pipeline_stage && pipeline_stage !== 'All') {
       query.pipeline_stage = pipeline_stage;
     }
@@ -172,6 +135,7 @@ exports.getallleadsds = async (req, res) => {
     }
 
     if (search) {
+      // For search, we need to combine with $or for user access
       query.$and = [
         {
           $or: [
@@ -188,14 +152,16 @@ exports.getallleadsds = async (req, res) => {
           ]
         }
       ];
+      // Remove the $or key since we're using $and now
       delete query.$or;
     }
 
+    // Sort by updatedAt descending so recently modified leads appear first
     const leads = await crmh1.find(query).sort({ updatedAt: -1 });
+
     res.status(200).json({ success: true, data: leads, count: leads.length });
   } catch (err) {
-    console.error('Error in getallleadsds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -203,14 +169,15 @@ exports.getallleadsds = async (req, res) => {
 exports.getleadbyidds = async (req, res) => {
   try {
     const { id } = req.params;
+
     const lead = await crmh1.findById(id);
-    
+
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
 
     const activities = await leadactivityds.find({ lead_id: id }).sort({ activity_date: -1 });
-    
+
     res.status(200).json({
       success: true,
       data: {
@@ -219,55 +186,73 @@ exports.getleadbyidds = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Error in getleadbyidds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// **UPDATED: Update lead with automatic score/temperature recalculation**
+// Update lead
 exports.updateleadds = async (req, res) => {
   try {
     const { id } = req.query;
-    
+
     if (req.body.colid) {
       req.body.colid = Number(req.body.colid);
     }
 
     const lead = await crmh1.findById(id);
-    
+
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
 
-    // Merge existing lead data with updates
-    const updatedLead = { ...lead.toObject(), ...req.body };
-    
-    // **ALWAYS recalculate score and temperature based on new data**
-    const newScore = calculateLeadScore(updatedLead);
-    const newTemperature = getLeadTemperature(newScore, updatedLead.pipeline_stage);
-    
-    req.body.lead_score = newScore;
-    req.body.lead_temperature = newTemperature;
+    // Auto-update fields based on pipeline stage for better lead scoring
+    if (req.body.pipeline_stage) {
+      switch (req.body.pipeline_stage) {
+        case 'Counselling Scheduled':
+          req.body.counselling_session_booked = 'Yes';
+          break;
+        case 'Campus Visited':
+          req.body.campus_visit_completed = 'Yes';
+          req.body.counselling_session_booked = 'Yes';
+          break;
+        case 'Application Sent':
+          req.body.campus_visit_completed = 'Yes';
+          req.body.counselling_session_booked = 'Yes';
+          req.body.brochure_downloaded = 'Yes';
+          req.body.fee_details_requested = 'Yes';
+          break;
+        case 'Application Submitted':
+        case 'Fee Paid':
+        case 'Admitted':
+          req.body.campus_visit_completed = 'Yes';
+          req.body.counselling_session_booked = 'Yes';
+          req.body.brochure_downloaded = 'Yes';
+          req.body.fee_details_requested = 'Yes';
+          break;
+      }
+    }
 
-    // Update the lead
+    const updatedLead = { ...lead.toObject(), ...req.body };
+    const newScore = calculateLeadScore(updatedLead);
+    req.body.lead_score = newScore;
+    req.body.lead_temperature = getLeadTemperature(newScore);
+
     const updated = await crmh1.findByIdAndUpdate(id, req.body, { new: true });
 
-    // Log pipeline stage change
     if (req.body.pipeline_stage && req.body.pipeline_stage !== lead.pipeline_stage) {
       await leadactivityds.create({
         lead_id: id,
         colid: lead.colid,
         activity_type: 'note',
         performed_by: req.body.updated_by || lead.user,
-        notes: `Pipeline stage changed from ${lead.pipeline_stage} to ${req.body.pipeline_stage}. Score: ${newScore}, Temperature: ${newTemperature}`,
+        notes: `Pipeline stage changed from ${lead.pipeline_stage} to ${req.body.pipeline_stage}`,
         activity_date: new Date()
       });
     }
 
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
-    console.error('Error in updateleadds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -277,73 +262,28 @@ exports.updatepipelinestage = async (req, res) => {
     const { id } = req.query;
     const { pipeline_stage, performed_by, notes } = req.body;
 
-    const lead = await crmh1.findById(id);
-    
+    const lead = await crmh1.findByIdAndUpdate(
+      id,
+      { pipeline_stage },
+      { new: true }
+    );
+
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
-
-    // Recalculate score and temperature
-    const updatedLeadData = { ...lead.toObject(), pipeline_stage };
-    const newScore = calculateLeadScore(updatedLeadData);
-    const newTemperature = getLeadTemperature(newScore, pipeline_stage);
-
-    // Update lead with new stage, score, and temperature
-    const updatedLead = await crmh1.findByIdAndUpdate(
-      id,
-      { 
-        pipeline_stage,
-        lead_score: newScore,
-        lead_temperature: newTemperature
-      },
-      { new: true }
-    );
 
     await leadactivityds.create({
       lead_id: id,
       colid: lead.colid,
       activity_type: 'note',
       performed_by: performed_by || lead.user,
-      notes: notes || `Moved to ${pipeline_stage}. Score: ${newScore}, Temperature: ${newTemperature}`,
+      notes: notes || `Moved to ${pipeline_stage}`,
       activity_date: new Date()
     });
 
-    res.status(200).json({ success: true, data: updatedLead });
+    res.status(200).json({ success: true, data: lead });
   } catch (err) {
-    console.error('Error in updatepipelinestage:', err);
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-// Delete lead (Admin only)
-exports.deleteleadds = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user } = req.query;
-
-    const lead = await crmh1.findById(id);
-    
-    if (!lead) {
-      return res.status(404).json({ success: false, message: 'Lead not found' });
-    }
-
-    // Check if the requesting user is the admin/owner
-    if (lead.user !== user) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Unauthorized. Only the admin who created this lead can delete it.' 
-      });
-    }
-
-    await crmh1.findByIdAndDelete(id);
-    
-    res.status(200).json({ 
-      success: true, 
-      message: 'Lead deleted successfully' 
-    });
-  } catch (err) {
-    console.error('Error in deleteleadds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -354,7 +294,7 @@ exports.reassignleadds = async (req, res) => {
     const { new_counsellor_email, performed_by, reason } = req.body;
 
     const lead = await crmh1.findById(id);
-    
+
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
@@ -376,8 +316,7 @@ exports.reassignleadds = async (req, res) => {
 
     res.status(200).json({ success: true, data: lead });
   } catch (err) {
-    console.error('Error in reassignleadds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -385,11 +324,13 @@ exports.reassignleadds = async (req, res) => {
 exports.bulkassignleadsds = async (req, res) => {
   try {
     const { lead_ids, counsellor_email, performed_by } = req.body;
+
     const results = [];
 
     for (const id of lead_ids) {
       try {
         const lead = await crmh1.findById(id);
+
         if (lead) {
           lead.assignedto = counsellor_email;
           lead.assigned_date = new Date();
@@ -414,8 +355,7 @@ exports.bulkassignleadsds = async (req, res) => {
 
     res.status(200).json({ success: true, data: results });
   } catch (err) {
-    console.error('Error in bulkassignleadsds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -423,7 +363,7 @@ exports.bulkassignleadsds = async (req, res) => {
 exports.gethotleadsds = async (req, res) => {
   try {
     const { colid, user } = req.query;
-    
+
     let query = {
       colid: Number(colid),
       lead_temperature: 'Hot',
@@ -434,10 +374,10 @@ exports.gethotleadsds = async (req, res) => {
     };
 
     const leads = await crmh1.find(query).sort({ lead_score: -1 });
+
     res.status(200).json({ success: true, data: leads, count: leads.length });
   } catch (err) {
-    console.error('Error in gethotleadsds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -445,6 +385,7 @@ exports.gethotleadsds = async (req, res) => {
 exports.gettodayfollowupsds = async (req, res) => {
   try {
     const { colid, user } = req.query;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -463,10 +404,10 @@ exports.gettodayfollowupsds = async (req, res) => {
     };
 
     const leads = await crmh1.find(query).sort({ next_followup_date: 1 });
+
     res.status(200).json({ success: true, data: leads, count: leads.length });
   } catch (err) {
-    console.error('Error in gettodayfollowupsds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -474,6 +415,7 @@ exports.gettodayfollowupsds = async (req, res) => {
 exports.getoverduefollowupsds = async (req, res) => {
   try {
     const { colid, user } = req.query;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -488,10 +430,10 @@ exports.getoverduefollowupsds = async (req, res) => {
     };
 
     const leads = await crmh1.find(query).sort({ next_followup_date: 1 });
+
     res.status(200).json({ success: true, data: leads, count: leads.length });
   } catch (err) {
-    console.error('Error in getoverduefollowupsds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -500,11 +442,14 @@ exports.getleadanalyticsds = async (req, res) => {
   try {
     const { colid, user } = req.query;
 
+    // Match leads where:
+    // 1. Lead belongs to this organization (colid matches)
+    // 2. Either lead.user === user (admin/owner) OR lead.assignedto === user (counsellor)
     let matchQuery = {
       colid: Number(colid),
       $or: [
-        { user: user },
-        { assignedto: user }
+        { user: user },        // Admin/Owner sees all their organization's leads
+        { assignedto: user }   // Counsellor sees leads assigned to them
       ]
     };
 
@@ -531,6 +476,7 @@ exports.getleadanalyticsds = async (req, res) => {
       { $sort: { count: -1 } }
     ]);
 
+    // Location-wise analytics
     const byLocation = await crmh1.aggregate([
       { $match: matchQuery },
       {
@@ -572,8 +518,36 @@ exports.getleadanalyticsds = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Error in getleadanalyticsds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Delete lead (Admin only)
+exports.deleteleadds = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user } = req.query;
+
+    const lead = await crmh1.findById(id);
+
+    if (!lead) {
+      return res.status(404).json({ success: false, message: 'Lead not found' });
+    }
+
+    // Check if the requesting user is the admin (owner)
+    if (lead.user !== user) {
+      return res.status(403).json({ success: false, message: 'Unauthorized. Only the admin can delete leads.' });
+    }
+
+    // Delete associated activities
+    await leadactivityds.deleteMany({ lead_id: id });
+
+    // Delete the lead
+    await crmh1.findByIdAndDelete(id);
+
+    res.status(200).json({ success: true, message: 'Lead and associated activities deleted successfully' });
+  } catch (err) {
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -581,12 +555,13 @@ exports.getleadanalyticsds = async (req, res) => {
 exports.searchusersds = async (req, res) => {
   try {
     const { query, colid } = req.query;
-    
+
     if (!query) {
       return res.status(400).json({ success: false, message: 'Query parameter is required' });
     }
 
     const searchRegex = new RegExp(query, 'i');
+
     const users = await user.find({
       colid: Number(colid),
       $or: [
@@ -597,7 +572,6 @@ exports.searchusersds = async (req, res) => {
 
     res.status(200).json({ success: true, data: users });
   } catch (err) {
-    console.error('Error in searchusersds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
