@@ -45,7 +45,7 @@ const autoAssignCounsellor = async (category, colid) => {
     const randomIndex = Math.floor(Math.random() * activeCounsellors.length);
     return activeCounsellors[randomIndex].counsellor_email;
   } catch (err) {
-    console.error('Error in autoAssignCounsellor:', err);
+    // console.error('Error in autoAssignCounsellor:', err);
     throw err;
   }
 };
@@ -67,7 +67,7 @@ const enrollInDripCampaign = async (lead) => {
       lead.drip_campaign_status = 'Active';
     }
   } catch (err) {
-    console.error('Error enrolling in drip campaign:', err);
+    // console.error('Error enrolling in drip campaign:', err);
   }
 };
 
@@ -101,8 +101,8 @@ exports.createleadds = async (req, res) => {
 
     res.status(201).json({ success: true, data: lead });
   } catch (err) {
-    console.error('Error in createleadds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // console.error('Error in createleadds:', err);
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -253,8 +253,8 @@ exports.updateleadds = async (req, res) => {
 
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
-    console.error('Error in updateleadds:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // console.error('Error in updateleadds:', err);
+    // res.status(500).json({ success: false, message: err.message });
   }
 };
 
