@@ -101,7 +101,8 @@ exports.createleadds = async (req, res) => {
 
     res.status(201).json({ success: true, data: lead });
   } catch (err) {
-    // res.status(500).json({ success: false, message: err.message });
+    console.error('Error in createleadds:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -252,7 +253,8 @@ exports.updateleadds = async (req, res) => {
 
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
-    // res.status(500).json({ success: false, message: err.message });
+    console.error('Error in updateleadds:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
