@@ -70423,11 +70423,11 @@ exports.createnewfaculty = async (req, res) => {
       status: "Success",
     });
   }  catch (err) {
-    //console.log(err);
-    //res.status(400).json({
-     // status: "Failed",
-    //  message: err,
-   // });
+  //   console.log(err);
+  //   res.status(400).json({
+  //    status: "Failed",
+  //    message: err,
+  //  });
   }
 };
 

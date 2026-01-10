@@ -35,7 +35,7 @@ const aiworkflowSchema1 = new mongoose.Schema({
       type: String,
       required: true
     },
-    
+
     // API Configuration
     isInternalApi: {
       type: Boolean,
@@ -51,7 +51,6 @@ const aiworkflowSchema1 = new mongoose.Schema({
     },
     method: {
       type: String,
-      enum: ['GET', 'POST', 'PUT', 'DELETE'],
       default: 'POST'
     },
     paramLocation: {
@@ -76,7 +75,8 @@ const aiworkflowSchema1 = new mongoose.Schema({
       enum: ['auto', 'manual'], // auto = executes immediately, manual = waits for user input
       default: 'manual'
     },
-    
+    isSelectionOnly: { type: Boolean, default: false }, // New field: Data Collection Only
+
     // NEW: Conditional Execution
     isConditional: {
       type: Boolean,
@@ -106,12 +106,12 @@ const aiworkflowSchema1 = new mongoose.Schema({
         type: String,
         default: ''
       },
-      
+
       // For static select type
       options: [{
         type: String
       }],
-      
+
       // For dynamicDropdown type - NEW!
       isDynamicDropdown: {
         type: Boolean,
@@ -133,7 +133,7 @@ const aiworkflowSchema1 = new mongoose.Schema({
         type: String, // Field to use as value (e.g., "programCode")
         default: ''
       },
-      
+
       // Use data from previous step (for hidden auto-fill)
       useFromPreviousStep: {
         type: Boolean,
@@ -145,7 +145,7 @@ const aiworkflowSchema1 = new mongoose.Schema({
       previousStepFieldPath: {
         type: String
       },
-      
+
       // NEW: Multiple dependencies
       multipleSourceSteps: [{
         stepSerialNo: Number,

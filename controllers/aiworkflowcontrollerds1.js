@@ -13,7 +13,7 @@ exports.createworkflowds1 = async (req, res) => {
     });
 
     await workflow.save();
-    
+
     res.status(201).json({
       success: true,
       message: 'Workflow created successfully',
@@ -89,6 +89,7 @@ exports.updateworkflowds1 = async (req, res) => {
       steps: req.body.steps || [],
       updatedAt: Date.now()
     };
+    // console.log('INCOMING UPDATE:', JSON.stringify(updateData, null, 2));
     const workflow = await aiworkflowds.findOneAndUpdate(
       {
         _id: req.query.id,
@@ -96,7 +97,7 @@ exports.updateworkflowds1 = async (req, res) => {
         colid: parseInt(req.query.colid)
       },
       updateData,
-      { 
+      {
         new: true,  // Return updated document
         runValidators: true  // Run schema validations
       }
@@ -148,5 +149,50 @@ exports.deleteworkflowds1 = async (req, res) => {
     //   success: false,
     //   message: error.message
     // });
+  }
+};
+
+// NEW: Search Workflows (Global/Shared)
+exports.searchworkflowsds1 = async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    if (!search) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search parameter is required'
+      });
+    }
+
+    let query = {};
+
+    // Check if search looks like a valid MongoDB ObjectId
+    if (search.match(/^[0-9a-fA-F]{24}$/)) {
+      query._id = search;
+    } else {
+      // Otherwise search by name (case-insensitive)
+      query.name = { $regex: search, $options: 'i' };
+    }
+
+    // Add optional status filter if provided, otherwise default to Active
+    if (req.query.status) {
+      query.status = req.query.status;
+    } else {
+      query.status = 'Active';
+    }
+
+    const workflows = await aiworkflowds.find(query).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: workflows.length,
+      data: workflows
+    });
+  } catch (error) {
+    // console.error('❌ Search error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };

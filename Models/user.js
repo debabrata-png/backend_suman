@@ -140,6 +140,18 @@ const userschema = new mongoose.Schema({
     },
     rollno: {
         type: String
+    },
+    adhaarno: {
+        type: String
+    },
+    wpno: {
+        type: String
+    },
+    bloodgroup: {
+        type: String
+    },
+    cbseno: {
+        type: String
     }
 })
 //

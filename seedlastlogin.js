@@ -29,9 +29,13 @@ const seeduser = async () => {
 
         // console.log(user);
 
+        // const user = await User.updateMany(
+        //     {email: "faculty1@ogi.com"},
+        //     {$set: {lastlogin: new Date('2026-12-01T10:00:00Z')}}
+        // )
         const user = await User.updateMany(
-            {email: "faculty1@ogi.com"},
-            {$set: {lastlogin: new Date('2026-12-01T10:00:00Z')}}
+            {colid: 3090},
+            {$set: {name: "PU Admin & Faculty"}}
         )
         console.log(user);
         mongoose.connection.close();
