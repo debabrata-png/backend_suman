@@ -152,6 +152,12 @@ const userschema = new mongoose.Schema({
     },
     cbseno: {
         type: String
+    },
+    joiningdate:{
+        type: Date
+    },
+    designation:{
+        type: String
     }
 })
 //

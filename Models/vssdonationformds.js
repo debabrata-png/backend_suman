@@ -16,15 +16,15 @@ const donationReceiptSchema = new mongoose.Schema({
   },
   trustAddress: {
     type: String,
-    required: true,
+    // required: true,
   },
   trustPhone: {
     type: String,
-    required: true,
+    // required: true,
   },
   trustEmail: {
     type: String,
-    required: true,
+    // required: true,
   },
   donorName: {
     type: String,
@@ -55,11 +55,11 @@ const donationReceiptSchema = new mongoose.Schema({
     enum: ['cash', 'bank', 'upi'],
     required: true,
   },
-  chequeNo:{type: String,},
-  bankName: {type: String},
-  chequeDate: {type: String},
-  upiId: {type: String},
-  upiDate: {type: String},
+  chequeNo: { type: String, },
+  bankName: { type: String },
+  chequeDate: { type: String },
+  upiId: { type: String },
+  upiDate: { type: String },
   purposeOfDonation: {
     type: String,
     required: true,

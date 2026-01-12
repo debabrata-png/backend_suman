@@ -4240,6 +4240,9 @@ app.get("/api/v2/getalllaweditlogds", laweditlogdsctlr.getalllaweditlogds);
 // // Dashboard Endpoint
 // app.get("/api/v2/getdashboardstats", lawdsctlr.getdashboardstats);
 
+const institutionsctlrds = require("./controllers/institutionsctlrds.js")
+app.get("/api/v2/checkinstitutionsds", institutionsctlrds.checkInstitutionsds);
+
 const generatecodedsctlr = require("./controllers/generatecodedsctlr");
 app.post("/api/v2/generateinstitutecode", generatecodedsctlr.generateinstitutecode);
 
