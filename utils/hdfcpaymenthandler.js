@@ -220,6 +220,8 @@ class HDFCPaymentHandler {
 
       // Make API call
       const response = await fetch(url, requestoptions);
+
+      // console.log(response);
       
       this.logger.info(apitag, paymentrequestid, "Response Status", response.status);
 

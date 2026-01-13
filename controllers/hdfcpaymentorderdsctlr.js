@@ -52,9 +52,9 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       });
     }
 
-    // console.log('📥 Payment Request URLs:');
-    // console.log('   Frontend Callback:', frontendCallbackUrl);
-    // console.log('   Backend Return:', backendReturnUrl);
+    // // console.log('📥 Payment Request URLs:');
+    // // console.log('   Frontend Callback:', frontendCallbackUrl);
+    // // console.log('   Backend Return:', backendReturnUrl);
 
     // Parse and validate amount
     const parsedamount = parseFloat(originalAmount);
@@ -101,7 +101,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
           : finalcharge;
       }
     } catch (err) {
-      // console.log('Platform charges not configured:', err.message);
+      // // console.log('Platform charges not configured:', err.message);
     }
 
     // Handle coupon
@@ -127,7 +127,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
           }
         }
       } catch (err) {
-        // console.log('Coupon validation failed:', err.message);
+        // // console.log('Coupon validation failed:', err.message);
       }
     }
 
@@ -188,7 +188,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
         const coupon = await Coupon.findById(couponid);
         await coupon.applyCoupon(studentName, regno, orderid, discount);
       } catch (err) {
-        // console.log('Coupon apply failed:', err.message);
+        // // console.log('Coupon apply failed:', err.message);
       }
     }
 
@@ -204,7 +204,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       order_note: paymentPurpose || 'Fee Payment'
     };
 
-    // console.log('📤 HDFC Session Params:', sessionparams);
+    // // console.log('📤 HDFC Session Params:', sessionparams);
 
     // Initialize HDFC Payment Handler
     const handler = HDFCPaymentHandler.getinstance(gatewayconfig);
@@ -240,7 +240,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
         throw new Error('No payment URL received from HDFC');
       }
     } catch (hdfcerror) {
-      // console.error('HDFC API Error:', hdfcerror);
+      // // console.error('HDFC API Error:', hdfcerror);
 
       // Update order status to failed
       neworder.status = 'FAILED';
@@ -272,7 +272,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       });
     }
   } catch (err) {
-    // console.error('Create HDFC Order Error:', err);
+    // // console.error('Create HDFC Order Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -372,7 +372,7 @@ exports.checkhdfcpaymentstatusbyds = async (req, res) => {
         }
       });
     } catch (hdfcerror) {
-      // console.error('HDFC Status Check Error:', hdfcerror);
+      // // console.error('HDFC Status Check Error:', hdfcerror);
 
       if (hdfcerror instanceof HDFCAPIException) {
         return res.status(hdfcerror.httpresponsecode || 500).json({
@@ -393,7 +393,7 @@ exports.checkhdfcpaymentstatusbyds = async (req, res) => {
       });
     }
   } catch (err) {
-    // console.error('Check Status Error:', err);
+    // // console.error('Check Status Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -428,7 +428,7 @@ exports.gethdfcpaymentorderdsdatabyds = async (req, res) => {
       data: order
     });
   } catch (err) {
-    // console.error('Get Order Error:', err);
+    // // console.error('Get Order Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch order',
@@ -486,7 +486,7 @@ exports.getallhdfcpaymentorderdsdatabyds = async (req, res) => {
       data: orders
     });
   } catch (err) {
-    // console.error('Get All Orders Error:', err);
+    // // console.error('Get All Orders Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch orders',
@@ -533,7 +533,7 @@ exports.updatehdfcpaymentorderdsdatabyds = async (req, res) => {
       data: order
     });
   } catch (err) {
-    // console.error('Update Order Error:', err);
+    // // console.error('Update Order Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Failed to update order',
@@ -579,7 +579,7 @@ exports.deletehdfcpaymentorderdsdatabyds = async (req, res) => {
       });
     }
   } catch (err) {
-    // console.error('Delete Order Error:', err);
+    // // console.error('Delete Order Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Failed to cancel order',
@@ -662,7 +662,7 @@ exports.initiatehdfcrefundbyds = async (req, res) => {
         }
       });
     } catch (hdfcerror) {
-      // console.error('HDFC Refund Error:', hdfcerror);
+      // // console.error('HDFC Refund Error:', hdfcerror);
 
       if (hdfcerror instanceof HDFCAPIException) {
         return res.status(hdfcerror.httpresponsecode || 500).json({
@@ -683,7 +683,7 @@ exports.initiatehdfcrefundbyds = async (req, res) => {
       });
     }
   } catch (err) {
-    // console.error('Refund Error:', err);
+    // // console.error('Refund Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -740,14 +740,14 @@ exports.hdfcwebhookhandler = async (req, res) => {
       );
 
       if (!isvalid) {
-        // console.error('HDFC Webhook signature validation failed');
+        // // console.error('HDFC Webhook signature validation failed');
         return res.status(400).json({
           success: false,
           message: 'Signature validation failed'
         });
       }
     } catch (signatureerror) {
-      // console.error('Signature validation error:', signatureerror);
+      // // console.error('Signature validation error:', signatureerror);
       return res.status(400).json({
         success: false,
         message: 'Signature validation error'
@@ -776,7 +776,7 @@ exports.hdfcwebhookhandler = async (req, res) => {
       message: 'Webhook processed successfully'
     });
   } catch (err) {
-    // console.error('Webhook Handler Error:', err);
+    // // console.error('Webhook Handler Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Webhook processing failed',
@@ -787,75 +787,75 @@ exports.hdfcwebhookhandler = async (req, res) => {
 // HDFC Return URL handler - Handles POST from HDFC after payment
 exports.hdfcreturnurlhandler = async (req, res) => {
   try {
-    // console.log('📥 HDFC Return URL Handler - POST Data:', req.body);
-    // console.log('📥 Query Params:', req.query);
-    
     const callbackdata = req.body;
-    
-    // Extract order ID from callback data
     const hdfcorderid = callbackdata.order_id || callbackdata.orderid;
     
     if (!hdfcorderid) {
-      // console.error('❌ HDFC Order ID missing in return data');
-      // ❌ DON'T USE HARDCODED URL
-      // return res.redirect(`http://localhost:3001/hdfcpaymentcallbackds?error=order_id_missing`);
-      
-      // ✅ Send error response instead
-      return res.status(400).send('Order ID missing in payment callback');
+      return res.status(400).send('Order ID missing');
     }
 
-    // console.log('🔍 Looking for order with HDFC Order ID:', hdfcorderid);
-
-    // Find order by merchant transaction ID
     const order = await hdfcpaymentorderds.findOne({ 
       merchanttransactionid: hdfcorderid 
     });
 
     if (!order) {
-      // console.error('❌ Order not found for HDFC Order ID:', hdfcorderid);
       return res.status(404).send('Order not found');
     }
 
-    // console.log('✅ Order found:', order.orderid);
+    // ✅ Fetch gateway config
+    const gatewayconfig = await hdfcgatewayds.findOne({
+      colid: order.colid,
+      isactive: true
+    });
 
-    // Update order with callback data
-    const status = callbackdata.status;
-    
-    if (status === 'CHARGED') {
-      order.status = 'SUCCESS';
-      order.state = 'CHARGED';
-      order.hdfctransactionid = callbackdata.txn_id || callbackdata.transaction_id;
-      order.paymentmode = callbackdata.payment_method_type || callbackdata.payment_instrument?.type;
-      order.completedat = new Date();
-      // console.log('✅ Payment SUCCESS');
-    } else if (status === 'FAILED' || status === 'AUTHORIZATION_FAILED' || status === 'AUTHENTICATION_FAILED') {
-      order.status = 'FAILED';
-      order.state = status;
-      order.errordetails = callbackdata;
-      order.failedat = new Date();
-      // console.log('❌ Payment FAILED');
+    if (gatewayconfig) {
+      try {
+        // ✅ Initialize handler with logging enabled
+        const handler = HDFCPaymentHandler.getinstance(gatewayconfig);
+        
+        // ✅ Call your EXISTING checkorderstatus method
+        const statusresponse = await handler.checkorderstatus(hdfcorderid);
+        
+        // console.log('✅ HDFC Status API Response:', statusresponse);
+        
+        // Update order with verified status
+        if (statusresponse && statusresponse.status) {
+          order.status = statusresponse.status === 'CHARGED' ? 'SUCCESS' : 
+                        statusresponse.status === 'FAILED' ? 'FAILED' : 
+                        statusresponse.status;
+          order.state = statusresponse.status;
+          order.hdfctransactionid = statusresponse.txn_id || statusresponse.cf_payment_id;
+          order.paymentmode = statusresponse.payment_method || statusresponse.payment_group;
+          order.paymentdetails = statusresponse;
+          
+          if (statusresponse.status === 'CHARGED') {
+            order.completedat = new Date();
+          } else if (statusresponse.status === 'FAILED') {
+            order.failedat = new Date();
+          }
+        }
+      } catch (apierror) {
+        // console.error('❌ HDFC Status API Error:', apierror);
+        // Fallback to callback data
+        order.status = callbackdata.status === 'CHARGED' ? 'SUCCESS' : callbackdata.status;
+        order.paymentdetails = callbackdata;
+      }
     } else {
-      order.status = status;
-      order.state = status;
-      // console.log('⚠️ Payment status:', status);
+      // No gateway config - use callback data
+      order.status = callbackdata.status === 'CHARGED' ? 'SUCCESS' : callbackdata.status;
+      order.paymentdetails = callbackdata;
     }
 
-    order.paymentdetails = callbackdata;
     await order.save();
 
-    // console.log('✅ Order updated, redirecting user to frontend');
-
-    // ✅ USE THE STORED FRONTEND CALLBACK URL (from order document)
     const frontendurl = order.frontendcallbackurl 
       ? `${order.frontendcallbackurl}?merchantOrderId=${order.orderid}&colid=${order.colid}&status=${order.status}`
       : `/error?message=Frontend callback URL not configured`;
     
-    // console.log('🔗 Redirecting to:', frontendurl);
-    
     return res.redirect(frontendurl);
 
   } catch (err) {
-    // console.error('❌ Return URL Handler Error:', err);
+    // // console.error('Return URL Handler Error:', err);
     return res.status(500).send('Payment processing failed');
   }
 };
