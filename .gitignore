@@ -1,2 +1,7 @@
 /node_modules
 .env
+/emails_found.txt
+/headers.txt
+/SOPR_Student_Data.csv
+/SOPR_Workload.xlsx
+/Student.xlsx

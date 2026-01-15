@@ -5035,6 +5035,7 @@ const landingpagectlrds = require('./controllers/landingpagectlrds.js');
 const webhookctlrds = require('./controllers/webhookctlrds.js');
 const apikeyctlrds1 = require('./controllers/apikeyctlrds1.js');
 const settingsctlrds = require('./controllers/settingsctlrds.js');
+const leadadminds = require('./controllers/leadadminds.js');
 
 // ==================== USER ROUTES ====================
 app.get('/api/v2/searchusersds', crmh1ctlrds.searchusersds);
@@ -5063,6 +5064,9 @@ app.get('/api/v2/getoverduefollowupsds', crmh1ctlrds.getoverduefollowupsds);
 app.get('/api/v2/getleadanalyticsds', crmh1ctlrds.getleadanalyticsds);
 // Add this with your other lead routes
 app.get('/api/v2/deleteleadds/:id', crmh1ctlrds.deleteleadds);
+
+// Admin Lead Routes
+app.get('/api/v2/getallleadsadmin', leadadminds.getallleadsdsadmin);
 
 
 // ==================== ACTIVITY ROUTES ====================
