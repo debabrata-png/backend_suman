@@ -2,38 +2,6 @@ const User = require("./Models/user");
 const mongoose = require("mongoose");
 
 const users = [
-    //     {
-    //     name: "Vyagrashila Seva Samithi Admin",
-    //     password: "Password@123",
-    //     role:"Admin",
-    //     colid: 4055,
-    //     email: "admin@vss.com",
-    //     phone: "9999999999",
-    //     regno: "VSS0001",
-    //     programcode: "NA",
-    //     admissionyear: "2025-26",
-    //     semester: "NA",
-    //     section: "NA",
-    //     department: "VC",
-    //     status: 1,
-    //     lastlogin: new Date('2026-12-01T10:00:00Z')
-    // },
-    // {
-    //     name: "Vyagrashila Seva Samithi All",
-    //     password: "Password@123",
-    //     role:"All",
-    //     colid: 4055,
-    //     email: "adminall@vss.com",
-    //     phone: "9999999999",
-    //     regno: "VSS0003",
-    //     programcode: "NA",
-    //     admissionyear: "2025-26",
-    //     semester: "NA",
-    //     section: "NA",
-    //     department: "Mathematics",
-    //     status: 1,
-    //     lastlogin: new Date('2026-12-01T10:00:00Z')
-    // }
     {
         name: "Ms. Arzoo Qureshi",
         password: "Password@123",
@@ -102,8 +70,8 @@ const connectDB = async () => {
 const seeduser = async () => {
     await connectDB();
     try {
-        const user = await User.insertMany(users);
-        console.log("Users seeded:", user);
+        const user = await User.findOne({email: "prachisharma6257258@gmail.com"});
+        console.log("Users found:", user);
         mongoose.connection.close();
     }catch (err) {
         console.error(err);

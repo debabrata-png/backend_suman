@@ -77,24 +77,6 @@ const importData = async () => {
         const usersToInsert = [];
 
         for (const row of rawData) {
-            // --- Transform Admission Year ---
-            let admissionYear = null;
-            const admissionRaw = row.admissionyear;
-
-            // Try to parse as date first to extract year
-            const admissionDate = parseDate(admissionRaw);
-            if (admissionDate && !isNaN(admissionDate.getTime())) {
-                admissionYear = admissionDate.getFullYear().toString();
-            } else if (admissionRaw) {
-                // If parsing failed (maybe it's just a year string "2023"), use raw string
-                const str = String(admissionRaw).trim();
-                if (str.match(/^\d{4}$/)) {
-                    admissionYear = str;
-                } else {
-                    // Fallback: take first 4 chars
-                    admissionYear = str.substring(0, 4);
-                }
-            }
 
 
             // --- Transform DOB ---
@@ -121,19 +103,14 @@ const importData = async () => {
                 role: row.role || 'Student',
                 regno: row.regno,
                 programcode: row.programcode,
-                admissionyear: admissionYear,
+                admissionyear: row.admissionyear,
                 semester: String(row.semester),
                 section: row.section,
                 gender: row.gender,
                 department: row.department,
-
-                // Mapping colid and user
-                colid: row.colid ? Number(row.colid) : 3052,
+                colid: row.colid ? Number(row.colid) : 4000,
                 user: row.user || 'adminsopr@pu.edu.in',
-
                 status: 1,
-
-                // Mapped fields
                 category: row.category,
                 address: row.address,
                 fathername: row.fathername,
@@ -143,14 +120,11 @@ const importData = async () => {
                 degree: row.degree,
                 obtain: row.obtain,
                 isdisabled: row.isdisabled,
-
                 adhaarno: String(row.adhaar || row.adhaarno || ''),
                 abcid: String(row.abcid || ''),
                 wpno: String(row.wpno || ''),
                 joiningdate: joiningDate,
-
-                // Defaults
-                lastlogin: new Date(),
+                lastlogin: new Date('2027-06-01T10:00:00Z'),
             };
 
             usersToInsert.push(userObj);
