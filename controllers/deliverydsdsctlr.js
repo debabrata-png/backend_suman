@@ -90,86 +90,110 @@ exports.getdeliverydsdsbyid = async (req, res) => {
     }
 };
 
-// Workflow: Mark Delivered (Full PO)
+// Workflow: Mark Delivered (Full PO with Partial Returns)
 exports.markDelivered = async (req, res) => {
     try {
-        const { poid_str, po_db_id, receivedby, note, user, colid, name } = req.body;
+        const { poid_str, po_db_id, receivedby, note, user, colid, name, deliveryDetails } = req.body;
+        // deliveryDetails: Array of { itemid (PO Item ID), itemcode, receivedQty, returnedQty, price, discount, itemtype, itemname }
 
-        // 1. Fetch all items in this PO
-        const storepoitemsds = require('../Models/storepoitemsds');
-        const poItems = await storepoitemsds.find({ poid: poid_str, colid: colid });
-
-        if (!poItems || poItems.length === 0) {
-            return res.status(404).json({ status: 'fail', message: 'No items found for this PO' });
+        if (!deliveryDetails || !Array.isArray(deliveryDetails) || deliveryDetails.length === 0) {
+            return res.status(400).json({ status: 'fail', message: 'No delivery details provided' });
         }
 
-        // 2. Process each item: Update Inventory & Stock Register
-        // 2. Process each item: Update Inventory & Stock Register
-        const itemmasterds = require('../Models/itemmasterds');
-        const storeMaster = require('../Models/storemasterds'); // Moved outside loop for efficiency
+        const storeitemds = require('../Models/storeitemds');
+        const stockregisterds = require('../Models/stockregisterds');
+        const storepoorderds = require('../Models/storepoorderds');
+        const storeMaster = require('../Models/storemasterds');
 
-        for (const item of poItems) {
-            // Need Item Code from Master
-            const itemMaster = await itemmasterds.findById(item.itemid);
-            if (!itemMaster) {
-                console.log(`Item Master not found for ID: ${item.itemid}`);
-                continue;
-            }
+        let totalAcceptedValue = 0;
+        let totalReturnedValue = 0;
+        let totalNetValue = 0; // Should match original PO total if all items accounted for
 
-            const itemCode = itemMaster.itemcode;
+        // Fetch Default Store for this college (if needed)
+        const anyStore = await storeMaster.findOne({ colid: colid });
+        const defaultStoreId = anyStore?._id;
 
-            // Update/Create Store Inventory
-            // Find store item by CODE in this college
-            // Note: If multiple stores have this item, which one to update?
-            // Without storeid in PO, we assume the one that exists or default?
+        for (const detail of deliveryDetails) {
+            const qtyReceived = Number(detail.receivedQty) || 0;
+            const qtyReturned = Number(detail.returnedQty) || 0;
+            const price = Number(detail.price) || 0;
+            // Assuming simplified calc (price * qty), ignoring discount for return value specific logic unless requested
+            // If price is unit price:
 
-            const existingStoreItem = await storeitemds.findOne({ itemcode: itemCode, colid: colid });
-            let targetStoreId;
+            const itemTotal = (qtyReceived + qtyReturned) * price;
+            const acceptedVal = qtyReceived * price;
+            const returnedVal = qtyReturned * price;
 
-            if (existingStoreItem) {
-                targetStoreId = existingStoreItem.storeid;
-                await storeitemds.findByIdAndUpdate(existingStoreItem._id, { $inc: { quantity: item.quantity } });
-            } else {
-                // Fetch any store to default to
-                const anyStore = await storeMaster.findOne({ colid: colid });
-                targetStoreId = anyStore?._id;
+            totalNetValue += itemTotal;
+            totalAcceptedValue += acceptedVal;
+            totalReturnedValue += returnedVal;
 
-                if (targetStoreId) {
+            if (qtyReceived > 0) {
+                // Fetch Item Master to ensure correct Code/Name
+                const itemMaster = require('../Models/itemmasterds');
+                const masterItem = await itemMaster.findById(detail.itemid);
+
+                const finalItemCode = masterItem ? masterItem.itemcode : detail.itemcode;
+                const finalItemName = masterItem ? masterItem.itemname : detail.itemname;
+                const finalItemType = masterItem ? masterItem.itemtype : (detail.itemtype || 'N/A');
+
+                // Update/Create Store Inventory
+                const existingStoreItem = await storeitemds.findOne({ itemcode: finalItemCode, colid: colid });
+                let targetStoreId;
+
+                if (existingStoreItem) {
+                    targetStoreId = existingStoreItem.storeid;
+                    await storeitemds.findByIdAndUpdate(existingStoreItem._id, { $inc: { quantity: qtyReceived } });
+                } else if (defaultStoreId) {
+                    targetStoreId = defaultStoreId;
                     await storeitemds.create({
                         storeid: targetStoreId,
                         storename: anyStore.storename,
-                        itemcode: itemCode,
-                        itemname: item.itemname,
-                        quantity: item.quantity,
-                        type: item.itemtype || 'N/A',
+                        itemcode: finalItemCode,
+                        itemname: finalItemName,
+                        quantity: qtyReceived,
+                        type: finalItemType,
                         user: user,
                         colid: colid,
                         status: 'Available',
                         name: 'Auto Created'
                     });
                 }
-            }
 
-            if (targetStoreId) {
-                await stockregisterds.create({
-                    storeid: targetStoreId,
-                    store: targetStoreId,
-                    item: item.itemname,
-                    itemid: itemCode, // Using Code as requested by user ("itemcode is the main thing")
-                    itemtype: item.itemtype || 'N/A',
-                    quantityadded: item.quantity,
-                    quantityreturn: 0,
-                    netquantity: item.quantity,
-                    user: user,
-                    colid: colid,
-                    stockdate: new Date(),
-                    name: name
-                });
+
+                // Stock Register
+                if (targetStoreId) {
+                    await stockregisterds.create({
+                        storeid: targetStoreId,
+                        store: targetStoreId,
+                        item: detail.itemname,
+                        itemid: detail.itemcode,
+                        itemtype: detail.itemtype || 'N/A',
+                        quantityadded: qtyReceived,
+                        quantityreturn: qtyReturned, // Log returned amt contextually if needed, but registry is mainly strictly stock movement. 
+                        // However, user wants "quantityreturn" field usage maybe? 
+                        // Usually "quantityreturn" in stock register means "returned TO stock". 
+                        // Here we are just NOT adding it. 
+                        // Let's stick to adding what we received. 
+                        // But we can log a record for the return if the user meant "Log that we returned it to vendor"
+                        // current model "quantityreturn" might be for that. Let's assume 0 for "added" line.
+                        netquantity: qtyReceived,
+                        user: user,
+                        colid: colid,
+                        stockdate: new Date(),
+                        name: name
+                    });
+                }
             }
         }
 
-        // 3. Update PO Status
-        await storepoorderds.findByIdAndUpdate(po_db_id, { postatus: 'Delivered' });
+        // 3. Update PO Status & Financials
+        await storepoorderds.findByIdAndUpdate(po_db_id, {
+            postatus: 'Delivered',
+            netprice: totalNetValue,
+            price: totalAcceptedValue, // Using 'price' field for Accepted Value as requested ("show net price, price and returned price") - Assuming 'price' is the final billable.
+            returnamount: totalReturnedValue
+        });
 
         // 4. Create Delivery Record
         const newDelivery = await deliverydsds.create({
@@ -179,12 +203,13 @@ exports.markDelivered = async (req, res) => {
             note: note,
             colid: colid,
             user: user,
-            name: name
+            name: name,
+            // Could store JSON of detailed breakdown if schema supports it, strictly not demanded but good practice.
         });
 
         res.status(200).json({
             status: 'success',
-            message: 'Delivery Processed Successfully',
+            message: 'Delivery Processed Successfully with Returns',
             data: newDelivery
         });
 

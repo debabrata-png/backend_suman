@@ -14,7 +14,10 @@ const storepoorderdsschema = new mongoose.Schema({
     returnamount: { type: Number },
     netprice: { type: Number },
     updatedate: { type: Date },
-    postatus: { type: String }
+    postatus: { type: String },
+    level: { type: Number, default: 0 },
+    level1_status: { type: String, default: 'Pending' },
+    level2_status: { type: String, default: 'Pending' }
 });
 
 const storepoorderds = mongoose.model('storepoorderds', storepoorderdsschema);

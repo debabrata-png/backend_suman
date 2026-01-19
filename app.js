@@ -454,6 +454,7 @@ const storeitemdsctlr = require('./controllers/storeitemdsctlr');
 const itemmasterdsctlr = require('./controllers/itemmasterdsctlr');
 const itemtypedsctlr = require('./controllers/itemtypedsctlr');
 const requisationdsctlr = require('./controllers/requisationdsctlr');
+const requisationds1ctlr = require('./controllers/requisationds1ctlr');
 const storerequisationdsctlr = require('./controllers/storerequisationdsctlr');
 const storepoorderdsctlr = require('./controllers/storepoorderdsctlr');
 const storepoitemsdsctlr = require('./controllers/storepoitemsdsctlr');
@@ -506,6 +507,13 @@ app.get('/api/v2/deleterequisationds', requisationdsctlr.deleterequisationds);
 app.get('/api/v2/getallrequisationds', requisationdsctlr.getallrequisationds);
 app.get('/api/v2/getrequisationdsbyid', requisationdsctlr.getrequisationdsbyid);
 
+// 6a. Requisition Staging (Level 1 Approval)
+app.post('/api/v2/addrequisationds1', requisationds1ctlr.addrequisationds1);
+app.get('/api/v2/getallrequisationds1', requisationds1ctlr.getallrequisationds1);
+app.post('/api/v2/approverequisationds1', requisationds1ctlr.approverequisationds1);
+app.post('/api/v2/rejectrequisationds1', requisationds1ctlr.rejectrequisationds1);
+app.get('/api/v2/deleterequisationds1', requisationds1ctlr.deleterequisationds1);
+
 // 7. Store Requisition (Purchase Request)
 app.post('/api/v2/addstorerequisationds', storerequisationdsctlr.addstorerequisationds);
 app.post('/api/v2/updatestorerequisationds', storerequisationdsctlr.updatestorerequisationds);
@@ -520,6 +528,8 @@ app.get('/api/v2/deletestorepoorderds', storepoorderdsctlr.deletestorepoorderds)
 app.get('/api/v2/getallstorepoorderds', storepoorderdsctlr.getallstorepoorderds);
 app.get('/api/v2/getstorepoorderdsbyid', storepoorderdsctlr.getstorepoorderdsbyid);
 app.post('/api/v2/approvestorepo', storepoorderdsctlr.approveStorePO);
+app.post('/api/v2/verifypolevel1', storepoorderdsctlr.verifyLevel1);
+app.post('/api/v2/verifypolevel2', storepoorderdsctlr.verifyLevel2);
 
 // 9. PO Items
 app.post('/api/v2/addstorepoitemsds', storepoitemsdsctlr.addstorepoitemsds);

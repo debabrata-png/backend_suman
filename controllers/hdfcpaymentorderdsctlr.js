@@ -195,7 +195,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
     // Prepare HDFC payment request
     const sessionparams = {
       order_id: merchanttransactionid,
-      amount: finalamount * 100, // Amount in paise
+      amount: finalamount, // Amount in paise
       currency: 'INR',
       customer_id: regno,
       customer_email: studentEmail,

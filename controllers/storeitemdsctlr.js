@@ -137,13 +137,31 @@ exports.allotItem = async (req, res) => {
         storeItem.quantity -= Number(quantity);
         await storeItem.save();
 
-        // 2. Update Requisition Status
+        // 2. Update Requisition Status & Quantity (Partial Allotment Logic)
         const requisationds = require("../Models/requisationds");
-        await requisationds.findByIdAndUpdate(requestId, {
-            reqstatus: "Allotted",
-            allotted: Number(quantity),
-            allotdate: new Date()
-        });
+        const reqDoc = await requisationds.findById(requestId);
+
+        if (!reqDoc) return res.status(404).json({ message: "Requisition not found" });
+
+        const allotmentQty = Number(quantity);
+        const remainingQty = reqDoc.quantity - allotmentQty;
+
+        if (remainingQty > 0) {
+            // Partial Allotment: Decrease requested quantity, keep status Pending
+            reqDoc.quantity = remainingQty;
+            reqDoc.reqstatus = 'Pending';
+            reqDoc.allotted = (reqDoc.allotted || 0) + allotmentQty;
+            await reqDoc.save();
+        } else {
+            // Full Allotment
+            reqDoc.reqstatus = "Allotted";
+            reqDoc.allotted = (reqDoc.allotted || 0) + allotmentQty; // Ensure cumulative if multiple partials happen (though logic suggests otherwise if quantity reduced)
+            // If quantity is reduced, then original total is lost. 
+            // If we reduce quantity, then 'allotted' tracking becomes tricky relative to 'original'.
+            // But if we just want to track 'total given against this ID', this works.
+            reqDoc.allotdate = new Date();
+            await reqDoc.save();
+        }
 
         // 3. Add to Stock Register (Outgoing)
         await stockregisterds.create({
@@ -152,13 +170,16 @@ exports.allotItem = async (req, res) => {
             colid: colid,
             storeid: storeId,
             itemid: storeItem.itemcode, // Using code as ID
-            quantityreturn: Number(quantity), // Outgoing
+            quantityreturn: allotmentQty, // Outgoing
             netquantity: storeItem.quantity,
             tdate: new Date(),
-            status: "Allotted"
+            status: remainingQty > 0 ? "Partial Allotment" : "Allotted"
         });
 
-        res.status(200).json({ success: true, message: "Item Allotted Successfully" });
+        res.status(200).json({
+            success: true,
+            message: remainingQty > 0 ? `Partial Allotted. Remaining Request: ${remainingQty}` : "Item Allotted Successfully"
+        });
 
     } catch (error) {
         res.status(500).json({ success: false, message: "Error allotting item", error: error.message });

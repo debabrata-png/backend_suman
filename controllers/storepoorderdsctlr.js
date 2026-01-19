@@ -90,3 +90,31 @@ exports.approveStorePO = async (req, res) => {
         res.status(500).json({ success: false, message: "Error approving PO", error: error.message });
     }
 };
+
+exports.verifyLevel1 = async (req, res) => {
+    try {
+        const { id } = req.body;
+        const updatedPO = await storepoorderds.findByIdAndUpdate(id, {
+            level: 1,
+            level1_status: 'Verified',
+            postatus: 'Pending Level 2'
+        }, { new: true });
+        res.status(200).json({ success: true, message: "Level 1 Verified", data: updatedPO });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error Verifying Level 1", error: error.message });
+    }
+};
+
+exports.verifyLevel2 = async (req, res) => {
+    try {
+        const { id } = req.body;
+        const updatedPO = await storepoorderds.findByIdAndUpdate(id, {
+            level: 2,
+            level2_status: 'Verified',
+            postatus: 'Approved' // Ready for delivery
+        }, { new: true });
+        res.status(200).json({ success: true, message: "Level 2 Verified", data: updatedPO });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error Verifying Level 2", error: error.message });
+    }
+};
