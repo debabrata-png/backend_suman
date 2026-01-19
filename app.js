@@ -441,10 +441,121 @@ const redituser = require('./router/edituserrouter.js');
 const rdeleteuser = require('./router/deleteuserrouter.js');
 
 const rselectprograminst = require('./router/selectprograminstrouter.js');
+// const rleadadmin = require('./routes/leadadminrouterds.js');
 
 
 const User = require('./Models/user');
 const Admusers = require('./Models/admusers');
+
+// Purchasing Module Controllers
+const storemasterdsctlr = require('./controllers/storemasterdsctlr');
+const storeuserdsctlr = require('./controllers/storeuserdsctlr');
+const storeitemdsctlr = require('./controllers/storeitemdsctlr');
+const itemmasterdsctlr = require('./controllers/itemmasterdsctlr');
+const itemtypedsctlr = require('./controllers/itemtypedsctlr');
+const requisationdsctlr = require('./controllers/requisationdsctlr');
+const storerequisationdsctlr = require('./controllers/storerequisationdsctlr');
+const storepoorderdsctlr = require('./controllers/storepoorderdsctlr');
+const storepoitemsdsctlr = require('./controllers/storepoitemsdsctlr');
+const vendoritemdsctlr = require('./controllers/vendoritemdsctlr');
+const deliverydsdsctlr = require('./controllers/deliverydsdsctlr');
+const stockregisterdsctlr = require('./controllers/stockregisterdsctlr');
+const vendordsctlr1 = require('./controllers/vendordsctlr1'); // Renamed to avoid conflict
+
+// Purchasing Module Routes
+// 1. Store Master
+app.post('/api/v2/addstoremasterds', storemasterdsctlr.addstoremasterds);
+app.post('/api/v2/updatestoremasterds', storemasterdsctlr.updatestoremasterds);
+app.get('/api/v2/deletestoremasterds', storemasterdsctlr.deletestoremasterds);
+app.get('/api/v2/getallstoremasterds', storemasterdsctlr.getallstoremasterds);
+app.get('/api/v2/getstoremasterdsbyid', storemasterdsctlr.getstoremasterdsbyid);
+
+// 2. Store User
+app.post('/api/v2/addstoreuserds', storeuserdsctlr.addstoreuserds);
+app.post('/api/v2/updatestoreuserds', storeuserdsctlr.updatestoreuserds);
+app.get('/api/v2/deletestoreuserds', storeuserdsctlr.deletestoreuserds);
+app.get('/api/v2/getallstoreuserds', storeuserdsctlr.getallstoreuserds);
+app.get('/api/v2/getstoreuserdsbyid', storeuserdsctlr.getstoreuserdsbyid);
+
+// 3. Store Item
+app.post('/api/v2/addstoreitemds', storeitemdsctlr.addstoreitemds);
+app.post('/api/v2/updatestoreitemds', storeitemdsctlr.updatestoreitemds);
+app.get('/api/v2/deletestoreitemds', storeitemdsctlr.deletestoreitemds);
+app.get('/api/v2/getallstoreitemds', storeitemdsctlr.getallstoreitemds);
+app.get('/api/v2/getstoreitemdsbyid', storeitemdsctlr.getstoreitemdsbyid);
+app.post('/api/v2/allotitem', storeitemdsctlr.allotItem);
+
+// 4. Item Master
+app.post('/api/v2/additemmasterds', itemmasterdsctlr.additemmasterds);
+app.post('/api/v2/updateitemmasterds', itemmasterdsctlr.updateitemmasterds);
+app.get('/api/v2/deleteitemmasterds', itemmasterdsctlr.deleteitemmasterds);
+app.get('/api/v2/getallitemmasterds', itemmasterdsctlr.getallitemmasterds);
+app.get('/api/v2/getitemmasterdsbyid', itemmasterdsctlr.getitemmasterdsbyid);
+
+// 5. Item Type
+app.post('/api/v2/additemtypeds', itemtypedsctlr.additemtypeds);
+app.post('/api/v2/updateitemtypeds', itemtypedsctlr.updateitemtypeds);
+app.get('/api/v2/deleteitemtypeds', itemtypedsctlr.deleteitemtypeds);
+app.get('/api/v2/getallitemtypeds', itemtypedsctlr.getallitemtypeds);
+app.get('/api/v2/getitemtypedsbyid', itemtypedsctlr.getitemtypedsbyid);
+
+// 6. Requisition (Faculty)
+app.post('/api/v2/addrequisationds', requisationdsctlr.addrequisationds);
+app.post('/api/v2/updaterequisationds', requisationdsctlr.updaterequisationds);
+app.get('/api/v2/deleterequisationds', requisationdsctlr.deleterequisationds);
+app.get('/api/v2/getallrequisationds', requisationdsctlr.getallrequisationds);
+app.get('/api/v2/getrequisationdsbyid', requisationdsctlr.getrequisationdsbyid);
+
+// 7. Store Requisition (Purchase Request)
+app.post('/api/v2/addstorerequisationds', storerequisationdsctlr.addstorerequisationds);
+app.post('/api/v2/updatestorerequisationds', storerequisationdsctlr.updatestorerequisationds);
+app.get('/api/v2/deletestorerequisationds', storerequisationdsctlr.deletestorerequisationds);
+app.get('/api/v2/getallstorerequisationds', storerequisationdsctlr.getallstorerequisationds);
+app.get('/api/v2/getstorerequisationdsbyid', storerequisationdsctlr.getstorerequisationdsbyid);
+
+// 8. Purchase Order
+app.post('/api/v2/addstorepoorderds', storepoorderdsctlr.addstorepoorderds);
+app.post('/api/v2/updatestorepoorderds', storepoorderdsctlr.updatestorepoorderds);
+app.get('/api/v2/deletestorepoorderds', storepoorderdsctlr.deletestorepoorderds);
+app.get('/api/v2/getallstorepoorderds', storepoorderdsctlr.getallstorepoorderds);
+app.get('/api/v2/getstorepoorderdsbyid', storepoorderdsctlr.getstorepoorderdsbyid);
+app.post('/api/v2/approvestorepo', storepoorderdsctlr.approveStorePO);
+
+// 9. PO Items
+app.post('/api/v2/addstorepoitemsds', storepoitemsdsctlr.addstorepoitemsds);
+app.post('/api/v2/updatestorepoitemsds', storepoitemsdsctlr.updatestorepoitemsds);
+app.get('/api/v2/deletestorepoitemsds', storepoitemsdsctlr.deletestorepoitemsds);
+app.get('/api/v2/getallstorepoitemsds', storepoitemsdsctlr.getallstorepoitemsds);
+app.get('/api/v2/getstorepoitemsdsbyid', storepoitemsdsctlr.getstorepoitemsdsbyid);
+
+// 10. Vendor Items
+app.post('/api/v2/addvendoritemds', vendoritemdsctlr.addvendoritemds);
+app.post('/api/v2/updatevendoritemds', vendoritemdsctlr.updatevendoritemds);
+app.get('/api/v2/deletevendoritemds', vendoritemdsctlr.deletevendoritemds);
+app.get('/api/v2/getallvendoritemds', vendoritemdsctlr.getallvendoritemds);
+app.get('/api/v2/getvendoritemdsbyid', vendoritemdsctlr.getvendoritemdsbyid);
+
+// 11. Delivery
+app.post('/api/v2/adddeliverydsds', deliverydsdsctlr.adddeliverydsds);
+app.post('/api/v2/updatedeliverydsds', deliverydsdsctlr.updatedeliverydsds);
+app.get('/api/v2/deletedeliverydsds', deliverydsdsctlr.deletedeliverydsds);
+app.get('/api/v2/getalldeliverydsds', deliverydsdsctlr.getalldeliverydsds);
+app.get('/api/v2/getdeliverydsdsbyid', deliverydsdsctlr.getdeliverydsdsbyid);
+app.post('/api/v2/markdelivered', deliverydsdsctlr.markDelivered);
+
+// 12. Stock Register
+app.post('/api/v2/addstockregisterds', stockregisterdsctlr.addstockregisterds);
+app.post('/api/v2/updatestockregisterds', stockregisterdsctlr.updatestockregisterds);
+app.get('/api/v2/deletestockregisterds', stockregisterdsctlr.deletestockregisterds);
+app.get('/api/v2/getallstockregisterds', stockregisterdsctlr.getallstockregisterds);
+app.get('/api/v2/getstockregisterdsbyid', stockregisterdsctlr.getstockregisterdsbyid);
+
+// 13. Vendor (Modified to use vendordsctlr1)
+app.post('/api/v2/addvendords', vendordsctlr1.addvendords);
+app.post('/api/v2/updatevendords', vendordsctlr1.updatevendords);
+app.get('/api/v2/deletevendords', vendordsctlr1.deletevendords);
+app.get('/api/v2/getallvendords', vendordsctlr1.getallvendords);
+app.get('/api/v2/getvendordsbyid', vendordsctlr1.getvendordsbyid);
 
 
 app.use(passport.initialize());
@@ -1175,6 +1286,8 @@ app.get('/generateotp', naaccontroller.generateotp);
 app.get('/getcoattainment', naaccontroller.getco);
 app.get('/viewstudcount', naaccontroller.getstudcount);
 app.get('/getcourseattendance/:id', naaccontroller.getcourseattendance);
+
+// app.use(rleadadmin);
 
 
 const apicontroller = require('./controllers/apicontroller');
@@ -5067,6 +5180,9 @@ app.get('/api/v2/deleteleadds/:id', crmh1ctlrds.deleteleadds);
 
 // Admin Lead Routes
 app.get('/api/v2/getallleadsadmin', leadadminds.getallleadsdsadmin);
+app.get('/api/v2/leads/daterange', leadadminds.getLeadsByDateRange);
+app.post('/api/v2/leads/bulk-assign', leadadminds.bulkAssignCounselor);
+app.post('/api/v2/leads/bulk-stage', leadadminds.bulkChangeLeadStage);
 
 
 // ==================== ACTIVITY ROUTES ====================

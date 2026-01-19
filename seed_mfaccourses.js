@@ -55,6 +55,9 @@ const importData = async () => {
             const colid = getVal(row, 'colid');
             const year = getVal(row, 'year');
             const courseCode = getVal(row, 'coursecode');
+            const course = getVal(row, 'course');
+            const type = getVal(row, 'type');
+            const status = getVal(row, 'status');
 
             // Validate required fields based on schema
             // Schema requires: name, user, colid
@@ -67,13 +70,13 @@ const importData = async () => {
                 name: String(name).trim(),
                 user: String(user).trim(),
                 colid: Number(colid),
-                year: year ? String(year).trim() : undefined,
-                coursecode: courseCode ? String(courseCode).trim() : undefined,
-                coursename: String(name).trim(), // Mapping name to coursename as well, as likely intended
+                year: year ? String(year).trim() : "",
+                coursecode: courseCode ? String(courseCode).trim() : "",
+                coursename: String(course).trim(), // Mapping course to coursename as well, as likely intended
                 // Other fields optional in schema or not in excel
-                type: undefined,
-                status1: undefined,
-                comments: undefined
+                type: type ? String(type).trim() : "",
+                status1: status ? String(status).trim() : "",
+                comments: ""
             };
         }).filter(item => item !== null);
 
