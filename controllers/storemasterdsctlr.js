@@ -54,7 +54,8 @@ exports.deletestoremasterds = async (req, res) => {
 
 exports.getallstoremasterds = async (req, res) => {
     try {
-        const stores = await storemasterds.find();
+        const { colid } = req.query;
+        const stores = await storemasterds.find({ colid });
         res.status(200).json({
             status: 'success',
             results: stores.length,

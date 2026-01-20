@@ -54,7 +54,8 @@ exports.deleteitemtypeds = async (req, res) => {
 
 exports.getallitemtypeds = async (req, res) => {
     try {
-        const itemTypes = await itemtypeds.find();
+        const { colid } = req.query;
+        const itemTypes = await itemtypeds.find({ colid });
         res.status(200).json({
             status: 'success',
             results: itemTypes.length,
