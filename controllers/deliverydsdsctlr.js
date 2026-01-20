@@ -191,9 +191,24 @@ exports.markDelivered = async (req, res) => {
         await storepoorderds.findByIdAndUpdate(po_db_id, {
             postatus: 'Delivered',
             netprice: totalNetValue,
-            price: totalAcceptedValue, // Using 'price' field for Accepted Value as requested ("show net price, price and returned price") - Assuming 'price' is the final billable.
+            price: totalAcceptedValue,
             returnamount: totalReturnedValue
         });
+
+        // 4. Update PO Items Status
+        const storepoitemsds = require('../Models/storepoitemsds');
+        // We really should iterate and update each item, but typically for a full delivery we update all.
+        // However, we have specific details. Let's update each item's status.
+        for (const detail of deliveryDetails) {
+            // detail.itemid should be the PO Item ID if passed correctly from frontend. 
+            // If not, we might need to query by poid + itemcode.
+            // Given the frontend sends itemid = item.itemid (which is usually the DB ID of the PO Item row from getallstorepoitemsds), we can try updating by ID.
+            if (detail.itemid) {
+                await storepoitemsds.findByIdAndUpdate(detail.itemid, {
+                    postatus: 'Delivered'
+                });
+            }
+        }
 
         // 4. Create Delivery Record
         const newDelivery = await deliverydsds.create({

@@ -14,6 +14,7 @@ const vendordsschema = new mongoose.Schema({
     mobileno: { type: String },
     email: { type: String },
     type: { type: String },
+    payterm: { type: String },
 
     createdAt: { type: Date, default: Date.now }
 });
