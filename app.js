@@ -462,6 +462,11 @@ const vendoritemdsctlr = require('./controllers/vendoritemdsctlr');
 const deliverydsdsctlr = require('./controllers/deliverydsdsctlr');
 const stockregisterdsctlr = require('./controllers/stockregisterdsctlr');
 const vendordsctlr1 = require('./controllers/vendordsctlr1'); // Renamed to avoid conflict
+const approvalconfigdsctlr = require('./controllers/approvalconfigdsctlr');
+
+// Approval Config Routes
+app.post('/api/v2/addapprovalconfig', approvalconfigdsctlr.addConfig);
+app.get('/api/v2/getapprovalconfig', approvalconfigdsctlr.getConfig);
 
 // Purchasing Module Routes
 // 1. Store Master
@@ -528,8 +533,9 @@ app.get('/api/v2/deletestorepoorderds', storepoorderdsctlr.deletestorepoorderds)
 app.get('/api/v2/getallstorepoorderds', storepoorderdsctlr.getallstorepoorderds);
 app.get('/api/v2/getstorepoorderdsbyid', storepoorderdsctlr.getstorepoorderdsbyid);
 app.post('/api/v2/approvestorepo', storepoorderdsctlr.approveStorePO);
-app.post('/api/v2/verifypolevel1', storepoorderdsctlr.verifyLevel1);
-app.post('/api/v2/verifypolevel2', storepoorderdsctlr.verifyLevel2);
+// app.post('/api/v2/verifypolevel1', storepoorderdsctlr.verifyLevel1); // Deprecated
+// app.post('/api/v2/verifypolevel2', storepoorderdsctlr.verifyLevel2); // Deprecated
+app.post('/api/v2/verifyDynamicStep', storepoorderdsctlr.verifyDynamicStep);
 
 // 9. PO Items
 app.post('/api/v2/addstorepoitemsds', storepoitemsdsctlr.addstorepoitemsds);

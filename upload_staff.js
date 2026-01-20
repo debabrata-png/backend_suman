@@ -3,7 +3,7 @@ const XLSX = require('xlsx');
 const User = require('./Models/user');
 
 const MONGODB_URI = "mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const FILE_PATH = './staff_data_pu.xlsx';
+const FILE_PATH = './Mahajana Fculty.csv.xls';
 
 const connectDB = async () => {
     try {

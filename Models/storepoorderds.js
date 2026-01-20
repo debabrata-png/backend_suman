@@ -15,9 +15,9 @@ const storepoorderdsschema = new mongoose.Schema({
     netprice: { type: Number },
     updatedate: { type: Date },
     postatus: { type: String },
-    level: { type: Number, default: 0 },
-    level1_status: { type: String, default: 'Pending' },
-    level2_status: { type: String, default: 'Pending' }
+    // Dynamic Approval Fields
+    currentStep: { type: Number, default: 1 },
+    approvalStatus: { type: String, default: 'Pending' }
 });
 
 const storepoorderds = mongoose.model('storepoorderds', storepoorderdsschema);

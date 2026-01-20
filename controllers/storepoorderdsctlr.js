@@ -91,30 +91,67 @@ exports.approveStorePO = async (req, res) => {
     }
 };
 
-exports.verifyLevel1 = async (req, res) => {
-    try {
-        const { id } = req.body;
-        const updatedPO = await storepoorderds.findByIdAndUpdate(id, {
-            level: 1,
-            level1_status: 'Verified',
-            postatus: 'Pending Level 2'
-        }, { new: true });
-        res.status(200).json({ success: true, message: "Level 1 Verified", data: updatedPO });
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Error Verifying Level 1", error: error.message });
-    }
-};
 
-exports.verifyLevel2 = async (req, res) => {
+
+exports.verifyDynamicStep = async (req, res) => {
     try {
-        const { id } = req.body;
-        const updatedPO = await storepoorderds.findByIdAndUpdate(id, {
-            level: 2,
-            level2_status: 'Verified',
-            postatus: 'Approved' // Ready for delivery
-        }, { new: true });
-        res.status(200).json({ success: true, message: "Level 2 Verified", data: updatedPO });
+        const { id, user_email } = req.body;
+        const approvalconfigds = require("../Models/approvalconfigds");
+
+        const po = await storepoorderds.findById(id);
+        if (!po) return res.status(404).json({ success: false, message: "PO not found" });
+
+        // Fetch Config Steps
+        const steps = await approvalconfigds.find({ colid: po.colid, module: 'Purchase Order' }).sort({ stepNumber: 1 });
+
+        if (steps.length === 0) {
+            return res.status(400).json({ success: false, message: "No approval configuration found." });
+        }
+
+        const currentStepIndex = po.currentStep - 1; // 1-based to 0-based
+        if (currentStepIndex >= steps.length) {
+            return res.status(400).json({ success: false, message: "Already fully approved." });
+        }
+
+        const stepConfig = steps[currentStepIndex];
+
+        // Authorization Check
+        if (stepConfig.approverEmail !== user_email) {
+            return res.status(403).json({ success: false, message: `Unauthorized. Waiting for ${stepConfig.approverEmail}` });
+        }
+
+        // Proceed with Approval
+        // Create Approval Action Log in separate table
+        const storepoapprovalds = require("../Models/storepoapprovalds");
+        await storepoapprovalds.create({
+            colid: po.colid,
+            poid: po.poid, // or po._id if linking by ID primarily, but poid is string identifier
+            stepNumber: po.currentStep,
+            approverEmail: user_email,
+            action: 'Approved',
+            user: user_email, // Using email as username ref
+            actionDate: new Date()
+        });
+
+        const nextStep = po.currentStep + 1;
+
+        if (nextStep > steps.length) {
+            // All Steps Completed
+            po.postatus = 'Approved';
+            po.approvalStatus = 'Completed';
+            // po.level = steps.length; // Legacy
+        } else {
+            // Move to Next Step
+            po.currentStep = nextStep;
+            po.postatus = `Pending Step ${nextStep}`;
+            po.approvalStatus = `Pending Step ${nextStep}`;
+            // po.level = po.currentStep - 1; // Legacy
+        }
+
+        await po.save();
+        res.status(200).json({ success: true, message: `Step ${po.currentStep - 1} Verified`, data: po });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error Verifying Level 2", error: error.message });
+        res.status(500).json({ success: false, message: "Error verifying step", error: error.message });
     }
 };

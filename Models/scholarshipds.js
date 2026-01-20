@@ -42,7 +42,7 @@ const scholarshipdsschema = new mongoose.Schema({
     createdat: {
         type: Date,
         default: Date.now
-    }
+    },
 });
 
 const scholarshipds = mongoose.model('scholarshipds', scholarshipdsschema);

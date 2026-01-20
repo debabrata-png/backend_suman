@@ -161,9 +161,12 @@ const userschema = new mongoose.Schema({
     },
     abcid: {
         type: String
+    },
+    income: {
+        type: String
     }
 })
-//
+
 const User = mongoose.model('Users', userschema);
 
 module.exports = User;
