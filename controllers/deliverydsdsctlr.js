@@ -93,7 +93,7 @@ exports.getdeliverydsdsbyid = async (req, res) => {
 // Workflow: Mark Delivered (Full PO with Partial Returns)
 exports.markDelivered = async (req, res) => {
     try {
-        const { poid_str, po_db_id, receivedby, note, user, colid, name, deliveryDetails } = req.body;
+        const { poid_str, po_db_id, receivedby, note, doclink, user, colid, name, deliveryDetails } = req.body;
         // deliveryDetails: Array of { itemid (PO Item ID), itemcode, receivedQty, returnedQty, price, discount, itemtype, itemname }
 
         if (!deliveryDetails || !Array.isArray(deliveryDetails) || deliveryDetails.length === 0) {
@@ -191,8 +191,10 @@ exports.markDelivered = async (req, res) => {
         await storepoorderds.findByIdAndUpdate(po_db_id, {
             postatus: 'Delivered',
             netprice: totalNetValue,
+            netprice: totalNetValue,
             price: totalAcceptedValue,
-            returnamount: totalReturnedValue
+            returnamount: totalReturnedValue,
+            doclink: doclink
         });
 
         // 4. Update PO Items Status
@@ -219,6 +221,7 @@ exports.markDelivered = async (req, res) => {
             colid: colid,
             user: user,
             name: name,
+            doclink: doclink
             // Could store JSON of detailed breakdown if schema supports it, strictly not demanded but good practice.
         });
 

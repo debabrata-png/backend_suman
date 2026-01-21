@@ -15,6 +15,7 @@ const vendordsschema = new mongoose.Schema({
     email: { type: String },
     type: { type: String },
     payterm: { type: String },
+    doclink: { type: String },
 
     createdAt: { type: Date, default: Date.now }
 });

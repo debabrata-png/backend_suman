@@ -35,13 +35,16 @@ const deleverydsschema = new mongoose.Schema({
         type: String
     },
     deldate: {
-        type: Date, 
+        type: Date,
         default: Date.now
     },
     accepted: {
         type: String
     },
     return: {
+        type: String
+    },
+    doclink: {
         type: String
     }
 })

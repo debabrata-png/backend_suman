@@ -3,7 +3,7 @@ const vendords = require("../Models/vendords");
 // Add single vendor
 exports.addvendords = async (req, res) => {
     try {
-        const { name, user, colid, vendorname, pan, gst, address, state, city, mobileno, email, type } = req.body;
+        const { name, user, colid, vendorname, pan, gst, address, state, city, mobileno, email, type, doclink } = req.body;
 
         const newVendor = new vendords({
             name,
@@ -17,7 +17,9 @@ exports.addvendords = async (req, res) => {
             city,
             mobileno,
             email,
-            type
+            email,
+            type,
+            doclink
         });
 
         await newVendor.save();
