@@ -468,6 +468,9 @@ const approvalconfigdsctlr = require('./controllers/approvalconfigdsctlr');
 app.post('/api/v2/addapprovalconfig', approvalconfigdsctlr.addConfig);
 app.get('/api/v2/getapprovalconfig', approvalconfigdsctlr.getConfig);
 
+const dashboardReportController = require('./controllers/dashboardReportController');
+app.get('/api/v2/dashboard/stats', dashboardReportController.getDashboardStats);
+
 // Purchasing Module Routes
 // 1. Store Master
 app.post('/api/v2/addstoremasterds', storemasterdsctlr.addstoremasterds);
