@@ -106,6 +106,48 @@ exports.createleadds = async (req, res) => {
   }
 };
 
+// Check for duplicate lead
+exports.checkduplicateds = async (req, res) => {
+  try {
+    const { colid, phone, email } = req.query;
+
+    if (!colid) {
+      return res.status(400).json({ success: false, message: 'Colid is required' });
+    }
+
+    let query = {
+      colid: Number(colid),
+      $or: []
+    };
+
+    if (phone) query.$or.push({ phone: phone });
+    if (email) query.$or.push({ email: email });
+
+    if (query.$or.length === 0) {
+      return res.status(200).json({ exists: false });
+    }
+
+    const lead = await crmh1.findOne(query);
+
+    if (lead) {
+      return res.status(200).json({
+        exists: true,
+        lead: {
+          name: lead.name,
+          assignedto: lead.assignedto,
+          phone: lead.phone,
+          email: lead.email,
+          _id: lead._id
+        }
+      });
+    }
+
+    res.status(200).json({ exists: false });
+  } catch (err) {
+    // res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // Get all leads (USER-BASED ACCESS)
 exports.getallleadsds = async (req, res) => {
   try {
@@ -118,7 +160,9 @@ exports.getallleadsds = async (req, res) => {
       colid: Number(colid),
       $or: [
         { user: user },        // Admin/Owner sees all their organization's leads
-        { assignedto: user }   // Counsellor sees leads assigned to them
+        { assignedto: user },   // Counsellor sees leads assigned to them
+        { assignedto: null },    // Unassigned leads
+        { assignedto: "" }
       ]
     };
 
@@ -136,14 +180,8 @@ exports.getallleadsds = async (req, res) => {
     }
 
     if (search) {
-      // For search, we need to combine with $or for user access
+      // For search, we bypass the assignment check and search strictly within the colid
       query.$and = [
-        {
-          $or: [
-            { user: user },
-            { assignedto: user }
-          ]
-        },
         {
           $or: [
             { name: { $regex: search, $options: 'i' } },
@@ -153,7 +191,7 @@ exports.getallleadsds = async (req, res) => {
           ]
         }
       ];
-      // Remove the $or key since we're using $and now
+      // Remove the $or key since we're using $and now (and effectively removing the visibility restriction)
       delete query.$or;
     }
 

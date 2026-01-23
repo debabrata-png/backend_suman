@@ -4,7 +4,7 @@ const Mfaccourses = require('./Models/mfaccourses');
 
 // Use the same connection string as other seed/upload scripts
 const MONGODB_URI = "mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const FILE_PATH = './SOPR_workload.xlsx';
+const FILE_PATH = './DHSS WORKLOAD.xlsx';
 
 const connectDB = async () => {
     try {

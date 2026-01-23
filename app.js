@@ -468,6 +468,9 @@ const approvalconfigdsctlr = require('./controllers/approvalconfigdsctlr');
 app.post('/api/v2/addapprovalconfig', approvalconfigdsctlr.addConfig);
 app.get('/api/v2/getapprovalconfig', approvalconfigdsctlr.getConfig);
 
+// const programmasterdsRouter = require('./router/programmasterdsRouter');
+// app.use('/api/v2', programmasterdsRouter);
+
 const dashboardReportController = require('./controllers/dashboardReportController');
 app.get('/api/v2/dashboard/stats', dashboardReportController.getDashboardStats);
 
@@ -5194,6 +5197,7 @@ app.get('/api/v2/gethotleadsds', crmh1ctlrds.gethotleadsds);
 app.get('/api/v2/gettodayfollowupsds', crmh1ctlrds.gettodayfollowupsds);
 app.get('/api/v2/getoverduefollowupsds', crmh1ctlrds.getoverduefollowupsds);
 app.get('/api/v2/getleadanalyticsds', crmh1ctlrds.getleadanalyticsds);
+app.get('/api/v2/checkduplicateds', crmh1ctlrds.checkduplicateds);
 // Add this with your other lead routes
 app.get('/api/v2/deleteleadds/:id', crmh1ctlrds.deleteleadds);
 
@@ -5220,6 +5224,10 @@ app.get('/api/v2/getprogrambyidds/:id', programmasterctlrds.getprogrambyidds);
 app.get('/api/v2/getprogramsbycategoryds/:category', programmasterctlrds.getprogramsbycategoryds);
 app.post('/api/v2/updateprogrammasterds', programmasterctlrds.updateprogrammasterds); // Uses req.query.id
 app.get('/api/v2/deleteprogrammasterds/:id', programmasterctlrds.deleteprogrammasterds);
+
+app.get('/api/v2/getinstitutionsds', programmasterctlrds.getinstitutionsds);
+app.get('/api/v2/getprogramtypesds', programmasterctlrds.getprogramtypesds);
+app.get('/api/v2/getprogramsbyfiltersds', programmasterctlrds.getprogramsbyfiltersds);
 
 // ==================== DRIP CAMPAIGN ROUTES ====================
 app.post('/api/v2/createdripcampaignds', dripcampaignctlrds.createdripcampaignds);

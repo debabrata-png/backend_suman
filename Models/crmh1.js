@@ -57,6 +57,15 @@ const crmh1schema = new mongoose.Schema({
     expected_admission_year: {
         type: String
     },
+    institution: {
+        type: String
+    },
+    program_type: {
+        type: String
+    },
+    program: {
+        type: String // Mapped to course_name from programmasterds
+    },
     scores_10th: {
         type: String
     },
