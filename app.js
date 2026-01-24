@@ -4806,6 +4806,8 @@ app.get('/api/v2/getstudentmarks9ds', studentmarks9ctlrds.getstudentmarks9ds);
 app.post('/api/v2/finalizestudentmarks9ds', studentmarks9ctlrds.finalizestudentmarks9ds);
 // Get distinct semesters and admission years
 app.get('/api/v2/getdistinctsemestersandyears9ds', studentmarks9ctlrds.getdistinctsemestersandyears9ds);
+// Student Marks PDF Route (New)
+app.get('/api/v2/getmarksheetpdfdata9ds', studentmarks9ctlrds.getmarksheetpdfdata9ds);
 
 
 
@@ -14607,8 +14609,6 @@ app.use('/createcbcsprogram', rcbcsadd);
 app.use('/viewcbcsprogram', rcbcsview);
 app.use('/editcbcsprogram', rcbcsedit);
 app.use('/deletecbcsprogram', rcbcsdel);
-
-//pratiti june 04 2021 end
 
 
 

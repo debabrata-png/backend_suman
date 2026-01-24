@@ -19,15 +19,21 @@ function calculateGrade(obtained, max) {
 // Get students and subjects using aggregation pipeline
 exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
   try {
-    const { colid, semester, academicyear, term, componentname } = req.query;
-    
+    const { colid, semester, academicyear, term, componentname, section } = req.query;
+
+    const matchStage = {
+      colid: Number(colid),
+      semester: semester
+    };
+
+    if (section) {
+      matchStage.section = section;
+    }
+
     // Get students using aggregation
     const students = await User.aggregate([
       {
-        $match: {
-          colid: Number(colid),
-          semester: semester
-        }
+        $match: matchStage
       },
       {
         $project: {
@@ -39,11 +45,11 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
         $sort: { regno: 1 }
       }
     ]);
-    
+
     // Get active subjects with component info using aggregation
     const activeFieldName = `${componentname}active`;
     const maxFieldName = `${componentname}max`;
-    
+
     const subjects = await SubjectComponentConfig9ds.aggregate([
       {
         $match: {
@@ -65,7 +71,7 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
         $sort: { subjectname: 1 }
       }
     ]);
-    
+
     // Get existing marks using aggregation with lookup
     const existingMarks = await StudentMarks9ds.aggregate([
       {
@@ -86,7 +92,7 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
         }
       }
     ]);
-    
+
     res.json({
       success: true,
       students: students,
@@ -109,30 +115,30 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
 exports.bulksavemarksbycomponent9ds = async (req, res) => {
   try {
     const { colid, user, semester, academicyear, componentname, marks } = req.body;
-    
+
     if (!marks || marks.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'No marks data provided'
       });
     }
-    
+
     const obtainedFieldName = `${componentname}obtained`;
     const isTerm1 = componentname.startsWith('term1');
-    
+
     // Prepare bulk operations
     const bulkOps = marks.map(markEntry => {
       const { regno, subjectcode, obtained, studentname, subjectname } = markEntry;
-      
+
       const updateFields = {
         [obtainedFieldName]: obtained || 0,
         updatedat: new Date()
       };
-      
+
       // Add student/subject names if provided
       if (studentname) updateFields.studentname = studentname;
       if (subjectname) updateFields.subjectname = subjectname;
-      
+
       return {
         updateOne: {
           filter: {
@@ -159,14 +165,14 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
         }
       };
     });
-    
+
     // Execute bulk write
     const bulkResult = await StudentMarks9ds.bulkWrite(bulkOps);
-    
+
     // Recalculate totals using aggregation and update
     const regnos = [...new Set(marks.map(m => m.regno))];
     const subjectcodes = [...new Set(marks.map(m => m.subjectcode))];
-    
+
     // Get all marks for recalculation
     const marksToRecalc = await StudentMarks9ds.find({
       colid: Number(colid),
@@ -175,13 +181,13 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
       semester: semester,
       academicyear: academicyear
     });
-    
+
     // Prepare total calculation updates
     const totalUpdateOps = marksToRecalc.map(mark => {
       let total, grade, totalField, gradeField;
-      
+
       if (isTerm1) {
-        total = 
+        total =
           (mark.term1periodictestobtained || 0) +
           (mark.term1notebookobtained || 0) +
           (mark.term1enrichmentobtained || 0) +
@@ -190,7 +196,7 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
         totalField = 'term1total';
         gradeField = 'term1grade';
       } else {
-        total = 
+        total =
           (mark.term2periodictestobtained || 0) +
           (mark.term2notebookobtained || 0) +
           (mark.term2enrichmentobtained || 0) +
@@ -199,7 +205,7 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
         totalField = 'term2total';
         gradeField = 'term2grade';
       }
-      
+
       return {
         updateOne: {
           filter: { _id: mark._id },
@@ -213,12 +219,12 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
         }
       };
     });
-    
+
     // Update totals
     if (totalUpdateOps.length > 0) {
       await StudentMarks9ds.bulkWrite(totalUpdateOps);
     }
-    
+
     res.json({
       success: true,
       message: `Successfully saved ${bulkResult.upsertedCount + bulkResult.modifiedCount} marks`,
@@ -240,7 +246,7 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
 exports.getstudentmarks9ds = async (req, res) => {
   try {
     const { colid, regno, semester, academicyear } = req.query;
-    
+
     const marks = await StudentMarks9ds.aggregate([
       {
         $match: {
@@ -259,7 +265,7 @@ exports.getstudentmarks9ds = async (req, res) => {
         }
       }
     ]);
-    
+
     res.json({
       success: true,
       count: marks.length,
@@ -279,7 +285,7 @@ exports.getstudentmarks9ds = async (req, res) => {
 exports.finalizestudentmarks9ds = async (req, res) => {
   try {
     const { colid, regno, semester, academicyear } = req.body;
-    
+
     const result = await StudentMarks9ds.updateMany(
       {
         colid: Number(colid),
@@ -288,13 +294,13 @@ exports.finalizestudentmarks9ds = async (req, res) => {
         academicyear: academicyear
       },
       {
-        $set: { 
-          status: 'finalized', 
-          updatedat: new Date() 
+        $set: {
+          status: 'finalized',
+          updatedat: new Date()
         }
       }
     );
-    
+
     res.json({
       success: true,
       message: `Finalized ${result.modifiedCount} subject marks`,
@@ -310,12 +316,12 @@ exports.finalizestudentmarks9ds = async (req, res) => {
   }
 };
 
-// Get distinct semesters and years from User table
+// Get distinct semesters, years and sections from User table
 exports.getdistinctsemestersandyears9ds = async (req, res) => {
   try {
     const { colid } = req.query;
-    
-    // Get distinct semesters and admission years using aggregation
+
+    // Get distinct semesters, admission years and sections using aggregation
     const result = await User.aggregate([
       {
         $match: {
@@ -326,40 +332,221 @@ exports.getdistinctsemestersandyears9ds = async (req, res) => {
         $group: {
           _id: null,
           semesters: { $addToSet: '$semester' },
-          admissionyears: { $addToSet: '$admissionyear' }
+          admissionyears: { $addToSet: '$admissionyear' },
+          sections: { $addToSet: '$section' }
         }
       },
       {
         $project: {
           _id: 0,
           semesters: 1,
-          admissionyears: 1
+          admissionyears: 1,
+          sections: 1
         }
       }
     ]);
-    
+
     if (!result || result.length === 0) {
       return res.json({
         success: true,
         semesters: ['9', '10'],
-        admissionyears: []
+        admissionyears: [],
+        sections: []
       });
     }
-    
-    // Sort semesters and years
+
+    // Sort semesters, years and sections
     const semesters = result[0].semesters.sort();
     const admissionyears = result[0].admissionyears.filter(y => y).sort().reverse();
-    
+    const sections = result[0].sections.filter(s => s).sort();
+
     res.json({
       success: true,
       semesters: semesters,
-      admissionyears: admissionyears
+      admissionyears: admissionyears,
+      sections: sections
     });
   } catch (error) {
-    console.error('Error in getdistinctsemestersandyears9ds:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get semesters and years',
+      error: error.message
+    });
+  }
+};
+
+// Start of new endpoint code
+const Attendancenew = require('../Models/attendancenew');
+
+// Helper function to calculate attendance (copied from marksheetdatactlrds.js)
+async function calculateAttendance(regno, colid, semester, academicyear) {
+  try {
+    const year = academicyear ? academicyear.split('-')[0] : new Date().getFullYear().toString();
+
+    const attendanceRecords = await Attendancenew.find({
+      regno: regno,
+      colid: Number(colid),
+      semester: semester,
+      year: year
+    });
+
+    if (attendanceRecords.length === 0) {
+      return {
+        term1: { working: 0, present: 0 },
+        term2: { working: 0, present: 0 }
+      };
+    }
+
+    const term1Records = [];
+    const term2Records = [];
+
+    attendanceRecords.forEach(record => {
+      const month = new Date(record.classdate).getMonth() + 1;
+      if (month >= 6 && month <= 10) {
+        term1Records.push(record);
+      } else {
+        term2Records.push(record);
+      }
+    });
+
+    const calculateStats = (records) => {
+      const uniqueDates = new Set();
+      let presentCount = 0;
+
+      records.forEach(record => {
+        const dateStr = new Date(record.classdate).toISOString().split('T')[0];
+        uniqueDates.add(dateStr);
+        if (record.att === 1 || record.status1 === 'P') {
+          presentCount++;
+        }
+      });
+
+      return {
+        working: uniqueDates.size,
+        present: presentCount
+      };
+    };
+
+    return {
+      term1: calculateStats(term1Records),
+      term2: calculateStats(term2Records)
+    };
+  } catch (error) {
+    console.error('Error calculating attendance:', error);
+    return {
+      term1: { working: 0, present: 0 },
+      term2: { working: 0, present: 0 }
+    };
+  }
+}
+
+// Get marksheet data for PDF using StudentMarks9ds
+exports.getmarksheetpdfdata9ds = async (req, res) => {
+  try {
+    const { regno, colid, semester, academicyear } = req.query;
+
+    // 1. Fetch Student/User Data
+    const userData = await User.findOne({
+      regno,
+      colid: Number(colid)
+    });
+
+    if (!userData) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // 2. Fetch Marks Data
+    const marksData = await StudentMarks9ds.find({
+      regno,
+      colid: Number(colid),
+      semester,
+      academicyear
+    }).sort({ subjectname: 1 });
+
+    if (!marksData || marksData.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Marks data not found for this student'
+      });
+    }
+
+    // 3. Format Subjects Data
+    const subjects = marksData.map(mark => ({
+      subjectname: mark.subjectname,
+      term1PeriodicTest: mark.term1periodictestobtained || 0,
+      term1Notebook: mark.term1notebookobtained || 0,
+      term1Enrichment: mark.term1enrichmentobtained || 0,
+      term1MidExam: mark.term1midexamobtained || 0,
+      term1Total: mark.term1total || 0,
+      term1Grade: mark.term1grade || '-',
+
+      term2PeriodicTest: mark.term2periodictestobtained || 0,
+      term2Notebook: mark.term2notebookobtained || 0,
+      term2Enrichment: mark.term2enrichmentobtained || 0,
+      term2AnnualExam: mark.term2annualexamobtained || 0,
+      term2Total: mark.term2total || 0,
+      term2Grade: mark.term2grade || '-'
+    }));
+
+    // 4. Calculate Totals
+    const term1TotalMarks = subjects.reduce((sum, s) => sum + s.term1Total, 0);
+    const term2TotalMarks = subjects.reduce((sum, s) => sum + s.term2Total, 0);
+    const grandTotal = term1TotalMarks + term2TotalMarks;
+    const maxMarks = subjects.length * 200;
+    const percentage = maxMarks > 0 ? ((grandTotal / maxMarks) * 100).toFixed(2) : 0;
+    const overallGrade = calculateGrade(grandTotal, maxMarks);
+
+    // 5. Fetch Attendance
+    const attendanceData = await calculateAttendance(regno, colid, semester, academicyear);
+
+    // 6. Construct PDF Data Object
+    const pdfData = {
+      session: academicyear,
+      classtype: '', // Not in StudentMarks9ds, leave empty or infer
+      profile: {
+        name: userData.name || '',
+        father: userData.fathername || '',
+        mother: userData.mothername || '',
+        address: userData.address || 'Behind Ambedkar Bhawan, Mudapar Bazar, Korba (C.G.)',
+        classSection: `Class ${semester} - ${userData.section || 'A'}`,
+        rollNo: userData.rollno || regno,
+        dob: userData.dob || '01-01-2000',
+        admissionNo: regno,
+        contact: userData.phone || '',
+        cbseRegNo: regno,
+        photo: userData.photo || ''
+      },
+      attendance: attendanceData,
+      subjects: subjects,
+      coScholastic: [ // Default co-scholastic data if not in DB
+        { area: "Work Education", term1Grade: "A", term2Grade: "A" },
+        { area: "Art Education", term1Grade: "A", term2Grade: "A" },
+        { area: "Health & Physical Education", term1Grade: "A", term2Grade: "A" }
+      ],
+      term1TotalMarks,
+      term2TotalMarks,
+      grandTotal,
+      percentage,
+      overallGrade,
+      rank: '-', // Rank calculation is complex, leaving placeholder
+      remarks: 'Good', // Default remark
+      promotedToClass: '', // User to fill manually?
+      newSessionDate: ''
+    };
+
+    res.json({
+      success: true,
+      data: pdfData
+    });
+
+  } catch (error) {
+    console.error('Error in getmarksheetpdfdata9ds:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate marksheet PDF data',
       error: error.message
     });
   }
