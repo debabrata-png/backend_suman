@@ -20,13 +20,40 @@ exports.addstorepoorderds = async (req, res) => {
 
 exports.getallstorepoorderds = async (req, res) => {
     try {
-        const { colid } = req.query;
-        const poOrders = await storepoorderds.find({ colid }).sort({ createdAt: -1 });
-        res.status(200).json({
-            success: true,
-            count: poOrders.length,
-            data: { poOrders }
-        });
+        const { colid, page, limit } = req.query;
+        const query = { colid };
+
+        if (page && limit) {
+            const pageNum = parseInt(page);
+            const limitNum = parseInt(limit);
+            const skip = (pageNum - 1) * limitNum;
+
+            const total = await storepoorderds.countDocuments(query);
+            const poOrders = await storepoorderds.find(query)
+                .sort({ createdAt: -1 }) // Explicit sort important for pagination stability
+                .skip(skip)
+                .limit(limitNum);
+
+            res.status(200).json({
+                success: true,
+                count: poOrders.length,
+                total,
+                data: { poOrders },
+                pagination: {
+                    total,
+                    page: pageNum,
+                    limit: limitNum,
+                    pages: Math.ceil(total / limitNum)
+                }
+            });
+        } else {
+            const poOrders = await storepoorderds.find(query).sort({ createdAt: -1 });
+            res.status(200).json({
+                success: true,
+                count: poOrders.length,
+                data: { poOrders } // Kept { poOrders } as per original
+            });
+        }
     } catch (error) {
         res.status(500).json({
             success: false,

@@ -20,20 +20,20 @@ const deleteData = async () => {
     await connectDB();
 
     try {
-        const colidToDelete = 3098;
+        const colidToDelete = 4004;
 
         console.log(`Deleting data for colid: ${colidToDelete}...`);
 
-        // // 1. Delete from Classenr1
-        // const res1 = await Classenr1.deleteMany({ colid: colidToDelete });
-        // console.log(`Deleted ${res1.deletedCount} records from Classenr1.`);
+        // 1. Delete from Classenr1
+        const res1 = await Classenr1.deleteMany({ colid: colidToDelete });
+        console.log(`Deleted ${res1.deletedCount} records from Classenr1.`);
 
         // // 2. Delete from MfacCourses
         // const res2 = await MfacCourses.deleteMany({ colid: colidToDelete });
         // console.log(`Deleted ${res2.deletedCount} records from MfacCourses.`);
 
-        const res3 = await User.deleteMany({ colid: colidToDelete, role: 'Student' });
-        console.log(`Deleted ${res3.deletedCount} records from User.`);
+        // const res3 = await User.deleteMany({ colid: colidToDelete, role: 'Student' });
+        // console.log(`Deleted ${res3.deletedCount} records from User.`);
 
     } catch (err) {
         console.error("❌ Error deleting data:", err);

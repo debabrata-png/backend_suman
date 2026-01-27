@@ -20,13 +20,41 @@ exports.additemmasterds = async (req, res) => {
 
 exports.getallitemmasterds = async (req, res) => {
     try {
-        const { colid } = req.query;
-        const items = await itemmasterds.find({ colid });
-        res.status(200).json({
-            success: true,
-            count: items.length,
-            data: { items }
-        });
+        const { colid, page, limit } = req.query;
+        const query = { colid };
+
+        if (page && limit) {
+            const pageNum = parseInt(page);
+            const limitNum = parseInt(limit);
+            const skip = (pageNum - 1) * limitNum;
+
+            const total = await itemmasterds.countDocuments(query);
+            const items = await itemmasterds.find(query)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNum);
+
+            res.status(200).json({
+                success: true,
+                count: items.length,
+                total, // Total records in DB
+                data: { items },
+                pagination: {
+                    total,
+                    page: pageNum,
+                    limit: limitNum,
+                    pages: Math.ceil(total / limitNum)
+                }
+            });
+        } else {
+            // Non-paginated (Legacy/Full)
+            const items = await itemmasterds.find(query).sort({ createdAt: -1 });
+            res.status(200).json({
+                success: true,
+                count: items.length,
+                data: { items }
+            });
+        }
     } catch (error) {
         res.status(500).json({
             success: false,

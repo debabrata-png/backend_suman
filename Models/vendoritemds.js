@@ -12,7 +12,15 @@ const vendoritemdsschema = new mongoose.Schema({
     price: { type: Number },
     discount: { type: Number },
     status: { type: String },
-    type: { type: String }
+    type: { type: String },
+    unit: { type: String },
+    unitcode: { type: String },
+    gst: { type: Number },
+    sgst: { type: Number },
+    cgst: { type: Number },
+    igst: { type: Number },
+    total: { type: Number },
+    category: { type: String },
 });
 
 const vendoritemds = mongoose.model('vendoritemds', vendoritemdsschema);

@@ -133,7 +133,7 @@ const crmh1schema = new mongoose.Schema({
     // Status & Pipeline
     pipeline_stage: {
         type: String,
-        default: 'New Lead'  // New Lead / Contacted / Qualified / Counselling Scheduled / Campus Visited / Application Sent / Application Submitted / Fee Paid / Admitted / Lost
+        default: 'New Lead'  // New Lead / Contacted / Qualified / Counselling Scheduled / Campus Visited / Application Sent / Application Submitted / Fee Paid / Admitted / Lost / Prospect / Contact Attempted / Phone Conversation / WhatsApp Conversation / Follow Up / General Enquiry / Call Reschedule / Interested / Not Interested / Seat Booked / ePravesh Done / Admission Done / Admission Cancelled / Admited in Another College / Consultancy Services / Enquiry for 2nd year / Enquiry for 3rd year / Enquiry for 4th year Hons. / Existing Student / Hospital Enquiry / Junk Lead / Wrong Number / Not Done Enquiry / Not Eligible / Offer Letter Issued / Other Courses / Prospect for next academic year / ERP Done
     },
     leadstatus: {
         type: String,

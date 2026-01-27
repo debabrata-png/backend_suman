@@ -47,9 +47,16 @@ const storepoitemsdsschema = new mongoose.Schema({
     itemname: {
         type: String
     },
-    itemtype: {
-        type: String
-    },
+    // New Fields for Tax & Classification
+    category: { type: String },
+    itemtype: { type: String }, // This field already exists, keeping its original definition.
+    unit: { type: String },
+    gst: { type: Number },      // Tax %
+    sgst: { type: Number },
+    cgst: { type: Number },
+    igst: { type: Number },
+    total: { type: Number },    // Line total (qty * priceWithTax or just total)
+    unitPriceWithTax: { type: Number },
     status1: {
         type: String
     },

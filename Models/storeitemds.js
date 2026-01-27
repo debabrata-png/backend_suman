@@ -11,7 +11,9 @@ const storeitemschema = new mongoose.Schema({
     itemname: { type: String },
     quantity: { type: Number },
     type: { type: String },
-    status: { type: String }
+    status: { type: String },
+    category: { type: String }, // New
+    unit: { type: String }      // New
 });
 
 const storeitemds = mongoose.model('storeitemds', storeitemschema);

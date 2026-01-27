@@ -34,7 +34,7 @@ const seeduser = async () => {
         //     {$set: {lastlogin: new Date('2026-12-01T10:00:00Z')}}
         // )
         const user = await User.updateMany(
-            {email: "jalkharepeoples@gmail.com"},
+            {email: "fr3d@gmail.com"},
             {$set: {role: "Faculty"}}
         )
         console.log(user);

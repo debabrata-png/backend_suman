@@ -3,10 +3,10 @@ const fs = require('fs');
 const path = require('path');
 
 const STUDENT_FILES = [
-    'DOHSS STUDENT.xlsx',
+    'PCPS STUDENT DATA.xlsx',
 ];
-const WORKLOAD_FILE = 'DHSS WORKLOAD.xlsx';
-const OUTPUT_FILE = 'classenr_dhss_output.xlsx';
+const WORKLOAD_FILE = 'PCPS WORKLOAD.xlsx';
+const OUTPUT_FILE = 'classenr_pcps_output.xlsx';
 
 const mapData = () => {
     console.log("Starting data mapping...");
@@ -70,22 +70,22 @@ const mapData = () => {
     const outputData = [];
 
     workloadData.forEach(workload => {
-        const pCodeRaw = workload.programcode || '';
+        const pCodeRaw = workload.programcode;
         const sem = workload.semester;
 
-        // --- PROMOTION LOGIC START ---
-        // Map Workload Semester X to Student Semester X-1
-        // e.g. Workload Sem 2 needs Students from Sem 1
-        const workSemNum = parseInt(sem, 10);
-        let targetStudentSem = sem; // default same
-        if (!isNaN(workSemNum) && workSemNum > 1) {
-            targetStudentSem = workSemNum - 1;
-        } else if (!isNaN(workSemNum) && workSemNum === 1) {
-            // If workload is sem 1, assume new students are sem 1? or 0? 
-            // Usually sem 1 workload maps to sem 1 students.
-            targetStudentSem = 1;
-        }
-        // --- PROMOTION LOGIC END ---
+        // // --- PROMOTION LOGIC START ---
+        // // Map Workload Semester X to Student Semester X-1
+        // // e.g. Workload Sem 2 needs Students from Sem 1
+        // const workSemNum = parseInt(sem, 10);
+        // let targetStudentSem = sem; // default same
+        // if (!isNaN(workSemNum) && workSemNum > 1) {
+        //     targetStudentSem = workSemNum - 1;
+        // } else if (!isNaN(workSemNum) && workSemNum === 1) {
+        //     // If workload is sem 1, assume new students are sem 1? or 0? 
+        //     // Usually sem 1 workload maps to sem 1 students.
+        //     targetStudentSem = 1;
+        // }
+        // // --- PROMOTION LOGIC END ---
 
         // Split by '/' to handle multiple programs like "19B/23B"
         const pCodes = String(pCodeRaw).split('/').map(s => s.trim()).filter(Boolean);
@@ -96,7 +96,7 @@ const mapData = () => {
         if (pCodes.length > 0) {
             // Try to find students for EACH program code + TARGET semester
             pCodes.forEach(code => {
-                const key = `${code}_${targetStudentSem}`;
+                const key = `${code}_${sem}`;
                 const students = studentsMap[key];
                 if (students && students.length > 0) {
                     aggregatedStudents = aggregatedStudents.concat(students);
@@ -106,8 +106,8 @@ const mapData = () => {
         }
 
         // FALLBACK: If strict match fails for ALL programs, try mapping by TARGET semester only
-        if (aggregatedStudents.length === 0 && targetStudentSem) {
-            const semKey = String(targetStudentSem);
+        if (aggregatedStudents.length === 0 && sem) {
+            const semKey = String(sem);
             aggregatedStudents = studentsBySemester[semKey] || [];
             if (aggregatedStudents.length > 0) sourceUsed = 'fallback';
         }

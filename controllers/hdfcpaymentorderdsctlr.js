@@ -4,6 +4,7 @@ const platformchargesds = require('../Models/platformchargesds');
 const Coupon = require('../Models/couponds');
 const { HDFCPaymentHandler, HDFCAPIException } = require('../utils/hdfcpaymenthandler');
 const crypto = require('crypto');
+const Ledgerstud = require('../Models/ledgerstud');
 
 // Create HDFC payment order
 exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
@@ -251,7 +252,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       if (hdfcerror instanceof HDFCAPIException) {
         // ✅ Fix: Ensure valid HTTP status code
         const statuscode = (hdfcerror.httpresponsecode > 0 && hdfcerror.httpresponsecode < 600)
-          ? hdfcerror.httpresponsecode 
+          ? hdfcerror.httpresponsecode
           : 500;
 
         return res.status(statuscode).json({
@@ -294,9 +295,9 @@ exports.checkhdfcpaymentstatusbyds = async (req, res) => {
     }
 
     // Fetch order from database
-    const order = await hdfcpaymentorderds.findOne({ 
-      orderid: merchantOrderId, 
-      colid 
+    const order = await hdfcpaymentorderds.findOne({
+      orderid: merchantOrderId,
+      colid
     });
 
     if (!order) {
@@ -307,9 +308,9 @@ exports.checkhdfcpaymentstatusbyds = async (req, res) => {
     }
 
     // Fetch gateway configuration
-    const gatewayconfig = await hdfcgatewayds.findOne({ 
-      colid, 
-      isactive: true 
+    const gatewayconfig = await hdfcgatewayds.findOne({
+      colid,
+      isactive: true
     });
 
     if (!gatewayconfig) {
@@ -339,9 +340,36 @@ exports.checkhdfcpaymentstatusbyds = async (req, res) => {
 
         // Create ledger entry if not already created
         if (!order.ledgerentrycreated) {
-          // TODO: Implement ledger creation logic here
-          // order.ledgerentrycreated = true;
-          // order.ledgerentryid = ledgerentry._id;
+          try {
+            const ledgerEntry = new Ledgerstud({
+              name: order.name,
+              user: order.user,
+              feegroup: order.feegroup || "Payment",
+              regno: order.regno,
+              student: order.student,
+              feeitem: order.feeitem || "Payment",
+              feecategory: order.feecategory || "Payment",
+              amount: -Math.abs(order.originalamount),
+              paymode: 'HDFC',
+              paydetails: order.hdfctransactionid || order.merchanttransactionid,
+              type: "negative",
+              semester: order.semester,
+              installment: order.installment,
+              comments: `Payment via HDFC Order ${order.orderid}`,
+              academicyear: order.academicyear,
+              classdate: new Date(),
+              status: "paid",
+              colid: order.colid,
+              programcode: order.programcode,
+              admissionyear: order.admissionyear,
+            });
+            await ledgerEntry.save();
+            order.ledgerentrycreated = true;
+            order.ledgerentryid = ledgerEntry._id;
+            // order saved below
+          } catch (ledgerError) {
+            console.error("Error creating ledger entry:", ledgerError);
+          }
         }
       } else if (orderstatus === 'PENDING' || orderstatus === 'PENDING_VBV') {
         order.status = 'PENDING';
@@ -617,9 +645,9 @@ exports.initiatehdfcrefundbyds = async (req, res) => {
     }
 
     // Fetch gateway configuration
-    const gatewayconfig = await hdfcgatewayds.findOne({ 
-      colid, 
-      isactive: true 
+    const gatewayconfig = await hdfcgatewayds.findOne({
+      colid,
+      isactive: true
     });
 
     if (!gatewayconfig) {
@@ -708,8 +736,8 @@ exports.hdfcwebhookhandler = async (req, res) => {
     }
 
     // Find order
-    const order = await hdfcpaymentorderds.findOne({ 
-      merchanttransactionid: orderid 
+    const order = await hdfcpaymentorderds.findOne({
+      merchanttransactionid: orderid
     });
 
     if (!order) {
@@ -720,9 +748,9 @@ exports.hdfcwebhookhandler = async (req, res) => {
     }
 
     // Fetch gateway config for signature validation
-    const gatewayconfig = await hdfcgatewayds.findOne({ 
-      colid: order.colid, 
-      isactive: true 
+    const gatewayconfig = await hdfcgatewayds.findOne({
+      colid: order.colid,
+      isactive: true
     });
 
     if (!gatewayconfig) {
@@ -735,7 +763,7 @@ exports.hdfcwebhookhandler = async (req, res) => {
     // Validate HMAC signature
     try {
       const isvalid = HDFCPaymentHandler.validatehmacsignature(
-        callbackdata, 
+        callbackdata,
         gatewayconfig.responsekey
       );
 
@@ -769,6 +797,40 @@ exports.hdfcwebhookhandler = async (req, res) => {
 
     order.state = status;
     order.paymentdetails = callbackdata;
+
+    // Create ledger entry if success and not created
+    if (order.status === 'SUCCESS' && !order.ledgerentrycreated) {
+      try {
+        const ledgerEntry = new Ledgerstud({
+          name: order.name,
+          user: order.user,
+          feegroup: order.feegroup || "Payment",
+          regno: order.regno,
+          student: order.student,
+          feeitem: order.feeitem || "Payment",
+          feecategory: order.feecategory || "Payment",
+          amount: -Math.abs(order.originalamount),
+          paymode: 'HDFC',
+          paydetails: order.hdfctransactionid || order.merchanttransactionid,
+          type: "negative",
+          semester: order.semester,
+          installment: order.installment,
+          comments: `Payment via HDFC Order ${order.orderid}`,
+          academicyear: order.academicyear,
+          classdate: new Date(),
+          status: "paid",
+          colid: order.colid,
+          programcode: order.programcode,
+          admissionyear: order.admissionyear,
+        });
+        await ledgerEntry.save();
+        order.ledgerentrycreated = true;
+        order.ledgerentryid = ledgerEntry._id;
+      } catch (ledgerError) {
+        console.error("Error creating ledger entry in webhook:", ledgerError);
+      }
+    }
+
     await order.save();
 
     return res.status(200).json({
@@ -789,13 +851,13 @@ exports.hdfcreturnurlhandler = async (req, res) => {
   try {
     const callbackdata = req.body;
     const hdfcorderid = callbackdata.order_id || callbackdata.orderid;
-    
+
     if (!hdfcorderid) {
       return res.status(400).send('Order ID missing');
     }
 
-    const order = await hdfcpaymentorderds.findOne({ 
-      merchanttransactionid: hdfcorderid 
+    const order = await hdfcpaymentorderds.findOne({
+      merchanttransactionid: hdfcorderid
     });
 
     if (!order) {
@@ -812,22 +874,22 @@ exports.hdfcreturnurlhandler = async (req, res) => {
       try {
         // ✅ Initialize handler with logging enabled
         const handler = HDFCPaymentHandler.getinstance(gatewayconfig);
-        
+
         // ✅ Call your EXISTING checkorderstatus method
         const statusresponse = await handler.checkorderstatus(hdfcorderid);
-        
+
         // console.log('✅ HDFC Status API Response:', statusresponse);
-        
+
         // Update order with verified status
         if (statusresponse && statusresponse.status) {
-          order.status = statusresponse.status === 'CHARGED' ? 'SUCCESS' : 
-                        statusresponse.status === 'FAILED' ? 'FAILED' : 
-                        statusresponse.status;
+          order.status = statusresponse.status === 'CHARGED' ? 'SUCCESS' :
+            statusresponse.status === 'FAILED' ? 'FAILED' :
+              statusresponse.status;
           order.state = statusresponse.status;
           order.hdfctransactionid = statusresponse.txn_id || statusresponse.cf_payment_id;
           order.paymentmode = statusresponse.payment_method || statusresponse.payment_group;
           order.paymentdetails = statusresponse;
-          
+
           if (statusresponse.status === 'CHARGED') {
             order.completedat = new Date();
           } else if (statusresponse.status === 'FAILED') {
@@ -846,12 +908,45 @@ exports.hdfcreturnurlhandler = async (req, res) => {
       order.paymentdetails = callbackdata;
     }
 
+    // Create ledger entry if success and not created
+    if (order.status === 'SUCCESS' && !order.ledgerentrycreated) {
+      try {
+        const ledgerEntry = new Ledgerstud({
+          name: order.name,
+          user: order.user,
+          feegroup: order.feegroup || "Payment",
+          regno: order.regno,
+          student: order.student,
+          feeitem: order.feeitem || "Payment",
+          feecategory: order.feecategory || "Payment",
+          amount: -Math.abs(order.originalamount),
+          paymode: 'HDFC',
+          paydetails: order.hdfctransactionid || order.merchanttransactionid,
+          type: "negative",
+          semester: order.semester,
+          installment: order.installment,
+          comments: `Payment via HDFC Order ${order.orderid}`,
+          academicyear: order.academicyear,
+          classdate: new Date(),
+          status: "paid",
+          colid: order.colid,
+          programcode: order.programcode,
+          admissionyear: order.admissionyear,
+        });
+        await ledgerEntry.save();
+        order.ledgerentrycreated = true;
+        order.ledgerentryid = ledgerEntry._id;
+      } catch (ledgerError) {
+        console.error("Error creating ledger entry in return handler:", ledgerError);
+      }
+    }
+
     await order.save();
 
-    const frontendurl = order.frontendcallbackurl 
+    const frontendurl = order.frontendcallbackurl
       ? `${order.frontendcallbackurl}?merchantOrderId=${order.orderid}&colid=${order.colid}&status=${order.status}`
       : `/error?message=Frontend callback URL not configured`;
-    
+
     return res.redirect(frontendurl);
 
   } catch (err) {

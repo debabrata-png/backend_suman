@@ -29,7 +29,7 @@ const leadactivitydsschema = new mongoose.Schema({
         type: String
     },
     outcome: {
-        type: String  // Interested / Not Interested / Call Back / No Answer / Busy / Wrong Number / Meeting Scheduled
+        type: String  // Interested / Not Interested / Call Back / No Answer / Busy / Wrong Number / Meeting Scheduled / Contacted / DNP1 / DNP2 / DNP3 / DNP4 / DNP5 / DNP6 / DNP7 / Follow Up 1 / Follow Up 2 / Follow Up 3 / Will visit college / Visited College / Registration Done / Admission Confirmed / Lead Closed / Admission In Process
     },
     next_action: {
         type: String

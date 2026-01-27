@@ -7,8 +7,18 @@ const itemmasterschema = new mongoose.Schema({
 
     itemname: { type: String },
     itemcode: { type: String },
-    itemtype: { type: String },
-    description: { type: String },
+    itemtype: {
+        type: String,
+    },
+    category: {
+        type: String,
+    },
+    unit: {
+        type: String,
+    },
+    description: {
+        type: String
+    },
     image: { type: String },
     status: { type: String }
 });

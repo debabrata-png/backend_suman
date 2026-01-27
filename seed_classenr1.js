@@ -3,7 +3,7 @@ const XLSX = require('xlsx');
 const Classenr1 = require('./Models/classenr1');
 
 const MONGODB_URI = "mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const FILE_PATH = './classenr_dhss_output.xlsx';
+const FILE_PATH = './classenr_pcps_output.xlsx';
 const BATCH_SIZE = 500;
 const DELAY_MS = 1000; // 1 second delay between batches
 

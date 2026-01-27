@@ -431,6 +431,40 @@ const rviewbulkattainment = require('./router/viewbulkattainmentrouter.js');
 const raddattendance = require('./router/addattendancerouter.js');
 const rdeleteattendance = require('./router/deleteattendancerouter.js');
 
+const attendancereportctlr = require('./controllers/attendancereportctlr');
+app.post('/api/v2/getattendancereport', attendancereportctlr.getAttendanceReport);
+
+const comunicationdsctlr = require('./controllers/comunicationdsctlr');
+app.post('/api/v2/createcomunication', comunicationdsctlr.createCommunication);
+app.post('/api/v2/getcomunication', comunicationdsctlr.getCommunications);
+app.post('/api/v2/updatecomunication', comunicationdsctlr.updateCommunication);
+app.post('/api/v2/deletecomunication', comunicationdsctlr.deleteCommunication);
+
+const filemasterdsctlr = require('./controllers/filemasterdsctlr');
+app.post('/api/v2/filemasterdsctlr/create', filemasterdsctlr.createfilemasterds);
+app.post('/api/v2/filemasterdsctlr/get', filemasterdsctlr.getfilemasterds);
+app.post('/api/v2/filemasterdsctlr/update', filemasterdsctlr.updatefilemasterds);
+app.post('/api/v2/filemasterdsctlr/delete', filemasterdsctlr.deletefilemasterds);
+
+const filemovementdsctlr = require('./controllers/filemovementdsctlr');
+app.post('/api/v2/filemovementdsctlr/create', filemovementdsctlr.createfilemovementds);
+app.post('/api/v2/filemovementdsctlr/get', filemovementdsctlr.getfilemovementds);
+app.post('/api/v2/filemovementdsctlr/update', filemovementdsctlr.updatefilemovementds);
+app.post('/api/v2/filemovementdsctlr/delete', filemovementdsctlr.deletefilemovementds);
+app.post('/api/v2/filemovementdsctlr/delete', filemovementdsctlr.deletefilemovementds);
+app.post('/api/v2/filemovementdsctlr/searchfaculty', filemovementdsctlr.searchfaculty);
+app.post('/api/v2/filemovementdsctlr/getdepartments', filemovementdsctlr.getDistinctDepartments);
+
+const exammarks2dsctlr = require('./controllers/exammarks2dsctlr');
+app.get('/api/v2/getexammarks2ds', exammarks2dsctlr.getexammarks2ds);
+app.post('/api/v2/createexammarks2ds', exammarks2dsctlr.createexammarks2ds);
+app.post('/api/v2/updateexammarks2ds', exammarks2dsctlr.updateexammarks2ds);
+app.post('/api/v2/updateexammarks2ds', exammarks2dsctlr.updateexammarks2ds);
+app.post('/api/v2/deleteexammarks2ds', exammarks2dsctlr.deleteexammarks2ds);
+
+const attendancetimereportctlr = require('./controllers/attendancetimereportctlr');
+app.post('/api/v2/getattendancetimereport', attendancetimereportctlr.getattendancetimereport);
+
 const rviewiamarkssummary = require('./router/viewiamarkssummaryrouter.js');
 const rfilteriamarkssummary = require('./router/filteriamarkssummaryrouter.js');
 
@@ -467,6 +501,11 @@ const approvalconfigdsctlr = require('./controllers/approvalconfigdsctlr');
 // Approval Config Routes
 app.post('/api/v2/addapprovalconfig', approvalconfigdsctlr.addConfig);
 app.get('/api/v2/getapprovalconfig', approvalconfigdsctlr.getConfig);
+
+const poconfigdsctlr = require('./controllers/poconfigdsctlr');
+app.post('/api/v2/addpoconfigds', poconfigdsctlr.addpoconfigds);
+app.get('/api/v2/getpoconfigds', poconfigdsctlr.getpoconfigds);
+app.post('/api/v2/updatepoconfigds', poconfigdsctlr.updatepoconfigds);
 
 // const programmasterdsRouter = require('./router/programmasterdsRouter');
 // app.use('/api/v2', programmasterdsRouter);
@@ -14399,6 +14438,27 @@ const rmouedit = require('./router/editmourouter.js');
 const rmoudel = require('./router/deletemourouter.js');
 const rmouexport = require('./router/exportmourouter.js');
 
+const itemcategorydsRouter = require('./controllers/itemcategorydsctlr');
+app.post('/api/v2/additemcategoryds', itemcategorydsRouter.additemcategoryds);
+app.get('/api/v2/getallitemcategoryds', itemcategorydsRouter.getallitemcategoryds);
+app.post('/api/v2/updateitemcategoryds', itemcategorydsRouter.updateitemcategoryds);
+app.delete('/api/v2/deleteitemcategoryds', itemcategorydsRouter.deleteitemcategoryds);
+app.get('/api/v2/getitemcategorydsbyid', itemcategorydsRouter.getitemcategorydsbyid);
+
+const itemtypedsRouter = require('./controllers/itemtypedsctlr');
+app.post('/api/v2/additemtypeds', itemtypedsRouter.additemtypeds);
+app.get('/api/v2/getallitemtypeds', itemtypedsRouter.getallitemtypeds);
+app.post('/api/v2/updateitemtypeds', itemtypedsRouter.updateitemtypeds);
+app.delete('/api/v2/deleteitemtypeds', itemtypedsRouter.deleteitemtypeds);
+app.get('/api/v2/getitemtypedsbyid', itemtypedsRouter.getitemtypedsbyid);
+
+const itemunitdsRouter = require('./controllers/itemunitdsctlr');
+app.post('/api/v2/additemunitds', itemunitdsRouter.additemunitds);
+app.get('/api/v2/getallitemunitds', itemunitdsRouter.getallitemunitds);
+app.post('/api/v2/updateitemunitds', itemunitdsRouter.updateitemunitds);
+app.delete('/api/v2/deleteitemunitds', itemunitdsRouter.deleteitemunitds);
+app.get('/api/v2/getitemunitdsbyid', itemunitdsRouter.getitemunitdsbyid);
+
 const rexpenditureadd = require('./router/addexpenditurerouter.js');
 const rexpenditureview = require('./router/viewexpenditurerouter.js');
 const rexpenditureedit = require('./router/editexpenditurerouter.js');
@@ -14598,6 +14658,13 @@ app.use('/exportseedm', rseedmexport);
 
 app.use('/viewnaac', rnaac);
 app.use('/viewnaacuni', rnaacuni);
+
+const feefinedsctlr = require('./controllers/feefinedsctlr');
+app.post('/api/v2/addfeefineds', feefinedsctlr.createfeefineds);
+app.get('/api/v2/getallfeefineds', feefinedsctlr.getfeefineds);
+app.get('/api/v2/getfeefinedsbyid', feefinedsctlr.getfeefinedsbyid);
+app.post('/api/v2/updatefeefineds', feefinedsctlr.updatefeefineds);
+app.get('/api/v2/deletefeefineds', feefinedsctlr.deletefeefineds);
 
 
 app.use('/createcollaboration', rcollabadd);

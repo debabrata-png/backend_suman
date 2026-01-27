@@ -20,13 +20,40 @@ exports.addvendoritemds = async (req, res) => {
 
 exports.getallvendoritemds = async (req, res) => {
     try {
-        const { colid } = req.query;
-        const vendorItems = await vendoritemds.find({ colid });
-        res.status(200).json({
-            success: true,
-            count: vendorItems.length,
-            data: { vendorItems }
-        });
+        const { colid, page, limit } = req.query;
+        const query = { colid };
+
+        if (page && limit) {
+            const pageNum = parseInt(page);
+            const limitNum = parseInt(limit);
+            const skip = (pageNum - 1) * limitNum;
+
+            const total = await vendoritemds.countDocuments(query);
+            const vendorItems = await vendoritemds.find(query)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNum);
+
+            res.status(200).json({
+                success: true,
+                count: vendorItems.length,
+                total,
+                data: { vendorItems },
+                pagination: {
+                    total,
+                    page: pageNum,
+                    limit: limitNum,
+                    pages: Math.ceil(total / limitNum)
+                }
+            });
+        } else {
+            const vendorItems = await vendoritemds.find(query).sort({ createdAt: -1 });
+            res.status(200).json({
+                success: true,
+                count: vendorItems.length,
+                data: { vendorItems }
+            });
+        }
     } catch (error) {
         res.status(500).json({
             success: false,
