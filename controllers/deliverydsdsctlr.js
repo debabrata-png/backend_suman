@@ -206,9 +206,15 @@ exports.markDelivered = async (req, res) => {
             // If not, we might need to query by poid + itemcode.
             // Given the frontend sends itemid = item.itemid (which is usually the DB ID of the PO Item row from getallstorepoitemsds), we can try updating by ID.
             if (detail.itemid) {
-                await storepoitemsds.findByIdAndUpdate(detail.itemid, {
+                const updatedItem = await storepoitemsds.findByIdAndUpdate(detail.itemid, {
                     postatus: 'Delivered'
-                });
+                }, { new: true });
+
+                // Update original Store Requisition if linked
+                if (updatedItem && updatedItem.storereqid) {
+                    const storerequisationds = require('../Models/storerequisationds');
+                    await storerequisationds.findByIdAndUpdate(updatedItem.storereqid, { reqstatus: 'Delivered' });
+                }
             }
         }
 

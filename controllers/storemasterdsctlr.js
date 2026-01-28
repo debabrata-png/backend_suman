@@ -54,8 +54,16 @@ exports.deletestoremasterds = async (req, res) => {
 
 exports.getallstoremasterds = async (req, res) => {
     try {
-        const { colid, page, limit } = req.query;
+        const { colid, page, limit, search } = req.query;
         const query = { colid };
+
+        if (search) {
+            query.$or = [
+                { storename: { $regex: search, $options: 'i' } },
+                { location: { $regex: search, $options: 'i' } },
+                { storemanager: { $regex: search, $options: 'i' } }
+            ];
+        }
 
         if (page && limit) {
             const pageNum = parseInt(page);

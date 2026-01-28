@@ -29,9 +29,17 @@ exports.deleteitemunitds = async (req, res) => {
 
 exports.getallitemunitds = async (req, res) => {
     try {
-        const { colid } = req.query;
-        const items = await itemunitds.find({ colid });
-        res.status(200).json({ status: 'success', results: items.length, data: { items } });
+        const { colid, search } = req.query;
+        let query = { colid };
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { unitcode: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+        }
+        const items = await itemunitds.find(query);
+        res.status(200).json({ status: 'success', results: items.length, count: items.length, data: { items } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
     }

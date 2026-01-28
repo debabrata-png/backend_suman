@@ -4,6 +4,13 @@ exports.addstorepoitemsds = async (req, res) => {
     try {
         // year, poid, vendor, vendorid, quantity, price, description, reqdate, postatus, itemid, itemname, itemtype
         const newItem = await storepoitemsds.create(req.body);
+
+        // Update Store Requisition Status if linked
+        if (req.body.storereqid) {
+            const storerequisationds = require("../Models/storerequisationds");
+            await storerequisationds.findByIdAndUpdate(req.body.storereqid, { reqstatus: 'PO Created' });
+        }
+
         res.status(201).json({
             success: true,
             message: "Store PO Item added successfully",

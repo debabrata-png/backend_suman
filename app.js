@@ -498,9 +498,23 @@ const stockregisterdsctlr = require('./controllers/stockregisterdsctlr');
 const vendordsctlr1 = require('./controllers/vendordsctlr1'); // Renamed to avoid conflict
 const approvalconfigdsctlr = require('./controllers/approvalconfigdsctlr');
 
+const prassignedsctlr = require('./controllers/prassignedsctlr');
+app.post('/api/v2/addprassigneds', prassignedsctlr.addprassigneds);
+app.get('/api/v2/getOEUsers', prassignedsctlr.getOEUsers);
+app.get('/api/v2/getallprassigneds', prassignedsctlr.getallprassigneds);
+app.get('/api/v2/getAssignedRequisitions', prassignedsctlr.getAssignedRequisitions);
+app.post('/api/v2/updateprassigneds', prassignedsctlr.updateprassigneds);
+app.get('/api/v2/deleteprassigneds', prassignedsctlr.deleteprassigneds);
+
 // Approval Config Routes
 app.post('/api/v2/addapprovalconfig', approvalconfigdsctlr.addConfig);
 app.get('/api/v2/getapprovalconfig', approvalconfigdsctlr.getConfig);
+
+const pimprestdsctlr = require('./controllers/pimprestdsctlr');
+app.post('/api/v2/addpimprestds', pimprestdsctlr.addpimprestds);
+app.get('/api/v2/getallpimprestds', pimprestdsctlr.getallpimprestds);
+app.post('/api/v2/updatepimprestds', pimprestdsctlr.updatepimprestds);
+app.get('/api/v2/deletepimprestds', pimprestdsctlr.deletepimprestds);
 
 const poconfigdsctlr = require('./controllers/poconfigdsctlr');
 app.post('/api/v2/addpoconfigds', poconfigdsctlr.addpoconfigds);

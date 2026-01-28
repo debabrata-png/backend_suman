@@ -20,8 +20,10 @@ exports.addstorerequisationds = async (req, res) => {
 
 exports.getallstorerequisationds = async (req, res) => {
     try {
-        const { colid, page, limit } = req.query;
+        const { colid, page, limit, reqstatus, storeid } = req.query;
         const query = { colid };
+        if (reqstatus) query.reqstatus = reqstatus;
+        if (storeid) query.storeid = storeid;
 
         if (page && limit) {
             const pageNum = parseInt(page);

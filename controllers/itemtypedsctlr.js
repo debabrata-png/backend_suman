@@ -54,11 +54,19 @@ exports.deleteitemtypeds = async (req, res) => {
 
 exports.getallitemtypeds = async (req, res) => {
     try {
-        const { colid } = req.query;
-        const itemTypes = await itemtypeds.find({ colid });
+        const { colid, search } = req.query;
+        let query = { colid };
+        if (search) {
+            query.$or = [
+                { itemtype: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+        }
+        const itemTypes = await itemtypeds.find(query);
         res.status(200).json({
             status: 'success',
             results: itemTypes.length,
+            count: itemTypes.length, // Added count for frontend compatibility
             data: {
                 itemTypes
             }

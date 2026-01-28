@@ -42,8 +42,16 @@ exports.addvendords = async (req, res) => {
 // Get all vendors
 exports.getallvendords = async (req, res) => {
     try {
-        const { colid, page, limit } = req.query;
+        const { colid, page, limit, search } = req.query;
         const query = { colid };
+
+        if (search) {
+            query.$or = [
+                { vendorname: { $regex: search, $options: 'i' } },
+                { city: { $regex: search, $options: 'i' } },
+                { state: { $regex: search, $options: 'i' } }
+            ];
+        }
 
         if (page && limit) {
             const pageNum = parseInt(page);
@@ -60,7 +68,7 @@ exports.getallvendords = async (req, res) => {
                 success: true,
                 count: vendors.length,
                 total,
-                data: vendors,
+                data: { vendors },
                 pagination: {
                     total,
                     page: pageNum,
@@ -73,7 +81,7 @@ exports.getallvendords = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 count: vendors.length,
-                data: vendors
+                data: { vendors }
             });
         }
 

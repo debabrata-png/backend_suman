@@ -62,6 +62,9 @@ const storepoitemsdsschema = new mongoose.Schema({
     },
     comments: {
         type: String
+    },
+    storereqid: {
+        type: String // Link to original Store Requisition
     }
 })
 //

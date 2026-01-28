@@ -54,7 +54,8 @@ const storepoorderdsschema = new mongoose.Schema({
     // Dynamic Approval Fields
     currentStep: { type: Number, default: 1 },
     approvalStatus: { type: String, default: 'Pending' },
-    doclink: { type: String }
+    doclink: { type: String },
+    creatorName: { type: String }
 })
 
 const storepoorderds = mongoose.model('storepoorderds', storepoorderdsschema);

@@ -20,8 +20,9 @@ exports.addvendoritemds = async (req, res) => {
 
 exports.getallvendoritemds = async (req, res) => {
     try {
-        const { colid, page, limit } = req.query;
+        const { colid, page, limit, item } = req.query;
         const query = { colid };
+        if (item) query.item = item;
 
         if (page && limit) {
             const pageNum = parseInt(page);

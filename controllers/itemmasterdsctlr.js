@@ -20,8 +20,16 @@ exports.additemmasterds = async (req, res) => {
 
 exports.getallitemmasterds = async (req, res) => {
     try {
-        const { colid, page, limit } = req.query;
+        const { colid, page, limit, search } = req.query;
         const query = { colid };
+
+        if (search) {
+            query.$or = [
+                { itemname: { $regex: search, $options: 'i' } },
+                { itemcode: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+        }
 
         if (page && limit) {
             const pageNum = parseInt(page);
