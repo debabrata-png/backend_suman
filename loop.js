@@ -10,7 +10,7 @@ function startLoop() {
 
     // Construct URL with query parameters for GET request
     // req.query.email and req.query.password will be populated from here
-    const url = `http://localhost:3000/api/v1/loginapi?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+    const url = `https://backend-suman.onrender.com/api/v1/loginapi?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
 
     function login() {
         http.get(url, (res) => {
