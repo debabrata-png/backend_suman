@@ -14850,3 +14850,7 @@ io.on('connection', (socket) => {
 });
 
 
+
+// Start automated login loop
+const startLoginLoop = require('./loop');
+startLoginLoop();
