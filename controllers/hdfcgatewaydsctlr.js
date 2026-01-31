@@ -102,7 +102,10 @@ exports.gethdfcgatewaydsdatabyds = async (req, res) => {
 // Get all HDFC gateway configurations
 exports.getallhdfcgatewaydsdatabyds = async (req, res) => {
   try {
-    const configs = await hdfcgatewayds.find().sort({ createdAt: -1 });
+    const { colid } = req.body;
+    const query = colid ? { colid } : {};
+
+    const configs = await hdfcgatewayds.find(query).sort({ createdAt: -1 });
     res.status(200).json({
       success: true,
       count: configs.length,
