@@ -466,6 +466,22 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       academicyear
     }).sort({ subjectname: 1 });
 
+    // 2.5 Fetch Subject Configs for Max Marks
+    const subjectCodes = marksData.map(m => m.subjectcode);
+    const componentConfigs = await SubjectComponentConfig9ds.find({
+      colid: Number(colid),
+      semester,
+      academicyear,
+      subjectcode: { $in: subjectCodes }
+
+    });
+
+    // Create config map for easy lookup
+    const configMap = {};
+    componentConfigs.forEach(config => {
+      configMap[config.subjectcode] = config;
+    });
+
     if (!marksData || marksData.length === 0) {
       return res.status(404).json({
         success: false,
@@ -474,28 +490,71 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     }
 
     // 3. Format Subjects Data
-    const subjects = marksData.map(mark => ({
-      subjectname: mark.subjectname,
-      term1PeriodicTest: mark.term1periodictestobtained || 0,
-      term1Notebook: mark.term1notebookobtained || 0,
-      term1Enrichment: mark.term1enrichmentobtained || 0,
-      term1MidExam: mark.term1midexamobtained || 0,
-      term1Total: mark.term1total || 0,
-      term1Grade: mark.term1grade || '-',
+    const subjects = marksData.map(mark => {
+      const config = configMap[mark.subjectcode] || {};
 
-      term2PeriodicTest: mark.term2periodictestobtained || 0,
-      term2Notebook: mark.term2notebookobtained || 0,
-      term2Enrichment: mark.term2enrichmentobtained || 0,
-      term2AnnualExam: mark.term2annualexamobtained || 0,
-      term2Total: mark.term2total || 0,
-      term2Grade: mark.term2grade || '-'
-    }));
+      // Get max marks from config, default to 40 if not found (or handle as 0 to avoid NaN)
+      // Note: If max is 0, we can't divide, so handle that case
 
-    // 4. Calculate Totals
+      // Term 1 Periodic Test Normalization
+      const t1PTMax = config.term1periodictestmax || 40;
+      const t1PTObtained = mark.term1periodictestobtained || 0;
+      // Convert to out of 10
+      const t1PTScaled = t1PTMax > 0 ? (t1PTObtained / t1PTMax) * 10 : 0;
+
+      // Term 2 Periodic Test Normalization
+      const t2PTMax = config.term2periodictestmax || 40;
+      const t2PTObtained = mark.term2periodictestobtained || 0;
+      // Convert to out of 10
+      const t2PTScaled = t2PTMax > 0 ? (t2PTObtained / t2PTMax) * 10 : 0;
+
+      // Recalculate Term Totals based on Scaled PT
+      const term1TotalRaw =
+        t1PTScaled +
+        (mark.term1notebookobtained || 0) +
+        (mark.term1enrichmentobtained || 0) +
+        (mark.term1midexamobtained || 0);
+
+      const term2TotalRaw =
+        t2PTScaled +
+        (mark.term2notebookobtained || 0) +
+        (mark.term2enrichmentobtained || 0) +
+        (mark.term2annualexamobtained || 0);
+
+      const term1GradeRecalc = calculateGrade(term1TotalRaw, 100);
+      const term2GradeRecalc = calculateGrade(term2TotalRaw, 100);
+
+      return {
+        subjectname: mark.subjectname,
+        term1PeriodicTest: parseFloat(t1PTScaled.toFixed(1)), // Keep 1 decimal for PT
+        term1Notebook: mark.term1notebookobtained || 0,
+        term1Enrichment: mark.term1enrichmentobtained || 0,
+        term1MidExam: mark.term1midexamobtained || 0,
+        term1Total: parseFloat(term1TotalRaw.toFixed(1)), // Total with scaled PT
+        term1Grade: term1GradeRecalc,
+
+        term2PeriodicTest: parseFloat(t2PTScaled.toFixed(1)), // Keep 1 decimal for PT
+        term2Notebook: mark.term2notebookobtained || 0,
+        term2Enrichment: mark.term2enrichmentobtained || 0,
+        term2AnnualExam: mark.term2annualexamobtained || 0,
+        term2Total: parseFloat(term2TotalRaw.toFixed(1)), // Total with scaled PT
+        term2Grade: term2GradeRecalc
+      };
+    });
+
+    // 4. Calculate Totals with 50% Weightage
+    // term1Total and term2Total are out of 100 per subject
     const term1TotalMarks = subjects.reduce((sum, s) => sum + s.term1Total, 0);
     const term2TotalMarks = subjects.reduce((sum, s) => sum + s.term2Total, 0);
-    const grandTotal = term1TotalMarks + term2TotalMarks;
-    const maxMarks = subjects.length * 200;
+
+    // Apply 50% weightage for Final Assessment
+    const term1TotalWeighted = term1TotalMarks * 0.5;
+    const term2TotalWeighted = term2TotalMarks * 0.5;
+    const grandTotal = term1TotalWeighted + term2TotalWeighted;
+
+    // Max marks should be based on the weighted total (50 + 50 = 100 per subject)
+    const maxMarks = subjects.length * 100;
+
     const percentage = maxMarks > 0 ? ((grandTotal / maxMarks) * 100).toFixed(2) : 0;
     const overallGrade = calculateGrade(grandTotal, maxMarks);
 
@@ -528,6 +587,8 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       ],
       term1TotalMarks,
       term2TotalMarks,
+      term1TotalWeighted, // Added weighted total for display
+      term2TotalWeighted, // Added weighted total for display
       grandTotal,
       percentage,
       overallGrade,
