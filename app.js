@@ -198,6 +198,8 @@ const rpatadd = require('./router/addpatentrouter.js');
 const rpatview = require('./router/viewpatentrouter.js');
 const rpatedit = require('./router/editpatentrouter.js');
 const rpatdel = require('./router/deletepatentrouter.js');
+const universityadmissionreportdsController = require('./controllers/universityadmissionreportds.js');
+const admissioncoursewisereportdsController = require('./controllers/admissioncoursewisereportds.js');
 
 const rbookadd = require('./router/addbookrouter.js');
 const rbookview = require('./router/viewbookrouter.js');
@@ -1103,6 +1105,8 @@ app.use('/addpatent', rpatadd);
 app.use('/viewpatent', rpatview);
 app.use('/editpatent', rpatedit);
 app.use('/deletepatent', rpatdel);
+app.get('/api/v2/universityadmissionreportds', universityadmissionreportdsController.universityadmissionreportds);
+app.get('/api/v2/admissioncoursewisereportds', admissioncoursewisereportdsController.admissioncoursewisereportds);
 
 app.use('/addcompany', rcompanyadd);
 app.use('/viewcompany', rcompanyview);

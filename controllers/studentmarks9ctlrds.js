@@ -46,52 +46,96 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
       }
     ]);
 
-    // Get active subjects with component info using aggregation
-    const activeFieldName = `${componentname}active`;
-    const maxFieldName = `${componentname}max`;
+    // Check if it's an attendance component
+    const attendanceFields = [
+      'term1totalworkingdays', 'term1totalpresentdays',
+      'term2totalworkingdays', 'term2totalpresentdays'
+    ];
+    const isAttendance = attendanceFields.includes(componentname);
 
-    const subjects = await SubjectComponentConfig9ds.aggregate([
-      {
-        $match: {
-          colid: Number(colid),
-          semester: semester,
-          academicyear: academicyear,
-          isactive: true,
-          [activeFieldName]: true
-        }
-      },
-      {
-        $project: {
-          subjectcode: 1,
-          subjectname: 1,
-          maxmarks: `$${maxFieldName}`
-        }
-      },
-      {
-        $sort: { subjectname: 1 }
-      }
-    ]);
+    let subjects = [];
+    let existingMarks = [];
 
-    // Get existing marks using aggregation with lookup
-    const existingMarks = await StudentMarks9ds.aggregate([
-      {
-        $match: {
-          colid: Number(colid),
-          semester: semester,
-          academicyear: academicyear
+    if (isAttendance) {
+      // Return a dummy subject for attendance
+      subjects = [{
+        subjectcode: 'ATTENDANCE',
+        subjectname: 'Attendance',
+        maxmarks: 300 // Arbitrary max
+      }];
+
+      // Get existing marks for ATTENDANCE subject
+      existingMarks = await StudentMarks9ds.aggregate([
+        {
+          $match: {
+            colid: Number(colid),
+            semester: semester,
+            academicyear: academicyear,
+            subjectcode: 'ATTENDANCE'
+          }
+        },
+        {
+          $project: {
+            regno: 1,
+            subjectcode: 1,
+            obtainedmarks: `$${componentname}`, // Direct field name
+            term1totalworkingdays: 1,
+            term2totalworkingdays: 1,
+            term1total: 1,
+            term2total: 1,
+            status: 1
+          }
         }
-      },
-      {
-        $project: {
-          regno: 1,
-          subjectcode: 1,
-          obtainedmarks: `$${componentname}obtained`,
-          term1total: 1,
-          term2total: 1,
-          status: 1
+      ]);
+
+    } else {
+      // Standard subject component logic
+      const activeFieldName = `${componentname}active`;
+      const maxFieldName = `${componentname}max`;
+
+      subjects = await SubjectComponentConfig9ds.aggregate([
+        {
+          $match: {
+            colid: Number(colid),
+            semester: semester,
+            academicyear: academicyear,
+            isactive: true,
+            [activeFieldName]: true
+          }
+        },
+        {
+          $project: {
+            subjectcode: 1,
+            subjectname: 1,
+            maxmarks: `$${maxFieldName}`
+          }
+        },
+        {
+          $sort: { subjectname: 1 }
         }
-      }
-    ]);
+      ]);
+
+      // Get existing marks using aggregation with lookup
+      existingMarks = await StudentMarks9ds.aggregate([
+        {
+          $match: {
+            colid: Number(colid),
+            semester: semester,
+            academicyear: academicyear
+          }
+        },
+        {
+          $project: {
+            regno: 1,
+            subjectcode: 1,
+            obtainedmarks: `$${componentname}obtained`,
+            term1total: 1,
+            term2total: 1,
+            status: 1
+          }
+        }
+      ]);
+    }
 
     res.json({
       success: true,
@@ -114,7 +158,7 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
 // Bulk save marks using bulkWrite (optimized)
 exports.bulksavemarksbycomponent9ds = async (req, res) => {
   try {
-    const { colid, user, semester, academicyear, componentname, marks } = req.body;
+    const { colid, user, semester, academicyear, componentname, marks, extraUpdates } = req.body;
 
     if (!marks || marks.length === 0) {
       return res.status(400).json({
@@ -123,7 +167,19 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
       });
     }
 
-    const obtainedFieldName = `${componentname}obtained`;
+    const attendanceFields = [
+      'term1totalworkingdays', 'term1totalpresentdays',
+      'term2totalworkingdays', 'term2totalpresentdays'
+    ];
+    const isAttendance = attendanceFields.includes(componentname);
+
+    let obtainedFieldName;
+    if (isAttendance) {
+      obtainedFieldName = componentname;
+    } else {
+      obtainedFieldName = `${componentname}obtained`;
+    }
+
     const isTerm1 = componentname.startsWith('term1');
 
     // Prepare bulk operations
@@ -134,6 +190,10 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
         [obtainedFieldName]: obtained || 0,
         updatedat: new Date()
       };
+
+      if (extraUpdates) {
+        Object.assign(updateFields, extraUpdates);
+      }
 
       // Add student/subject names if provided
       if (studentname) updateFields.studentname = studentname;
@@ -459,12 +519,16 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     }
 
     // 2. Fetch Marks Data
-    const marksData = await StudentMarks9ds.find({
+    const allMarksData = await StudentMarks9ds.find({
       regno,
       colid: Number(colid),
       semester,
       academicyear
     }).sort({ subjectname: 1 });
+
+    // Filter out Attendance record for scholastic table
+    const marksData = allMarksData.filter(m => m.subjectcode !== 'ATTENDANCE');
+    const attendanceRecord = allMarksData.find(m => m.subjectcode === 'ATTENDANCE') || {};
 
     // 2.5 Fetch Subject Configs for Max Marks
     const subjectCodes = marksData.map(m => m.subjectcode);
@@ -558,8 +622,23 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     const percentage = maxMarks > 0 ? ((grandTotal / maxMarks) * 100).toFixed(2) : 0;
     const overallGrade = calculateGrade(grandTotal, maxMarks);
 
-    // 5. Fetch Attendance
-    const attendanceData = await calculateAttendance(regno, colid, semester, academicyear);
+    // 5. Fetch Attendance (Manual from StudentMarks)
+    // Fallback to first record if not found in dedicated record
+    const fallbackRecord = marksData.length > 0 ? marksData[0] : {};
+
+    // Helper to get value > 0
+    const getVal = (rec, field) => (rec && rec[field]) ? rec[field] : 0;
+
+    const attendanceData = {
+      term1: {
+        working: getVal(attendanceRecord, 'term1totalworkingdays') || getVal(fallbackRecord, 'term1totalworkingdays'),
+        present: getVal(attendanceRecord, 'term1totalpresentdays') || getVal(fallbackRecord, 'term1totalpresentdays')
+      },
+      term2: {
+        working: getVal(attendanceRecord, 'term2totalworkingdays') || getVal(fallbackRecord, 'term2totalworkingdays'),
+        present: getVal(attendanceRecord, 'term2totalpresentdays') || getVal(fallbackRecord, 'term2totalpresentdays')
+      }
+    };
 
     // 6. Construct PDF Data Object
     const pdfData = {
@@ -571,11 +650,12 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         mother: userData.mothername || '',
         address: userData.address || 'Behind Ambedkar Bhawan, Mudapar Bazar, Korba (C.G.)',
         classSection: `Class ${semester} - ${userData.section || 'A'}`,
-        rollNo: userData.rollno || regno,
+        classSection: `Class ${semester} - ${userData.section || 'A'}`,
+        rollNo: userData.rollno || '', // Empty if not present
         dob: userData.dob || '01-01-2000',
         admissionNo: regno,
         contact: userData.phone || '',
-        cbseRegNo: regno,
+        cbseRegNo: userData.cbseno || '', // Fetch correct CBSE No
         photo: userData.photo || ''
       },
       attendance: attendanceData,
