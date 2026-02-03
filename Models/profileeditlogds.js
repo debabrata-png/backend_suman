@@ -5,17 +5,17 @@ const profileEditLogSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  
+
   name: {
     type: String,
     required: true
   },
-  
+
   regno: {
     type: String,
-    index: true
+
   },
-  
+
   // What was changed
   changes: [{
     fieldName: {
@@ -37,26 +37,26 @@ const profileEditLogSchema = new mongoose.Schema({
       required: true
     }
   }],
-  
+
   // Metadata
   changeType: {
     type: String,
     enum: ["Create", "Update", "Delete"],
     default: "Update"
   },
-  
+
   // Summary
   totalFieldsChanged: {
     type: Number,
     default: 0
   },
-  
+
   notes: {
     type: String
   }
-  
-}, { 
-  timestamps: true 
+
+}, {
+  timestamps: true
 });
 
 // Compound indexes for efficient queries

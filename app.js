@@ -522,6 +522,14 @@ const poconfigdsctlr = require('./controllers/poconfigdsctlr');
 app.post('/api/v2/addpoconfigds', poconfigdsctlr.addpoconfigds);
 app.get('/api/v2/getpoconfigds', poconfigdsctlr.getpoconfigds);
 app.post('/api/v2/updatepoconfigds', poconfigdsctlr.updatepoconfigds);
+// Cash Approval Routes
+// Cash Approval Routes
+const CashApprovaldsctlr = require('./controllers/CashApprovaldsctlr');
+app.get('/api/v2/cashapproval', CashApprovaldsctlr.getAllRequests);
+app.post('/api/v2/cashapproval', CashApprovaldsctlr.createRequest);
+app.get('/api/v2/cashapproval/:id', CashApprovaldsctlr.getRequestById);
+app.post('/api/v2/cashapproval/delete', CashApprovaldsctlr.deleteRequest);
+app.post('/api/v2/cashapproval/approve', CashApprovaldsctlr.approveRequest);
 
 // const programmasterdsRouter = require('./router/programmasterdsRouter');
 // app.use('/api/v2', programmasterdsRouter);
@@ -565,6 +573,14 @@ app.post('/api/v2/updateitemtypeds', itemtypedsctlr.updateitemtypeds);
 app.get('/api/v2/deleteitemtypeds', itemtypedsctlr.deleteitemtypeds);
 app.get('/api/v2/getallitemtypeds', itemtypedsctlr.getallitemtypeds);
 app.get('/api/v2/getitemtypedsbyid', itemtypedsctlr.getitemtypedsbyid);
+
+// 5a. Item Unit
+const itemunitdsctlr = require('./controllers/itemunitdsctlr');
+app.post('/api/v2/additemunitds', itemunitdsctlr.additemunitds);
+app.post('/api/v2/updateitemunitds', itemunitdsctlr.updateitemunitds);
+app.get('/api/v2/deleteitemunitds', itemunitdsctlr.deleteitemunitds);
+app.get('/api/v2/getallitemunitds', itemunitdsctlr.getallitemunitds);
+app.get('/api/v2/getitemunitdsbyid', itemunitdsctlr.getitemunitdsbyid);
 
 // 6. Requisition (Faculty)
 app.post('/api/v2/addrequisationds', requisationdsctlr.addrequisationds);
@@ -14698,13 +14714,15 @@ app.use('/deletecbcsprogram', rcbcsdel);
 
 
 
+
+
 //app.route('/api/v1/tours').get(getalltours);
 //app.route('/api/v1/tours/:id/:x').get(gettour);
 
 
 
 // start express
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 // app.listen(port, () => {
 //     console.log(`App running in port ${port}`);
 // });

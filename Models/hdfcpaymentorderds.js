@@ -13,7 +13,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
     type: Number,
     required: [true, 'Please enter colid']
   },
-  
+
   // Student details
   student: {
     type: String,
@@ -31,7 +31,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
     type: String,
     required: [true, 'Please enter student phone']
   },
-  
+
   // Order identification
   orderid: {
     type: String,
@@ -54,7 +54,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
     type: String
     // Payment redirect URL from HDFC
   },
-  
+
   // Amount details
   originalamount: {
     type: Number,
@@ -72,7 +72,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
     type: Number,
     required: [true, 'Please enter final amount']
   },
-  
+
   // Payment type
   paymenttype: {
     type: String,
@@ -84,7 +84,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
     type: String,
     required: [true, 'Please enter payment purpose']
   },
-  
+
   // Academic details
   academicyear: {
     type: String
@@ -104,7 +104,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
   admissionyear: {
     type: String
   },
-  
+
   // Payment status
   status: {
     type: String,
@@ -122,7 +122,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
     type: String
     // Payment instrument type (UPI, CARD, NETBANKING, etc.)
   },
-  
+
   // HDFC response details
   paymentdetails: {
     type: mongoose.Schema.Types.Mixed
@@ -132,7 +132,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed
     // Payment instrument details from HDFC
   },
-  
+
   // Coupon details
   couponapplied: {
     type: Boolean,
@@ -144,7 +144,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
   couponid: {
     type: String
   },
-  
+
   // Timestamps
   initiatedat: {
     type: Date,
@@ -159,7 +159,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
   expiresat: {
     type: Date
   },
-  
+
   // Ledger tracking
   ledgerentrycreated: {
     type: Boolean,
@@ -168,7 +168,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
   ledgerentryid: {
     type: String
   },
-  
+
   // URLs
   redirecturl: {
     type: String
@@ -176,7 +176,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
   callbackurl: {
     type: String
   },
-  
+
   // Error details
   errordetails: {
     type: mongoose.Schema.Types.Mixed
@@ -187,7 +187,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
   errormessage: {
     type: String
   },
-  
+
   // Refund information
   refund: {
     type: mongoose.Schema.Types.Mixed
@@ -201,7 +201,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
   refundrequestid: {
     type: String
   },
-  
+
   // Fee details
   feegroup: {
     type: String
@@ -216,7 +216,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
     type: String
   },
   frontendcallbackurl: { type: String },
-  
+
   // Additional information
   comments: {
     type: String
@@ -234,7 +234,7 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
 hdfcpaymentorderdsschema.index({ colid: 1, status: 1, createdAt: -1 });
 hdfcpaymentorderdsschema.index({ regno: 1, colid: 1, createdAt: -1 });
 hdfcpaymentorderdsschema.index({ studentemail: 1 });
-hdfcpaymentorderdsschema.index({ orderid: 1 });
+// hdfcpaymentorderdsschema.index({ orderid: 1 });
 hdfcpaymentorderdsschema.index({ merchanttransactionid: 1 });
 hdfcpaymentorderdsschema.index({ hdfcorderid: 1 });
 hdfcpaymentorderdsschema.index({ hdfctransactionid: 1 });
@@ -242,7 +242,7 @@ hdfcpaymentorderdsschema.index({ colid: 1, regno: 1, status: 1 });
 hdfcpaymentorderdsschema.index({ colid: 1, paymenttype: 1, createdAt: -1 });
 
 // Pre-save middleware
-hdfcpaymentorderdsschema.pre('save', async function(next) {
+hdfcpaymentorderdsschema.pre('save', async function (next) {
   if (this.isNew && this.status === 'INITIATED') {
     if (!this.expiresat) {
       // Set expiry to 30 minutes from now

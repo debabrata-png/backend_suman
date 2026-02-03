@@ -16,7 +16,7 @@ const connectDB = async () => {
             useUnifiedTopology: true
         });
         console.log("MongoDB connected");
-    }catch (err) {
+    } catch (err) {
         console.error(err);
         process.exit(1);
     }
@@ -29,17 +29,17 @@ const seeduser = async () => {
 
         // console.log(user);
 
-        // const user = await User.updateMany(
-        //     {email: "faculty1@ogi.com"},
-        //     {$set: {lastlogin: new Date('2026-12-01T10:00:00Z')}}
-        // )
         const user = await User.updateMany(
-            {email: "fr3d@gmail.com"},
-            {$set: {role: "Faculty"}}
+            { email: "demo2@campus.technology" },
+            { $set: { lastlogin: new Date('2027-12-01T10:00:00Z') } }
         )
+        // const user = await User.updateMany(
+        //     {email: "fr3d@gmail.com"},
+        //     {$set: {role: "Faculty"}}
+        // )
         console.log(user);
         mongoose.connection.close();
-    }catch (err) {
+    } catch (err) {
         console.error(err);
     }
 }
