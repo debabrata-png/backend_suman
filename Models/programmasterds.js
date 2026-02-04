@@ -24,6 +24,10 @@ const coursemasterdsschema = new mongoose.Schema({
     program_type: {
         type: String // e.g., Undergraduate, Postgraduate, Diploma
     },
+    total_seats: {
+        type: Number,
+        default: 0
+    },
     duration: {
         type: String  // 3 Years / 4 Years / 5 Years
     },

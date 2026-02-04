@@ -14873,6 +14873,13 @@ io.on('connection', (socket) => {
 
 
 
+
+
+// Admission Report API
+const admissionInstitutionWiseReport = require('./controllers/admissioninstitutionwisereport');
+app.get('/api/v2/admission-institution-wise-report', admissionInstitutionWiseReport.getAdmissionInstitutionWiseReport);
+
+
 // Start automated login loop
 const startLoginLoop = require('./loop');
 startLoginLoop();
