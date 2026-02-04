@@ -442,6 +442,18 @@ app.post('/api/v2/getcomunication', comunicationdsctlr.getCommunications);
 app.post('/api/v2/updatecomunication', comunicationdsctlr.updateCommunication);
 app.post('/api/v2/deletecomunication', comunicationdsctlr.deleteCommunication);
 
+const pipelinestageagcontroller = require('./controllers/pipelinestageagcontroller');
+app.post('/api/v2/createpipelinestageag', pipelinestageagcontroller.createpipelinestageag);
+app.get('/api/v2/getallpipelinestageag', pipelinestageagcontroller.getallpipelinestageag);
+app.post('/api/v2/updatepipelinestageag', pipelinestageagcontroller.updatepipelinestageag);
+app.get('/api/v2/deletepipelinestageag/:id', pipelinestageagcontroller.deletepipelinestageag);
+
+const outcomeagcontroller = require('./controllers/outcomeagcontroller');
+app.post('/api/v2/createoutcomeag', outcomeagcontroller.createoutcomeag);
+app.get('/api/v2/getalloutcomeag', outcomeagcontroller.getalloutcomeag);
+app.post('/api/v2/updateoutcomeag', outcomeagcontroller.updateoutcomeag);
+app.get('/api/v2/deleteoutcomeag/:id', outcomeagcontroller.deleteoutcomeag);
+
 const filemasterdsctlr = require('./controllers/filemasterdsctlr');
 app.post('/api/v2/filemasterdsctlr/create', filemasterdsctlr.createfilemasterds);
 app.post('/api/v2/filemasterdsctlr/get', filemasterdsctlr.getfilemasterds);
