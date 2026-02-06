@@ -100,7 +100,7 @@ app.use(function (req, res, next) {
 //app.set('view engine', 'pug');
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(session({
   name: "my_session",
   secret: "my_secret",
@@ -177,7 +177,7 @@ app.use("/addteachingfeedback", express.static(path.join(__dirname, 'public')));
 app.use("/adddeptfeedback", express.static(path.join(__dirname, 'public')));
 //app.use("/viewanswer", express.static(path.join(__dirname, 'public')));
 //app.use(express.static(`${__dirname}/admin-theme`));
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 
 const router1 = require('./router/approuter.js');

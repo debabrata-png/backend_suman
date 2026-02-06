@@ -47,7 +47,7 @@ const generateRollNo = async (programcode, admissionyear, colid) => {
 
     return newRollNo;
   } catch (error) {
-    console.error("Error generating roll number:", error);
+    //console.error("Error generating roll number:", error);
     throw error;
   }
 };
@@ -95,7 +95,7 @@ exports.ds1createuser = async (req, res) => {
   }
 };
 
-// Bulk Create Users (Admin)
+// Bulk Create Users (Admin) - OPTIMIZED
 exports.ds1bulkcreateuser = async (req, res) => {
   try {
     const users = req.body.users; // Array of user objects
@@ -107,32 +107,63 @@ exports.ds1bulkcreateuser = async (req, res) => {
     // Add lastlogin to each user (90 days from now)
     const usersWithLastLogin = users.map(user => ({
       ...user,
-      lastlogin: user.lastlogin || calculateLastLogin()
+      lastlogin: user.lastlogin || calculateLastLogin(),
+      rollno: user.rollno || null // Ensure rollno field exists
     }));
 
-    // ✅ GENERATE ROLL NUMBERS FOR ALL USERS
-    const usersWithRollNo = [];
-
-    for (let user of usersWithLastLogin) {
-      // Ensure colid is present (frontend sends it, but safeguard here)
+    // Group users by key: `${colid}-${programcode}-${admissionyear}`
+    const groups = {};
+    for (const user of usersWithLastLogin) {
       if (!user.colid) {
-        // Optionally fetch from request user session if available, or skip/error. 
-        // Assuming frontend logic handles it as seen in BulkUploadUsersdsoct18.jsx
-        console.warn("User missing colid during bulk upload:", user.email);
+        // //console.warn("User missing colid:", user.email);
+        continue;
+      }
+      // Only auto-generate if missing rollno and has required fields
+      if (!user.rollno && user.programcode && user.admissionyear) {
+        const key = `${user.colid}-${user.programcode}-${user.admissionyear}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(user);
+      }
+    }
+
+    // Fetch max sequence for each group and assign roll numbers
+    for (const key in groups) {
+      const [colid, programcode, admissionyear] = key.split('-');
+      const groupUsers = groups[key];
+
+      // Find the last roll number pattern
+      const rollnoPattern = `${programcode}-${admissionyear}-`;
+      const lastUser = await User.findOne({
+        colid: colid,
+        programcode: programcode,
+        admissionyear: admissionyear,
+        rollno: { $regex: `^${rollnoPattern}`, $options: 'i' }
+      }).sort({ rollno: -1 });
+
+      let nextSequence = 1;
+      if (lastUser && lastUser.rollno) {
+        const parts = lastUser.rollno.split('-');
+        const lastSeq = parseInt(parts[parts.length - 1]);
+        if (!isNaN(lastSeq)) nextSequence = lastSeq + 1;
       }
 
-      // Generate rollno if not provided
-      if (!user.rollno && user.programcode && user.admissionyear && user.colid) {
-        user.rollno = await generateRollNo(user.programcode, user.admissionyear, user.colid);
+      // Assign sequentially in memory
+      for (const user of groupUsers) {
+        const sequenceStr = nextSequence.toString().padStart(3, '0');
+        user.rollno = `${programcode}-${admissionyear}-${sequenceStr}`;
+        nextSequence++;
       }
+    }
 
-      // Copy rollno to regno if regno not provided
+    // Now all users (who needed one) have a rollno.
+    // Ensure regno is populated
+    for (const user of usersWithLastLogin) {
       if (!user.regno && user.rollno) {
         user.regno = user.rollno;
       }
-
-      usersWithRollNo.push(user);
     }
+
+    const usersWithRollNo = usersWithLastLogin;
 
     // Validate and filter out duplicates
     // Check duplicates based on email
@@ -159,7 +190,7 @@ exports.ds1bulkcreateuser = async (req, res) => {
       data: createdUsers
     });
   } catch (error) {
-    console.error("Bulk create error:", error);
+    //console.error("Bulk create error:", error);
     res.status(500).json({
       message: "Error creating users",
       error: error.message
