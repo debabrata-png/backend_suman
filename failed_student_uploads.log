@@ -1,8 +1,7 @@
-Batch Upload Log - Timestamp: 2026-01-22T17:31:05.132Z
+Batch Upload Log - Timestamp: 2026-02-05T08:19:37.935Z
 
-=== Processing File: ./SORT_BETC.xlsx ===
+=== Processing File: ./PCNRC STUDENT DATA.xlsx ===
+SKIPPED RECORDS:
+  Row 48: Name=N/A - Reason: Cannot generate email (Missing Regno AND (Name/Phone))
+  Row 49: Name=N/A - Reason: Cannot generate email (Missing Regno AND (Name/Phone))
 
-=== Processing File: ./SORT_DIPLOMA.xlsx ===
-
-=== Processing File: ./SORT_Mtech.xlsx ===
-Database Insertion Failures:

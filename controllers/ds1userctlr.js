@@ -10,14 +10,18 @@ const calculateLastLogin = () => {
 // ==========================================
 // HELPER: Generate Roll Number
 // ==========================================
-const generateRollNo = async (programcode, admissionyear) => {
+// ==========================================
+// HELPER: Generate Roll Number
+// ==========================================
+const generateRollNo = async (programcode, admissionyear, colid) => {
   try {
-    // Find the last roll number for this program and year
+    // Find the last roll number for this program, year, AND college
     // Format: CSE-2025-103
     const rollnoPattern = `${programcode}-${admissionyear}-`;
-    
+
     // Find all users with this programcode and year, sorted by rollno descending
     const lastUser = await User.findOne({
+      colid: colid, // Scope by college ID
       programcode: programcode,
       admissionyear: admissionyear,
       rollno: { $regex: `^${rollnoPattern}`, $options: 'i' }
@@ -29,8 +33,8 @@ const generateRollNo = async (programcode, admissionyear) => {
       // Extract the sequence number from the last roll number
       // Example: "CSE-2025-103" -> extract "103"
       const parts = lastUser.rollno.split('-');
-      if (parts.length === 3) {
-        const lastSequence = parseInt(parts[2]);
+      if (parts.length >= 3) { // Ensure correct format
+        const lastSequence = parseInt(parts[parts.length - 1]); // Get last part
         if (!isNaN(lastSequence)) {
           nextSequence = lastSequence + 1;
         }
@@ -40,7 +44,7 @@ const generateRollNo = async (programcode, admissionyear) => {
     // Format sequence with leading zeros (e.g., 001, 010, 103)
     const sequenceStr = nextSequence.toString().padStart(3, '0');
     const newRollNo = `${programcode}-${admissionyear}-${sequenceStr}`;
-    
+
     return newRollNo;
   } catch (error) {
     console.error("Error generating roll number:", error);
@@ -58,7 +62,7 @@ exports.ds1createuser = async (req, res) => {
     const userData = req.body;
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email: userData.email });
+    const existingUser = await User.findOne({ email: userData.email, colid: userData.colid }); // Scope uniqueness by email + colid if needed, or just email
     if (existingUser) {
       return res.status(400).json({ message: "User with this email already exists" });
     }
@@ -69,8 +73,8 @@ exports.ds1createuser = async (req, res) => {
     }
 
     // ✅ AUTO-GENERATE ROLL NUMBER
-    if (!userData.rollno && userData.programcode && userData.admissionyear) {
-      userData.rollno = await generateRollNo(userData.programcode, userData.admissionyear);
+    if (!userData.rollno && userData.programcode && userData.admissionyear && userData.colid) {
+      userData.rollno = await generateRollNo(userData.programcode, userData.admissionyear, userData.colid);
     }
 
     // ✅ COPY ROLLNO TO REGNO IF REGNO NOT PROVIDED
@@ -108,22 +112,30 @@ exports.ds1bulkcreateuser = async (req, res) => {
 
     // ✅ GENERATE ROLL NUMBERS FOR ALL USERS
     const usersWithRollNo = [];
-    
+
     for (let user of usersWithLastLogin) {
-      // Generate rollno if not provided
-      if (!user.rollno && user.programcode && user.admissionyear) {
-        user.rollno = await generateRollNo(user.programcode, user.admissionyear);
+      // Ensure colid is present (frontend sends it, but safeguard here)
+      if (!user.colid) {
+        // Optionally fetch from request user session if available, or skip/error. 
+        // Assuming frontend logic handles it as seen in BulkUploadUsersdsoct18.jsx
+        console.warn("User missing colid during bulk upload:", user.email);
       }
-      
+
+      // Generate rollno if not provided
+      if (!user.rollno && user.programcode && user.admissionyear && user.colid) {
+        user.rollno = await generateRollNo(user.programcode, user.admissionyear, user.colid);
+      }
+
       // Copy rollno to regno if regno not provided
       if (!user.regno && user.rollno) {
         user.regno = user.rollno;
       }
-      
+
       usersWithRollNo.push(user);
     }
 
     // Validate and filter out duplicates
+    // Check duplicates based on email
     const emails = usersWithRollNo.map(u => u.email);
     const existingUsers = await User.find({ email: { $in: emails } });
     const existingEmails = existingUsers.map(u => u.email);
@@ -131,9 +143,10 @@ exports.ds1bulkcreateuser = async (req, res) => {
     const newUsers = usersWithRollNo.filter(u => !existingEmails.includes(u.email));
 
     if (newUsers.length === 0) {
-      return res.status(400).json({
-        message: "All users already exist",
-        duplicates: existingEmails
+      return res.status(200).json({ // Changed to 200 to allow partial success workflow frontend handling, or just message
+        message: "All users already exist or no new valid users found",
+        duplicates: existingEmails,
+        created: 0
       });
     }
 
@@ -146,6 +159,7 @@ exports.ds1bulkcreateuser = async (req, res) => {
       data: createdUsers
     });
   } catch (error) {
+    console.error("Bulk create error:", error);
     res.status(500).json({
       message: "Error creating users",
       error: error.message
@@ -178,11 +192,11 @@ exports.ds1getalluser = async (req, res) => {
         // Handle numeric fields
         if (['status', 'srno', 'obtain', 'bonus', 'weightage'].includes(key)) {
           query[key] = parseInt(otherFilters[key]);
-        } 
+        }
         // Handle regex search for text fields
-        else if (['name', 'email', 'regno', 'rollno', 'phone', 'role', 'department', 
-                  'semester', 'section', 'programcode', 'admissionyear', 'gender',
-                  'category', 'fathername', 'mothername'].includes(key)) {
+        else if (['name', 'email', 'regno', 'rollno', 'phone', 'role', 'department',
+          'semester', 'section', 'programcode', 'admissionyear', 'gender',
+          'category', 'fathername', 'mothername'].includes(key)) {
           query[key] = { $regex: otherFilters[key], $options: 'i' };
         }
         // Default: exact match
@@ -577,7 +591,7 @@ exports.ds1getcounsellors = async (req, res) => {
     return res.status(200).json({
       data: counsellors
     })
-  }catch (error) {
+  } catch (error) {
     res.status(500).json({
       message: "Error fetching counsellors",
       error: error.message

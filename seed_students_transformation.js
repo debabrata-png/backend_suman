@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const MONGODB_URI = "mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const FILES = ['./SORT_BETC.xlsx', './SORT_DIPLOMA.xlsx', './SORT_Mtech.xlsx'];
+const FILES = ["./PCNRC STUDENT DATA.xlsx"];
 const FAILED_LOG_FILE = './failed_student_uploads.log';
 const OUTPUT_CREDENTIALS_FILE = './generated_student_credentials.xlsx';
 
@@ -126,7 +126,7 @@ const processFile = async (filePath, logStream, allCredentials) => {
             section: valOrNA(row.section),
             gender: valOrNA(row.gender),
             department: valOrNA(row.department),
-            colid: row.colid ? Number(row.colid) : 3098,
+            colid:Number(row.colid),
             user: row.user ? String(row.user).trim() : 'adminsopr@pu.edu.in',
             status: 1,
             category: valOrNA(row.category),

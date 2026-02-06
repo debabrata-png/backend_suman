@@ -1,6 +1,8 @@
 const StudentMarks9ds = require('../Models/studentmarks9ds');
 const SubjectComponentConfig9ds = require('../Models/subjectcomponentconfig9ds');
 const User = require('../Models/user');
+const CoScholasticActivity9ds = require('../Models/CoScholasticActivity9ds');
+const CoScholasticGrade9ds = require('../Models/CoScholasticGrade9ds');
 
 // Helper function to calculate grade
 function calculateGrade(obtained, max) {
@@ -107,6 +109,7 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
           $project: {
             subjectcode: 1,
             subjectname: 1,
+            isadditional: 1,
             maxmarks: `$${maxFieldName}`
           }
         },
@@ -590,6 +593,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
 
       return {
         subjectname: mark.subjectname,
+        isAdditional: config.isadditional || false, // Pass additional flag
         term1PeriodicTest: parseFloat(t1PTScaled.toFixed(1)), // Keep 1 decimal for PT
         term1Notebook: mark.term1notebookobtained || 0,
         term1Enrichment: mark.term1enrichmentobtained || 0,
@@ -640,6 +644,25 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       }
     };
 
+    // 5.5 Fetch Co-Scholastic Grades
+    const coActivities = await CoScholasticActivity9ds.find({ colid: Number(colid), isactive: true }).sort({ createdat: 1 });
+    const coGrades = await CoScholasticGrade9ds.find({
+      colid: Number(colid),
+      regno: regno,
+      academicyear: academicyear
+    });
+
+    const coGradeMap = {};
+    coGrades.forEach(g => {
+      coGradeMap[g.activityid.toString()] = g;
+    });
+
+    const coScholasticData = coActivities.map(act => ({
+      area: act.activityname,
+      term1Grade: (coGradeMap[act._id.toString()] && coGradeMap[act._id.toString()].term1grade) || '',
+      term2Grade: (coGradeMap[act._id.toString()] && coGradeMap[act._id.toString()].term2grade) || ''
+    }));
+
     // 6. Construct PDF Data Object
     const pdfData = {
       session: academicyear,
@@ -660,11 +683,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       },
       attendance: attendanceData,
       subjects: subjects,
-      coScholastic: [ // Default co-scholastic data if not in DB
-        { area: "Work Education", term1Grade: "A", term2Grade: "A" },
-        { area: "Art Education", term1Grade: "A", term2Grade: "A" },
-        { area: "Health & Physical Education", term1Grade: "A", term2Grade: "A" }
-      ],
+      coScholastic: coScholasticData,
       term1TotalMarks,
       term2TotalMarks,
       term1TotalWeighted, // Added weighted total for display

@@ -1458,6 +1458,11 @@ app.get('/api/v1/rvalueaddedcourses', rapicontroller.getviewaddonc);
 app.get('/api/v1/rvalueaddedclass', rapicontroller.getviewvacclass);
 app.get('/api/v1/rgetvacattend/:id', rapicontroller.getvacattend);
 app.get('/api/v1/renrollstud', rapicontroller.getenrollstud);
+
+// Report Card Config Routes
+const schreportcardconfigdsctlr = require('./controllers/schreportcardconfigdsctlr');
+app.post('/api/v2/saveschreportconfds', schreportcardconfigdsctlr.saveschreportconfds);
+app.get('/api/v2/getschreportconfds', schreportcardconfigdsctlr.getschreportconfds);
 app.get('/api/v1/rgetvacenroll', rapicontroller.getvacenroll);
 app.get('/api/v1/rgetvacclasstoday', rapicontroller.getvacclasstoday);
 app.get('/api/v1/rgetviewclub', rapicontroller.getviewclub);
@@ -4857,6 +4862,16 @@ app.get('/api/v2/getallocations', aiseatcontroller.getallocations);
 // Import controllers
 const subjectcomponentconfig9ctlrds = require('./controllers/subjectcomponentconfig9ctlrds');
 const studentmarks9ctlrds = require('./controllers/studentmarks9ctlrds');
+const coscholastic9ctlrds = require('./controllers/coscholastic9ctlrds');
+
+// Co-Scholastic Routes
+app.get('/api/v2/coscholastic/activities', coscholastic9ctlrds.getActivities);
+app.post('/api/v2/coscholastic/activity', coscholastic9ctlrds.createActivity);
+app.post('/api/v2/coscholastic/activity/update', coscholastic9ctlrds.updateActivity);
+app.post('/api/v2/coscholastic/activity/delete', coscholastic9ctlrds.deleteActivity);
+app.get('/api/v2/coscholastic/entry-data', coscholastic9ctlrds.getStudentsForGradeEntry);
+app.post('/api/v2/coscholastic/grades', coscholastic9ctlrds.saveGrades);
+
 
 // ===== SUBJECT COMPONENT CONFIGURATION ROUTES (Class 9-10) =====
 
