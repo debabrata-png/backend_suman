@@ -181,6 +181,7 @@ exports.ds1getalluser = async (req, res) => {
       status,
       page = 1,
       limit = 50,
+      excludeRole, // ✅ Destructure to prevent adding to otherFilters
       ...otherFilters
     } = req.query;
 
@@ -197,7 +198,7 @@ exports.ds1getalluser = async (req, res) => {
         else if (['name', 'email', 'regno', 'rollno', 'phone', 'role', 'department',
           'semester', 'section', 'programcode', 'admissionyear', 'gender',
           'category', 'fathername', 'mothername'].includes(key)) {
-          query[key] = { $regex: otherFilters[key], $options: 'i' };
+          query[key] = { $regex: String(otherFilters[key]), $options: 'i' };
         }
         // Default: exact match
         else {
@@ -206,6 +207,9 @@ exports.ds1getalluser = async (req, res) => {
       }
     });
     if (role) query.role = role;
+    if (excludeRole) {
+      query.role = { ...(query.role || {}), $ne: excludeRole };
+    }
     if (department) query.department = department;
     if (semester) query.semester = semester;
     if (section) query.section = section;
