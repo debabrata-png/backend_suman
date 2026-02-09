@@ -3708,6 +3708,9 @@ app.get('/api/v2/getappbyyear', aimdebcontroller.getappbyyear);
 app.post('/api/v2/createApplicationForm', aimdebcontroller.createApplicationForm);
 app.get('/api/v2/getApplicationForm', aimdebcontroller.getApplicationForm);
 
+const applicationcontrollerann = require('./controllers/applicationcontrollerann');
+app.post('/api/v2/createApplicationFormann', applicationcontrollerann.createApplicationann);
+
 const applicationreviewctlr = require('./controllers/applicationreviewctlr');
 
 app.get("/api/v2/checkregno", applicationreviewctlr.checkregno);
@@ -4871,6 +4874,15 @@ app.post('/api/v2/coscholastic/activity/update', coscholastic9ctlrds.updateActiv
 app.post('/api/v2/coscholastic/activity/delete', coscholastic9ctlrds.deleteActivity);
 app.get('/api/v2/coscholastic/entry-data', coscholastic9ctlrds.getStudentsForGradeEntry);
 app.post('/api/v2/coscholastic/grades', coscholastic9ctlrds.saveGrades);
+
+// ==================== CLASS 11-12 MARKSHEET MODULE ROUTES ====================
+const studentmarks11ctlrds = require('./controllers/studentmarks11ctlrds');
+
+app.get('/api/v2/getsubjectsfromconfig11ds', studentmarks11ctlrds.getsubjectsfromconfig11ds);
+app.post('/api/v2/subjectcomponentconfig11ds/save', studentmarks11ctlrds.saveSubjectConfig11ds);
+app.get('/api/v2/getstudentsandsubjectsformarks11ds', studentmarks11ctlrds.getstudentsandsubjectsformarks11ds);
+app.post('/api/v2/savemarks11ds', studentmarks11ctlrds.savemarks11ds);
+app.get('/api/v2/getmarksheetpdfdata11ds', studentmarks11ctlrds.getmarksheetpdfdata11ds);
 
 
 // ===== SUBJECT COMPONENT CONFIGURATION ROUTES (Class 9-10) =====

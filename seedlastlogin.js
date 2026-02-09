@@ -29,13 +29,13 @@ const seeduser = async () => {
 
         // console.log(user);
 
-        // const user = await User.updateMany(
-        //     { email: "demo2@campus.technology" },
-        //     { $set: { lastlogin: new Date('2027-12-01T10:00:00Z') } }
-        // )
-        const user = await User.find(
-            { email: "admin@mahajana.com" }
+        const user = await User.updateMany(
+            { email: "librarianpimr@gmail.com" },
+            { $set: { email: "pimr.library@peoplesuniversity@pu.edu.in" } }
         )
+        // const user = await User.find(
+        //     { email: "poonam.lodhi@careercollegeindia.com" }
+        // )
         console.log(user);
         mongoose.connection.close();
     } catch (err) {
