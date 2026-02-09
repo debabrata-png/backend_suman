@@ -1,4 +1,4 @@
-const applicationFormModel = require('../models/appmodel1');
+const applicationFormModel = require('../Models/appmodel2');
 
 exports.createApplicationann = async (req, res) => {
     try {
