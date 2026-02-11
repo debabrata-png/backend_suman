@@ -15,10 +15,6 @@ const bookSchema = new mongoose.Schema({
     required: [true, "Author is required"],
     trim: true
   },
-  booklanguage: {
-    type: String,
-    trim: true
-  },
   isbn: {
     type: String,
     trim: true
@@ -28,63 +24,20 @@ const bookSchema = new mongoose.Schema({
     trim: true
   },
   publishedDate: {
-    type: String,
+    type: String, // Use `Date` if you want to format/compare dates
     trim: true
   },
   accessid: {
     type: String,
     required: [true, "Access ID is required"],
-    unique: true,
     trim: true
   },
   category: {
     type: String,
     trim: true
   },
-  price: {
+  booklanguage: {
     type: String,
-    trim: true
-  },
-
-  // ✅ Newly added optional fields (NOT required)
-  source: {
-    type: String,
-    trim: true
-  },
-  editionOfBook: {
-    type: String,
-    trim: true
-  },
-  volume: {
-    type: String,
-    trim: true
-  },
-  classNo: {
-    type: String,
-    trim: true
-  },
-  donatedBy: {
-    type: String,
-    trim: true
-  },
-
-  pages: {
-    type: String,
-    trim: true
-  },
-  issuedstatus: {
-    type: String,
-    enum: ["available", "issued", "damaged", "lost"],
-    default: "available",
-    trim: true
-  },
-  bulkUploadBatch: {
-    type: String,
-    trim: true
-  },
-  colid: {
-    type: String,
-    required: [true, "College ID is required"],
     trim: true
   },
   addedDate: {
@@ -99,6 +52,14 @@ const bookSchema = new mongoose.Schema({
   libraryname: {
     type: String,
     trim: true
+  },
+  issuedstatus:{
+    type: String,
+    enum:["available", "issued"],
+    default: "available"
+  },
+  colid:{
+    type: Number
   }
 }, {
   timestamps: true
@@ -112,5 +73,6 @@ bookSchema.index({
   accessid: "text"
 });
 
-const bookmodel = mongoose.model("Bookmodel", bookSchema);
+
+const bookmodel = mongoose.model("bookmodel2", bookSchema);
 module.exports = bookmodel;

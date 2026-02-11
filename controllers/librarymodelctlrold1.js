@@ -8,7 +8,8 @@ const Ledgerstud = require("../Models/ledgerstud");
 exports.createlibrary = async (req, res) => {
   try {
     const { libraryid, libraryname, libraryincharge, contactno, colid } = req.body;
- 
+
+    // creating the database
     const newlibrary = await librarymodel.create({
       libraryid: libraryid,
       libraryname: libraryname,
@@ -16,7 +17,7 @@ exports.createlibrary = async (req, res) => {
       contactno: contactno,
       colid: colid
     })
- 
+    // return the new library
     return res.status(201).json({
       messsage: "library created successfully",
       success: true,
@@ -30,11 +31,11 @@ exports.createlibrary = async (req, res) => {
 exports.getlibrary = async (req, res) => {
   try {
     const id = req.params.id;
-   
+    // fetch trhe llibrary by id
     const library = await librarymodel.findOne({
       _id: id
     })
- 
+    // return with 200 status code
     return res.status(200).json({
       message: "libraray fetched successfully",
       success: true,
@@ -51,7 +52,7 @@ exports.getalllibrary = async (req, res) => {
     const alllibrary = await librarymodel.find({
       colid: colid,
     });
- 
+    // return with 200 status code
     return res.status(200).json({
       message: "librarymodel fetched successfully",
       success: true,
@@ -65,7 +66,7 @@ exports.updatelibrary = async (req, res) => {
   try {
     const datatoupdate = req.body;
     const {id} = req.query;
- 
+    // db operation here
     const updatedlibrary = await librarymodel.findByIdAndUpdate({
       _id: id
     },
@@ -96,54 +97,19 @@ exports.deletelibrary = async (req, res) => {
 
   }
 }
- 
+
+// Create a new book
 exports.createBook = async (req, res) => {
   try {
     const formdata = req.body;
-    if (formdata.author) formdata.author = formdata.author.trim();
-    if (formdata.accessid) formdata.accessid = formdata.accessid.trim();
-    if (formdata.libraryid) formdata.libraryid = formdata.libraryid.trim();
-    if (!formdata.author || formdata.author === "") {
-      return res.status(400).json({ success: false, message: "Author is required" });
-    }
-    if (!formdata.accessid || formdata.accessid === "") {
-      return res.status(400).json({ success: false, message: "Access ID is required" });
-    }
-    if (!formdata.libraryid || formdata.libraryid === "") {
-      return res.status(400).json({ success: false, message: "Library ID is required" });
-    }
-    if (!formdata.colid || formdata.colid === "" || formdata.colid === "undefined") {
-      return res.status(400).json({ success: false, message: "College ID is missing. Please log in again." });
-    }
-
     const newBook = await bookmodel.create({ ...formdata });
-    return res.status(201).json({ success: true, data: newBook, message: "Book created successfully" });
+    return res.status(201).json({ success: true, data: newBook });
   } catch (error) {
-    console.error("Error creating book:", error);
- 
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyPattern)[0];
-      return res.status(400).json({ 
-        success: false, 
-        message: `${field} already exists. Please use a unique value.` 
-      });
-    }
- 
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map(e => e.message);
-      return res.status(400).json({ 
-        success: false, 
-        message: messages.join(", ") 
-      });
-    }
-    
-    return res.status(500).json({ 
-      success: false, 
-      message: error.message || "Error creating book" 
-    });
   }
 };
- 
+
+
+// Get all books by library ID with pagination
 exports.getbooksbylibraryid = async (req, res) => {
   try {
     const { libraryid, page = 1, limit = 10, colid } = req.query;
@@ -171,6 +137,9 @@ exports.getbooksbylibraryid = async (req, res) => {
   } catch (error) {
   }
 };
+
+
+// Get a book by ID
 exports.getBookById = async (req, res) => {
   try {
     const book = await bookmodel.findById(req.params.id);
@@ -208,6 +177,10 @@ exports.searchBooks = async (req, res) => {
   } catch (error) {
   }
 };
+
+
+
+// Update a book by ID
 exports.updateBook = async (req, res) => {
   try {
     const {id} = req.params;
@@ -231,6 +204,8 @@ exports.updateBook = async (req, res) => {
   } catch (error) {
   }
 };
+
+// Delete a book
 exports.deleteBook = async (req, res) => {
   try {
     await bookmodel.findByIdAndDelete(req.params.id);
@@ -240,6 +215,8 @@ exports.deleteBook = async (req, res) => {
 
   }
 };
+
+// Create a new issue record
 exports.createIssuedBook = async (req, res) => {
   try {
     const newIssue = await issuebookmodel.create(req.body);
@@ -247,7 +224,8 @@ exports.createIssuedBook = async (req, res) => {
   } catch (error) {
   }
 };
- 
+
+// Get all issued books
 exports.getAllIssuedBooks = async (req, res) => {
   try {
     const libraryid = req.query.libraryid;
@@ -261,7 +239,7 @@ exports.getAllIssuedBooks = async (req, res) => {
   }
 };
 
- 
+// Get a single issued book by ID
 exports.getIssuedBookById = async (req, res) => {
   try {
     const book = await issuebookmodel.findById(req.params.id);
@@ -271,7 +249,7 @@ exports.getIssuedBookById = async (req, res) => {
   }
 };
 
- 
+// Update an issued book by ID
 exports.updateIssuedBook = async (req, res) => {
   try {
     const updatedBook = await issuebookmodel.findByIdAndUpdate(req.body.id, req.body, { new: true });
@@ -280,7 +258,8 @@ exports.updateIssuedBook = async (req, res) => {
   } catch (error) {    
   }
 };
- 
+
+// Delete an issued book by ID
 exports.deleteIssuedBook = async (req, res) => {
   try {
     const deletedBook = await issuebookmodel.findByIdAndDelete(req.params.id);
@@ -289,7 +268,8 @@ exports.deleteIssuedBook = async (req, res) => {
   }
 };
 
- 
+// search library
+// Search issued books by student, regno, or bookname
 exports.searchIssuedBooks = async (req, res) => {
   try {
     const { query, libraryid } = req.query;
@@ -326,18 +306,22 @@ exports.addUser = async (req, res) => {
   try {
     const data = req.body;
 
- 
+    // If it's an array -> bulk insert
     if (Array.isArray(data)) {
       const emails = data.map(user => user.email);
+
+      // Find existing users by email
       const existingUsers = await User.find({ email: { $in: emails } });
       const existingEmails = existingUsers.map(user => user.email);
+
+      // Filter out users with duplicate emails
       const newUsers = data.filter(user => !existingEmails.includes(user.email));
 
       if (newUsers.length === 0) {
         return res.status(409).json({ message: "All users already exist with these emails", existingEmails });
       }
 
-     
+      // Insert non-duplicate users
       const insertedUsers = await User.insertMany(newUsers);
 
       return res.status(201).json({
@@ -346,6 +330,7 @@ exports.addUser = async (req, res) => {
         skipped: existingEmails,
       });
     } 
+    // Else single user insert
     else {
       const existing = await User.findOne({ email: data.email });
       if (existing) {
@@ -374,6 +359,8 @@ exports.getSummary = async (req, res) => {
   } catch (err) {
   }
 };
+
+// controllers/report/categoryCounts.js
 exports.getCategoryCounts = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -385,6 +372,8 @@ exports.getCategoryCounts = async (req, res) => {
   } catch (err) {
   }
 };
+
+// controllers/report/languageCounts.js
 exports.getLanguageCounts = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -396,7 +385,8 @@ exports.getLanguageCounts = async (req, res) => {
   } catch (err) {
   }
 };
- 
+
+// controllers/report/monthlyAdded.js
 exports.getMonthlyAdded = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -414,7 +404,8 @@ exports.getMonthlyAdded = async (req, res) => {
   } catch (err) {
   }
 };
- 
+
+// controllers/report/issuedDaily.js
 exports.getIssuedDaily = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -437,7 +428,8 @@ exports.getIssuedDaily = async (req, res) => {
   } catch (err) {
   }
 };
- 
+
+// controllers/report/issuedMonthly.js
 exports.getIssuedMonthly = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -461,7 +453,8 @@ exports.getIssuedMonthly = async (req, res) => {
   } catch (err) {
   }
 };
- 
+
+// controllers/report/statusBreakdown.js
 exports.getStatusBreakdown = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -473,7 +466,8 @@ exports.getStatusBreakdown = async (req, res) => {
   } catch (err) {
   }
 };
- 
+
+// controllers/report/topBooks.js
 exports.getTopBooks = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -492,7 +486,8 @@ exports.getTopBooks = async (req, res) => {
   } catch (err) {
   }
 };
- 
+
+// controllers/report/libraryWise.js
 exports.getLibraryWise = async (req, res) => {
   try {
     const [books, issued] = await Promise.all([

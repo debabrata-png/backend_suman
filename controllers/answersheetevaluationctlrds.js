@@ -106,7 +106,7 @@ exports.getstudentadditionalinfods = async (req, res) => {
             papercode: papercode,
             semester: semester,
             year: year,
-            colid: Number(colid) // ✅ colid filter
+            colid: Number(colid) 
         });
 
         if (!examStructure) {

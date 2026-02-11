@@ -30,8 +30,10 @@ const seeduser = async () => {
         // console.log(user);
 
         const user = await User.updateMany(
-            { email: "librarianpimr@gmail.com" },
-            { $set: { email: "pimr.library@peoplesuniversity@pu.edu.in" } }
+            { colid: 5050,
+                role: "FACULTY"
+             },
+            { $set: { role: "Faculty" } }
         )
         // const user = await User.find(
         //     { email: "poonam.lodhi@careercollegeindia.com" }
