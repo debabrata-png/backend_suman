@@ -5,133 +5,10 @@ const librarymodel = require("../Models/librarymodel1");
 const User = require("../Models/user");
 const Ledgerstud = require("../Models/ledgerstud");
 
-
-exports.bulkCreateBooks = async (req, res) => {
-  try {
-    const books = req.body;
-
-    if (!Array.isArray(books) || books.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Payload must be a non-empty array of books",
-      });
-    }
-
-    if (books.length > 500) {
-      return res.status(400).json({
-        success: false,
-        message: "Maximum 500 books per request.",
-      });
-    }
-    const validatedBooks = [];
-    const validationFailures = [];
-
-    for (let i = 0; i < books.length; i++) {
-      const book = books[i];
-      const missingFields = [];
-      if (!book.author?.trim()) {
-        missingFields.push("author");
-      }
-      if (!book.accessid?.trim()) {
-        missingFields.push("accessid");
-      }
-      if (!book.libraryid?.trim()) {
-        missingFields.push("libraryid");
-      }
-      if (!book.colid || book.colid === "undefined") {
-        missingFields.push("colid");
-      }
-
-      if (missingFields.length > 0) {
-        validationFailures.push({
-          row: i + 1,
-          data: {
-            bookId: book.bookId || "N/A",
-            title: book.title || "N/A",
-            accessid: book.accessid || "MISSING",
-            author: book.author || "MISSING",
-          },
-          missingFields,
-          reason: `Missing required fields: ${missingFields.join(", ")}`,
-        });
-      } else {
-        validatedBooks.push(book);
-      }
-    }
-    let successCount = 0;
-    let duplicateCount = 0;
-    let duplicateRecords = [];
-
-    if (validatedBooks.length > 0) {
-      try {
-        const result = await bookmodel.insertMany(validatedBooks, {
-          ordered: false,
-          rawResult: true,
-        });
-
-        successCount = result.insertedCount || validatedBooks.length;
-
-      } catch (error) {
-
-        if (error.code === 11000 && error.writeErrors) {
-          successCount = validatedBooks.length - error.writeErrors.length;
-          duplicateCount = error.writeErrors.length;
-
-          error.writeErrors.forEach((writeError) => {
-            const failedBook = validatedBooks[writeError.index];
-            const duplicateField = Object.keys(writeError.err.keyPattern || {})[0] || "unknown";
-
-            duplicateRecords.push({
-              row: writeError.index + 1 + validationFailures.length,
-              data: {
-                bookId: failedBook.bookId || "N/A",
-                title: failedBook.title || "N/A",
-                accessid: failedBook.accessid,
-                author: failedBook.author,
-              },
-              duplicateField,
-              duplicateValue: failedBook[duplicateField],
-              reason: `Duplicate ${duplicateField}: "${failedBook[duplicateField]}" already exists in database`,
-            });
-          });
-        } else {
-          throw error;
-        }
-      }
-    }
-
-    const totalProcessed = books.length;
-    const failedCount = duplicateCount + validationFailures.length;
-
-    return res.status(201).json({
-      success: true,
-      message: "Bulk upload completed",
-      summary: {
-        totalProcessed,
-        successCount,
-        duplicateCount,
-        validationFailureCount: validationFailures.length,
-        failedCount,
-      },
-      details: {
-        duplicates: duplicateRecords.length > 0 ? duplicateRecords.slice(0, 10) : undefined,
-        validationFailures: validationFailures.length > 0 ? validationFailures.slice(0, 10) : undefined,
-      },
-    });
-
-  } catch (error) {
-    console.error("Bulk upload error:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Bulk upload failed",
-    });
-  }
-};
-
 exports.createlibrary = async (req, res) => {
   try {
     const { libraryid, libraryname, libraryincharge, contactno, colid } = req.body;
-
+ 
     const newlibrary = await librarymodel.create({
       libraryid: libraryid,
       libraryname: libraryname,
@@ -139,7 +16,7 @@ exports.createlibrary = async (req, res) => {
       contactno: contactno,
       colid: colid
     })
-
+ 
     return res.status(201).json({
       messsage: "library created successfully",
       success: true,
@@ -153,11 +30,11 @@ exports.createlibrary = async (req, res) => {
 exports.getlibrary = async (req, res) => {
   try {
     const id = req.params.id;
-
+   
     const library = await librarymodel.findOne({
       _id: id
     })
-
+ 
     return res.status(200).json({
       message: "libraray fetched successfully",
       success: true,
@@ -174,7 +51,7 @@ exports.getalllibrary = async (req, res) => {
     const alllibrary = await librarymodel.find({
       colid: colid,
     });
-
+ 
     return res.status(200).json({
       message: "librarymodel fetched successfully",
       success: true,
@@ -187,8 +64,8 @@ exports.getalllibrary = async (req, res) => {
 exports.updatelibrary = async (req, res) => {
   try {
     const datatoupdate = req.body;
-    const { id } = req.query;
-
+    const {id} = req.query;
+ 
     const updatedlibrary = await librarymodel.findByIdAndUpdate({
       _id: id
     },
@@ -201,7 +78,7 @@ exports.updatelibrary = async (req, res) => {
       data: updatedlibrary
     })
   } catch (error) {
-
+    
   }
 }
 
@@ -219,7 +96,7 @@ exports.deletelibrary = async (req, res) => {
 
   }
 }
-
+ 
 exports.createBook = async (req, res) => {
   try {
     const formdata = req.body;
@@ -243,30 +120,30 @@ exports.createBook = async (req, res) => {
     return res.status(201).json({ success: true, data: newBook, message: "Book created successfully" });
   } catch (error) {
     console.error("Error creating book:", error);
-
+ 
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern)[0];
-      return res.status(400).json({
-        success: false,
-        message: `${field} already exists. Please use a unique value.`
+      return res.status(400).json({ 
+        success: false, 
+        message: `${field} already exists. Please use a unique value.` 
       });
     }
-
+ 
     if (error.name === "ValidationError") {
       const messages = Object.values(error.errors).map(e => e.message);
-      return res.status(400).json({
-        success: false,
-        message: messages.join(", ")
+      return res.status(400).json({ 
+        success: false, 
+        message: messages.join(", ") 
       });
     }
-
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Error creating book"
+    
+    return res.status(500).json({ 
+      success: false, 
+      message: error.message || "Error creating book" 
     });
   }
 };
-
+ 
 exports.getbooksbylibraryid = async (req, res) => {
   try {
     const { libraryid, page = 1, limit = 10, colid } = req.query;
@@ -333,19 +210,18 @@ exports.searchBooks = async (req, res) => {
 };
 exports.updateBook = async (req, res) => {
   try {
-    const { id } = req.params;
+    const {id} = req.params;
     let updatedBook;
-    if (mongoose.Types.ObjectId.isValid(id)) {
+    if(mongoose.Types.ObjectId.isValid(id)){
       updatedBook = await bookmodel.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-        runValidators: true
-      });
-    } else {
+      new: true,
+      runValidators: true
+    });
+    }else{
       updatedBook = await bookmodel.findOneAndUpdate(
-        { bookId: id },
+        {bookId: id},
         req.body,
-        {
-          new: true,
+        {new: true,
           runValidators: true
         }
       )
@@ -371,7 +247,7 @@ exports.createIssuedBook = async (req, res) => {
   } catch (error) {
   }
 };
-
+ 
 exports.getAllIssuedBooks = async (req, res) => {
   try {
     const libraryid = req.query.libraryid;
@@ -385,7 +261,7 @@ exports.getAllIssuedBooks = async (req, res) => {
   }
 };
 
-
+ 
 exports.getIssuedBookById = async (req, res) => {
   try {
     const book = await issuebookmodel.findById(req.params.id);
@@ -395,16 +271,16 @@ exports.getIssuedBookById = async (req, res) => {
   }
 };
 
-
+ 
 exports.updateIssuedBook = async (req, res) => {
   try {
     const updatedBook = await issuebookmodel.findByIdAndUpdate(req.body.id, req.body, { new: true });
 
     return res.status(200).json({ message: "Record updated", data: updatedBook });
-  } catch (error) {
+  } catch (error) {    
   }
 };
-
+ 
 exports.deleteIssuedBook = async (req, res) => {
   try {
     const deletedBook = await issuebookmodel.findByIdAndDelete(req.params.id);
@@ -413,7 +289,7 @@ exports.deleteIssuedBook = async (req, res) => {
   }
 };
 
-
+ 
 exports.searchIssuedBooks = async (req, res) => {
   try {
     const { query, libraryid } = req.query;
@@ -450,7 +326,7 @@ exports.addUser = async (req, res) => {
   try {
     const data = req.body;
 
-
+ 
     if (Array.isArray(data)) {
       const emails = data.map(user => user.email);
       const existingUsers = await User.find({ email: { $in: emails } });
@@ -461,7 +337,7 @@ exports.addUser = async (req, res) => {
         return res.status(409).json({ message: "All users already exist with these emails", existingEmails });
       }
 
-
+     
       const insertedUsers = await User.insertMany(newUsers);
 
       return res.status(201).json({
@@ -469,7 +345,7 @@ exports.addUser = async (req, res) => {
         insertedUsers,
         skipped: existingEmails,
       });
-    }
+    } 
     else {
       const existing = await User.findOne({ email: data.email });
       if (existing) {
@@ -520,7 +396,7 @@ exports.getLanguageCounts = async (req, res) => {
   } catch (err) {
   }
 };
-
+ 
 exports.getMonthlyAdded = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -538,7 +414,7 @@ exports.getMonthlyAdded = async (req, res) => {
   } catch (err) {
   }
 };
-
+ 
 exports.getIssuedDaily = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -561,7 +437,7 @@ exports.getIssuedDaily = async (req, res) => {
   } catch (err) {
   }
 };
-
+ 
 exports.getIssuedMonthly = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -585,7 +461,7 @@ exports.getIssuedMonthly = async (req, res) => {
   } catch (err) {
   }
 };
-
+ 
 exports.getStatusBreakdown = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -597,7 +473,7 @@ exports.getStatusBreakdown = async (req, res) => {
   } catch (err) {
   }
 };
-
+ 
 exports.getTopBooks = async (req, res) => {
   const { libraryid } = req.query;
   try {
@@ -616,7 +492,7 @@ exports.getTopBooks = async (req, res) => {
   } catch (err) {
   }
 };
-
+ 
 exports.getLibraryWise = async (req, res) => {
   try {
     const [books, issued] = await Promise.all([
@@ -632,7 +508,7 @@ exports.getLibraryWise = async (req, res) => {
   }
 };
 
-exports.login = async (req, res) => {
+exports.login = async (req, res) =>{
   const { email, password } = req.body;
 
   try {
@@ -647,10 +523,10 @@ exports.login = async (req, res) => {
     const { colid, name, email: userEmail, regno, role } = user;
 
     return res.status(200).json({ colid, name, email: userEmail, regno, role });
-  } catch (err) { }
-}
+} catch(err){}
+} 
 
-exports.createledgerstud = async (req, res) => {
+exports.createledgerstud = async (req, res) =>{
   try {
     const ledgerstud = await Ledgerstud.create(req.body);
     return res.status(200).json({

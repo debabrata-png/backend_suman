@@ -32,7 +32,7 @@ const donationReceiptSchema = new mongoose.Schema({
   },
   donorAddress: {
     type: String,
-    required: true,
+    // required: true,
   },
   donorMobile: {
     type: String,
@@ -40,7 +40,7 @@ const donationReceiptSchema = new mongoose.Schema({
   },
   donorEmail: {
     type: String,
-    required: true,
+    // required: true,
   },
   amountReceived: {
     type: Number,
@@ -52,7 +52,7 @@ const donationReceiptSchema = new mongoose.Schema({
   },
   modeOfPayment: {
     type: String,
-    enum: ['cash', 'bank', 'upi'],
+    enum: ['cash', 'bank', 'online'], // Updated enum to match frontend 'online' value
     required: true,
   },
   chequeNo: { type: String, },
@@ -62,7 +62,7 @@ const donationReceiptSchema = new mongoose.Schema({
   upiDate: { type: String },
   purposeOfDonation: {
     type: String,
-    required: true,
+    // required: true,
   },
   otherPurpose: String,
   name: {

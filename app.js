@@ -535,6 +535,7 @@ app.get('/api/v2/getallpimprestds', pimprestdsctlr.getallpimprestds);
 app.post('/api/v2/updatepimprestds', pimprestdsctlr.updatepimprestds);
 app.get('/api/v2/deletepimprestds', pimprestdsctlr.deletepimprestds);
 
+
 const poconfigdsctlr = require('./controllers/poconfigdsctlr');
 app.post('/api/v2/addpoconfigds', poconfigdsctlr.addpoconfigds);
 app.get('/api/v2/getpoconfigds', poconfigdsctlr.getpoconfigds);
@@ -3844,6 +3845,7 @@ app.get("/api/v2/report/issued-monthly", librarymodelctlr.getIssuedMonthly);
 app.get("/api/v2/report/status-breakdown", librarymodelctlr.getStatusBreakdown);
 app.get("/api/v2/report/top-books", librarymodelctlr.getTopBooks);
 app.get("/api/v2/report/library-wise", librarymodelctlr.getLibraryWise);
+app.post("/api/v2/books/bulk-upload", librarymodelctlr.bulkCreateBooks);
 // app.post("/api/v2/login", librarymodelctlr.login);
 
 // app.post("/api/v2/createledgerstud", librarymodelctlr.createledgerstud);
@@ -14693,6 +14695,8 @@ app.use('/deletemou', rmoudel);
 app.use('/exportmou', rmouexport);
 
 app.use('/addexpenditure', rexpenditureadd);
+app.post('/api/v2/updatedonationreceiptds', vssdonationdsctlr.updatedonationreceiptds);
+app.get('/api/v2/deletedonationreceiptds/:id', vssdonationdsctlr.deletedonationreceiptds);
 app.use('/viewexpenditure', rexpenditureview);
 app.use('/editexpenditure', rexpenditureedit);
 app.use('/deleteexpenditure', rexpendituredel);
