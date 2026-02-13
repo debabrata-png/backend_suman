@@ -2,12 +2,22 @@
 const vssdonationformds = require('../Models/vssdonationformds');
 
 // Create new donation receipt
+// Create new donation receipt
 exports.createdonationreceiptds = async (req, res) => {
   try {
     const receiptData = req.body;
-    // Auto-generate receipt number
-    const count = await vssdonationformds.find().countDocuments();
-    receiptData.receiptNo = `VSS${String(count + 1).padStart(6, '0')}`;
+
+    // Auto-generate receipt number: Find the latest receipt number and increment
+    const lastReceipt = await vssdonationformds.findOne().sort({ receiptNo: -1 });
+    let nextNum = 1;
+    if (lastReceipt && lastReceipt.receiptNo) {
+      const match = lastReceipt.receiptNo.match(/VSS(\d+)/);
+      if (match && match[1]) {
+        nextNum = parseInt(match[1], 10) + 1;
+      }
+    }
+    receiptData.receiptNo = `VSS${String(nextNum).padStart(6, '0')}`;
+
     const receipt = new vssdonationformds(receiptData);
     await receipt.save();
     res.status(201).json(receipt);
@@ -73,10 +83,14 @@ exports.updatedonationreceiptds = async (req, res) => {
 // Delete donation receipt
 exports.deletedonationreceiptds = async (req, res) => {
   try {
-    const receipt = await vssdonationformds.findByIdAndDelete(req.query.id || req.params.id);
+    const id = req.query.id || req.params.id;
+    console.log(`Attempting to delete receipt with ID: ${id}`);
+    const receipt = await vssdonationformds.findByIdAndDelete(id);
     if (!receipt) {
+      console.log(`Receipt not found for ID: ${id}`);
       return res.status(404).json({ message: 'Receipt not found' });
     }
+    console.log(`Receipt deleted successfully: ${id}`);
     res.status(200).json({ message: 'Receipt deleted successfully' });
   } catch (error) {
     console.error('Error deleting donation receipt:', error);
