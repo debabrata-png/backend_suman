@@ -22,7 +22,8 @@ exports.createdonationreceiptds = async (req, res) => {
     await receipt.save();
     res.status(201).json(receipt);
   } catch (error) {
-    console.error('Error creating donation receipt:', error);
+    // console.error('Error creating donation receipt:', error);
+    console.log(error);
     res.status(500).json({ message: 'Failed to create donation receipt' });
   }
 };

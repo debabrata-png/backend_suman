@@ -436,7 +436,7 @@ const rdeleteattendance = require('./router/deleteattendancerouter.js');
 const attendancereportctlr = require('./controllers/attendancereportctlr');
 app.post('/api/v2/getattendancereport', attendancereportctlr.getAttendanceReport);
 
-const examadmitcontrollerds = require('./Controllers/examadmitcontrollerds');
+const examadmitcontrollerds = require('./controllers/examadmitcontrollerds');
 app.post('/api/v2/examadmitcontrollerds/release', examadmitcontrollerds.releaseAdmitCard);
 app.get('/api/v2/examadmitcontrollerds/:regno', examadmitcontrollerds.getAdmitCard);
 
