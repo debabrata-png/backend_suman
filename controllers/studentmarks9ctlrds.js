@@ -645,7 +645,12 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     };
 
     // 5.5 Fetch Co-Scholastic Grades
-    const coActivities = await CoScholasticActivity9ds.find({ colid: Number(colid), isactive: true }).sort({ createdat: 1 });
+    const coActivities = await CoScholasticActivity9ds.find({
+      colid: Number(colid),
+      semester: semester,
+      academicyear: academicyear,
+      isactive: true
+    }).sort({ createdat: 1 });
     const coGrades = await CoScholasticGrade9ds.find({
       colid: Number(colid),
       regno: regno,
@@ -662,6 +667,57 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       term1Grade: (coGradeMap[act._id.toString()] && coGradeMap[act._id.toString()].term1grade) || '',
       term2Grade: (coGradeMap[act._id.toString()] && coGradeMap[act._id.toString()].term2grade) || ''
     }));
+
+    // 5.8 Dynamic Rank Calculation
+    // Fetch all marks for the same batch (colid, year, semester) to calculate rank
+    const allStudentMarks = await StudentMarks9ds.find({
+      colid: Number(colid),
+      academicyear: academicyear,
+      semester: semester
+    }).lean();
+
+    // Group by regno
+    const studentGroups = {};
+    allStudentMarks.forEach(m => {
+      if (!studentGroups[m.regno]) studentGroups[m.regno] = [];
+      studentGroups[m.regno].push(m);
+    });
+
+    // Calculate Grand Total for key students
+    const studentTotals = Object.keys(studentGroups).map(rNo => {
+      const sMarks = studentGroups[rNo];
+      // Logic copied from above for total calculation
+      // We need configMap for scaling. Assuming standard 40/10 if config missing for speed
+      // Or better, assume the configMap fetched earlier covers all subjects in class.
+
+      const studTotal = sMarks.reduce((acc, m) => {
+        const conf = configMap[m.subjectcode] || {};
+
+        // T1
+        const t1Max = conf.term1periodictestmax || 40;
+        const t1Obt = m.term1periodictestobtained || 0;
+        const t1Sc = t1Max > 0 ? (t1Obt / t1Max) * 10 : 0;
+        const t1Raw = t1Sc + (m.term1notebookobtained || 0) + (m.term1enrichmentobtained || 0) + (m.term1midexamobtained || 0);
+
+        // T2
+        const t2Max = conf.term2periodictestmax || 40;
+        const t2Obt = m.term2periodictestobtained || 0;
+        const t2Sc = t2Max > 0 ? (t2Obt / t2Max) * 10 : 0;
+        const t2Raw = t2Sc + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0);
+
+        // Weighted
+        return acc + (t1Raw * 0.5) + (t2Raw * 0.5);
+      }, 0);
+
+      return { regno: rNo, total: studTotal };
+    });
+
+    // Sort Descending
+    studentTotals.sort((a, b) => b.total - a.total);
+
+    // Find Rank
+    const rankIndex = studentTotals.findIndex(s => s.regno === regno);
+    const rank = rankIndex !== -1 ? rankIndex + 1 : '-';
 
     // 6. Construct PDF Data Object
     const pdfData = {
@@ -691,7 +747,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       grandTotal,
       percentage,
       overallGrade,
-      rank: '-', // Rank calculation is complex, leaving placeholder
+      rank: rank,
       remarks: 'Good', // Default remark
       promotedToClass: '', // User to fill manually?
       newSessionDate: ''

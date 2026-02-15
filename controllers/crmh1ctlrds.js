@@ -3,6 +3,7 @@ const categoryds = require('../Models/categoryds.js');
 const leadactivityds = require('../Models/leadactivityds.js');
 const dripcampaignds = require('../Models/dripcampaignds.js');
 const user = require('../Models/user.js');
+const unifiedlandingpageds = require('../Models/unifiedlandingpageds.js');
 
 // Helper functions remain the same
 const calculateLeadScore = (lead) => {
@@ -98,6 +99,14 @@ exports.createleadds = async (req, res) => {
       notes: `Lead created from ${req.body.source}. Auto-assigned to ${lead.assignedto}`,
       activity_date: new Date()
     });
+
+    if (req.body.landing_page_id) {
+      try {
+        await unifiedlandingpageds.findByIdAndUpdate(req.body.landing_page_id, { $inc: { conversion_count: 1 } });
+      } catch (err) {
+        console.error("Error updating conversion count", err);
+      }
+    }
 
     res.status(201).json({ success: true, data: lead });
   } catch (err) {

@@ -5377,6 +5377,18 @@ app.get('/api/v2/deletelandingpageds/:id', landingpagectlrds.deletelandingpageds
 app.post('/api/v2/addqrcodeds', landingpagectlrds.addqrcodeds);
 app.delete('/api/v2/deleteqrcodeds', landingpagectlrds.deleteqrcodeds);
 // REMOVED: app.get('/api/v2/getlandingpageanalyticsds/:id', landingpagectlrds.getlandingpageanalyticsds);
+// ==================== UNIFIED LANDING PAGE ROUTES ====================
+const unifiedlandingpagectlrds = require('./controllers/unifiedlandingpagectlrds.js');
+app.post('/api/v2/createunifiedlandingpageds', unifiedlandingpagectlrds.createunifiedlandingpageds);
+app.get('/api/v2/getallunifiedlandingpagesds', unifiedlandingpagectlrds.getallunifiedlandingpagesds);
+app.get('/api/v2/getunifiedlandingpagebyslugds/:slug', unifiedlandingpagectlrds.getunifiedlandingpagebyslugds);
+app.get('/api/v2/getunifiedlandingpagebyidds/:id', unifiedlandingpagectlrds.getunifiedlandingpagebyidds);
+app.post('/api/v2/updateunifiedlandingpageds', unifiedlandingpagectlrds.updateunifiedlandingpageds);
+app.get('/api/v2/deleteunifiedlandingpageds/:id', unifiedlandingpagectlrds.deleteunifiedlandingpageds);
+app.post('/api/v2/addunifiedqrcodeds', unifiedlandingpagectlrds.addunifiedqrcodeds);
+app.get('/api/v2/deleteunifiedqrcodeds', unifiedlandingpagectlrds.deleteunifiedqrcodeds);
+
+
 
 
 // ==================== WEBHOOK ROUTES (Protected by API Key) ====================

@@ -291,6 +291,31 @@ exports.getmarksheetpdfdata11ds = async (req, res) => {
 
         const percentage = maxTotal > 0 ? ((grandTotal / maxTotal) * 100).toFixed(2) : 0;
         const resultStatus = failCount === 0 ? "PASSED" : (failCount === 1 ? "COMPARTMENT" : "FAILED");
+        // Dynamic Rank Calculation
+        // Fetch all marks for the batch
+        const allBatchMarks = await StudentMarks11ds.find({
+            colid: Number(colid),
+            semester,
+            academicyear,
+            subjectcode: { $ne: 'ATTENDANCE' }
+        }).lean();
+
+        // Group and Sum
+        const studentTotals = {};
+        allBatchMarks.forEach(m => {
+            if (!studentTotals[m.regno]) studentTotals[m.regno] = 0;
+            studentTotals[m.regno] += (m.total || 0);
+        });
+
+        // Convert to array and Sort Descending
+        const sortedRanks = Object.keys(studentTotals).map(r => ({
+            regno: r,
+            total: studentTotals[r]
+        })).sort((a, b) => b.total - a.total);
+
+        // Find Rank
+        const rankIndex = sortedRanks.findIndex(s => s.regno === regno);
+        const rank = rankIndex !== -1 ? rankIndex + 1 : '-';
 
         const pdfData = {
             profile: {
@@ -316,8 +341,10 @@ exports.getmarksheetpdfdata11ds = async (req, res) => {
             maxTotal,
             percentage,
             result: resultStatus,
+            rank: rank,
             failCount
         };
+
 
         res.json({ success: true, data: pdfData });
     } catch (error) {
