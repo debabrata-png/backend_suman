@@ -12,7 +12,7 @@ const coursemasterdsschema = new mongoose.Schema({
     course_code: {
         type: String,
         required: true,
-        unique: true
+        unique: false
     },
     course_name: {
         type: String,

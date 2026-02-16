@@ -57,11 +57,11 @@ async function importData() {
                 installments: program.installments
             };
 
-            // Remove flat fee fields to avoid schema error (if schema is strict)
-            delete program.total_fee;
-            delete program.application_fee;
-            delete program.first_installment;
-            delete program.installments;
+            // // Remove flat fee fields to avoid schema error (if schema is strict)
+            // delete program.total_fee;
+            // delete program.application_fee;
+            // delete program.first_installment;
+            // delete program.installments;
 
             // Update if exists (by course_code), else insert
             await programmasterds.findOneAndUpdate(

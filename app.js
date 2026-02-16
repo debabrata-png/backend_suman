@@ -632,6 +632,12 @@ app.post('/api/v2/approvestorepo', storepoorderdsctlr.approveStorePO);
 // app.post('/api/v2/verifypolevel2', storepoorderdsctlr.verifyLevel2); // Deprecated
 app.post('/api/v2/verifyDynamicStep', storepoorderdsctlr.verifyDynamicStep);
 
+// 9a. PR Configuration
+const prconfigdsctlr = require('./controllers/prconfigdsctlr');
+app.post('/api/v2/addprconfigds', prconfigdsctlr.addprconfigds);
+app.get('/api/v2/getprconfigds', prconfigdsctlr.getprconfigds);
+app.post('/api/v2/updateprconfigds', prconfigdsctlr.updateprconfigds);
+
 // 9. PO Items
 app.post('/api/v2/addstorepoitemsds', storepoitemsdsctlr.addstorepoitemsds);
 app.post('/api/v2/updatestorepoitemsds', storepoitemsdsctlr.updatestorepoitemsds);

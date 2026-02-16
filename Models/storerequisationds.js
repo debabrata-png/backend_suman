@@ -13,7 +13,8 @@ const storerequisationschema = new mongoose.Schema({
     reqdate: { type: Date },
     quantity: { type: Number },
     reqstatus: { type: String },
-    poid: { type: String }
+    poid: { type: String },
+    prnumber: { type: String }
 });
 
 const storerequisationds = mongoose.model('storerequisationds', storerequisationschema);
