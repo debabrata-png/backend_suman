@@ -569,6 +569,8 @@ app.post('/api/v2/updatestoreuserds', storeuserdsctlr.updatestoreuserds);
 app.get('/api/v2/deletestoreuserds', storeuserdsctlr.deletestoreuserds);
 app.get('/api/v2/getallstoreuserds', storeuserdsctlr.getallstoreuserds);
 app.get('/api/v2/getstoreuserdsbyid', storeuserdsctlr.getstoreuserdsbyid);
+const addusercontroller = require('./controllers/addusercontroller');
+app.post('/api/v2/getallusers', addusercontroller.getallusersapi);
 
 // 3. Store Item
 app.post('/api/v2/addstoreitemds', storeitemdsctlr.addstoreitemds);
