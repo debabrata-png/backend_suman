@@ -633,3 +633,66 @@ exports.ds1getcounsellors = async (req, res) => {
     });
   }
 };
+
+// Get Purchase Users (Store, AO, OE, CMA, PE)
+exports.ds1getpurchaseusers = async (req, res) => {
+  try {
+    const {
+      colid,
+      search,
+      department,
+      role, // Extract role from query
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const purchaseRoles = ['Store', 'AO', 'OE', 'CMA', 'PE', 'SPE'];
+
+    // Build query
+    const query = {};
+    if (colid) query.colid = parseInt(colid);
+
+    // If a specific role is requested and it's a valid purchase role, use it.
+    // Otherwise, fetch all purchase roles.
+    if (role && purchaseRoles.includes(role)) {
+      query.role = role;
+    } else {
+      query.role = { $in: purchaseRoles };
+    }
+
+    if (department) query.department = department;
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { regno: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const users = await User.find(query)
+      .sort({ _id: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await User.countDocuments(query);
+
+    res.status(200).json({
+      data: users,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching purchase users",
+      error: error.message
+    });
+  }
+};

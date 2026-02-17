@@ -4725,6 +4725,7 @@ app.get("/api/v2/ds1deleteuser", ds1userctlr.ds1deleteuser);
 app.get("/api/v2/ds1bulkdeleteuser", ds1userctlr.ds1bulkdeleteuser);
 app.get("/api/v2/ds1getuserstats", ds1userctlr.ds1getuserstats);
 app.get("/api/v2/ds1getfilteroptions", ds1userctlr.ds1getfilteroptions);
+app.get("/api/v2/ds1getpurchaseusers", ds1userctlr.ds1getpurchaseusers);
 
 // new counsellor get api
 app.get("/api/v2/ds1getcounsellors", ds1userctlr.ds1getcounsellors);
