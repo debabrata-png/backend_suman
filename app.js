@@ -459,6 +459,9 @@ app.get('/api/v2/getalloutcomeag', outcomeagcontroller.getalloutcomeag);
 app.post('/api/v2/updateoutcomeag', outcomeagcontroller.updateoutcomeag);
 app.get('/api/v2/deleteoutcomeag/:id', outcomeagcontroller.deleteoutcomeag);
 
+const studentadmissioncontrollerds = require('./controllers/studentadmissioncontrollerds');
+app.post('/api/v2/confirmadmissionds', studentadmissioncontrollerds.confirmadmissionds);
+
 const filemasterdsctlr = require('./controllers/filemasterdsctlr');
 app.post('/api/v2/filemasterdsctlr/create', filemasterdsctlr.createfilemasterds);
 app.post('/api/v2/filemasterdsctlr/get', filemasterdsctlr.getfilemasterds);
@@ -1395,6 +1398,14 @@ app.use('/edituser', redituser);
 app.use('/deleteuser', rdeleteuser);
 
 app.use('/selectprograminst', rselectprograminst);
+
+// Program Counselor Master
+const programcounselorcontrollerds = require('./controllers/programcounselorcontrollerds');
+app.post('/api/v2/createprogramcounselords', programcounselorcontrollerds.createprogramcounselords);
+app.get('/api/v2/getallprogramcounselords', programcounselorcontrollerds.getallprogramcounselords);
+app.get('/api/v2/getprogramcounselorbyidds/:id', programcounselorcontrollerds.getprogramcounselorbyidds);
+app.post('/api/v2/updateprogramcounselords', programcounselorcontrollerds.updateprogramcounselords);
+app.get('/api/v2/deleteprogramcounselords/:id', programcounselorcontrollerds.deleteprogramcounselords);
 
 const naaccontroller = require('./controllers/naacpivotcontroller');
 app.get('/naacpivot', naaccontroller.viewnaacpivot);

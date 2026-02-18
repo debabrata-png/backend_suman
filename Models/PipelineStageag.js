@@ -21,6 +21,10 @@ const PipelineStageagSchema = new mongoose.Schema({
     isactive: {
         type: Boolean,
         default: true
+    },
+    is_final_stage: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true
