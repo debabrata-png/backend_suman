@@ -1,4 +1,4 @@
-const User = require('../Models/User');
+const User = require('../Models/user');
 const Lead = require('../Models/crmh1');
 
 exports.confirmadmissionds = async (req, res) => {
