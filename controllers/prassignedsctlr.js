@@ -110,7 +110,7 @@ exports.getOEUsers = async (req, res) => {
 
         const oes = await User.find({
             colid: colid,
-            role: 'OE',
+            role: { $in: ['PE', 'SPE'] },
             status: 1 // Assuming 1 is active
         }).select('name email role');
 
