@@ -497,9 +497,9 @@ exports.getleadanalyticsds = async (req, res) => {
     let matchQuery = {
       colid: Number(colid),
       $or: [
+        { role: { $in: ["Admin", "CRM", "All"] } },
         { user: user },        // Admin/Owner sees all their organization's leads
         { assignedto: user },   // Counsellor sees leads assigned to them
-        { role: { $in: ["Admin", "CRM", "All"] } }
       ]
     };
 
