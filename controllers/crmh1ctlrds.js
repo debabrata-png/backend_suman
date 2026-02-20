@@ -498,7 +498,8 @@ exports.getleadanalyticsds = async (req, res) => {
       colid: Number(colid),
       $or: [
         { user: user },        // Admin/Owner sees all their organization's leads
-        { assignedto: user }   // Counsellor sees leads assigned to them
+        { assignedto: user },   // Counsellor sees leads assigned to them
+        { role: { $in: ["Admin", "CRM", "All"] } }
       ]
     };
 
