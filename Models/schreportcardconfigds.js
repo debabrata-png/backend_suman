@@ -13,6 +13,7 @@ const SchReportCardConfigdsSchema = new mongoose.Schema({
     udisecode: { type: String },
     email: { type: String },
     phone: { type: String },
+    telephone: { type: String },
     logolink: { type: String },
     activetemplate: { type: String, default: 'standard' },
     created_at: { type: Date, default: Date.now },

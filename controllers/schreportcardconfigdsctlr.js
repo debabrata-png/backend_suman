@@ -4,7 +4,7 @@ const User = require('../Models/user');
 // Save or Update School Report Card Configuration
 exports.saveschreportconfds = async (req, res) => {
     try {
-        const { colid, schoolname, addressline1, addressline2, affiliationno, schoolcode, udisecode, email, phone, logolink, activetemplate, user } = req.body;
+        const { colid, schoolname, addressline1, addressline2, affiliationno, schoolcode, udisecode, email, phone, telephone, logolink, activetemplate, user } = req.body;
 
         const filter = { colid: Number(colid) };
         const update = {
@@ -17,6 +17,7 @@ exports.saveschreportconfds = async (req, res) => {
             udisecode,
             email,
             phone,
+            telephone,
             logolink,
             activetemplate,
             updatedat: new Date()

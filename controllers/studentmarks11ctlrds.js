@@ -229,7 +229,7 @@ exports.savemarks11ds = async (req, res) => {
 };
 
 // 4. Get Data for PDF
-exports.getmarksheetpdfdata11ds = async (req, res) => {
+exports.getMarksheetPDFData11ds = async (req, res) => {
     try {
         const { regno, colid, semester, academicyear } = req.query;
 
@@ -254,6 +254,25 @@ exports.getmarksheetpdfdata11ds = async (req, res) => {
         // Filter out attendance from subjects list for display/calculation
         const subjectMarks = marks.filter(m => m.subjectcode !== 'ATTENDANCE');
 
+        // Fetch Subject Configs to get REAL Names (in case Marks has codes)
+        const subjectCodes = subjectMarks.map(m => m.subjectcode);
+        // Fetch Subject Configs to get REAL Names (in case Marks has codes)
+        // Relaxed query: Match by colid and subjectcode ONLY to ensure we find the name regardless of semester mismatch
+        const subjectConfigs = await SubjectComponentConfig11ds.find({
+            colid: Number(colid),
+            subjectcode: { $in: subjectCodes }
+        });
+
+        //console.log("DEBUG: Looking for subjects:", subjectCodes);
+        //console.log("DEBUG: Found configs:", subjectConfigs.length);
+        //subjectConfigs.forEach(sc => console.log(`DEBUG: Config Code: ${sc.subjectcode}, Name: ${sc.subjectname}`));
+
+
+        const codeToNameMap = {};
+        subjectConfigs.forEach(sc => {
+            codeToNameMap[sc.subjectcode] = sc.subjectname;
+        });
+
         // Calculate Totals / Percentage
         let grandTotal = 0;
         let maxTotal = 0;
@@ -266,8 +285,26 @@ exports.getmarksheetpdfdata11ds = async (req, res) => {
             // Pass Criteria: Traditionally 33%.
             if ((m.total || 0) < 33) failCount++;
 
+            // Use Config Name if available, else fallback to Marks Name
+            let realSubjectName = codeToNameMap[m.subjectcode] || m.subjectname;
+
+            // INTELLIGENT FIX: Check if the mapping inverted the Name/Code (User data issue)
+            // If the Result (realSubjectName) looks like a Code (has numbers) 
+            // AND the Input (m.subjectcode) looks like a Name (no numbers, len > 3), 
+            // REVERT to the Input.
+            const isResultCodeLike = /\d/.test(realSubjectName);
+            const isInputNameLike = !/\d/.test(m.subjectcode) && m.subjectcode.length > 2;
+
+            if (isResultCodeLike && isInputNameLike) {
+                //console.log(`DEBUG: Reverting mapping for ${m.subjectcode}. Map gave ${realSubjectName} (Code-like) but Input is Name-like.`);
+                realSubjectName = m.subjectcode; // Keep the name "Biology" instead of "BIO0011"
+            }
+
+            //console.log(`DEBUG: Final Name: ${realSubjectName}`);
+
+
             return {
-                subjectname: m.subjectname,
+                subjectname: realSubjectName,
                 subjectcode: m.subjectcode,
                 unitpremid: m.unitpremidobtain,
                 unitpostmid: m.unitpostmidobtain,
@@ -351,3 +388,55 @@ exports.getmarksheetpdfdata11ds = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+// Save Subject Component Config 11ds
+exports.saveSubjectComponentConfig11ds = async (req, res) => {
+    try {
+        const { id, colid, user, subjectcode, subjectname, semester, academicyear, unitpremid, unitpostmid, halfyearlyth, halfyearlypractical, annualth, annualpractical, isadditional } = req.body;
+
+        const updateData = {
+            colid: Number(colid),
+            user,
+            subjectcode,
+            subjectname,
+            semester,
+            academicyear,
+            unitpremid,
+            unitpostmid,
+            halfyearlyth,
+            halfyearlypractical,
+            annualth,
+            annualpractical,
+            isadditional,
+            updatedat: new Date()
+        };
+
+        if (req.body.name) updateData.name = req.body.name; // subjectname map
+
+        const filter = id ? { _id: id } : {
+            colid: Number(colid),
+            subjectcode: subjectcode,
+            semester: semester,
+            academicyear: academicyear
+        };
+
+        const options = { upsert: true, new: true, setDefaultsOnInsert: true };
+
+        const result = await SubjectComponentConfig11ds.findOneAndUpdate(filter, updateData, options);
+
+        res.json({
+            success: true,
+            message: 'Subject configuration saved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in saveSubjectComponentConfig11ds:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to save subject configuration',
+            error: error.message
+        });
+    }
+};
+
+// Start of getMarksheetPDFData11ds (existing) or End of file
+

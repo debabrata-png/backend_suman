@@ -4906,10 +4906,11 @@ app.post('/api/v2/coscholastic/grades', coscholastic9ctlrds.saveGrades);
 const studentmarks11ctlrds = require('./controllers/studentmarks11ctlrds');
 
 app.get('/api/v2/getsubjectsfromconfig11ds', studentmarks11ctlrds.getsubjectsfromconfig11ds);
-app.post('/api/v2/subjectcomponentconfig11ds/save', studentmarks11ctlrds.saveSubjectConfig11ds);
+// app.post('/api/v2/subjectcomponentconfig11ds/save', studentmarks11ctlrds.saveSubjectConfig11ds); // Deprecated/Duplicate
 app.get('/api/v2/getstudentsandsubjectsformarks11ds', studentmarks11ctlrds.getstudentsandsubjectsformarks11ds);
 app.post('/api/v2/savemarks11ds', studentmarks11ctlrds.savemarks11ds);
-app.get('/api/v2/getmarksheetpdfdata11ds', studentmarks11ctlrds.getmarksheetpdfdata11ds);
+app.get('/api/v2/getmarksheetpdfdata11ds', studentmarks11ctlrds.getMarksheetPDFData11ds);// Corrected Casing
+app.post('/api/v2/subjectcomponentconfig11ds/save', studentmarks11ctlrds.saveSubjectComponentConfig11ds);
 
 
 // ===== SUBJECT COMPONENT CONFIGURATION ROUTES (Class 9-10) =====
