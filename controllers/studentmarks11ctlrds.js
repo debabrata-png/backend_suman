@@ -28,7 +28,7 @@ exports.getsubjectsfromconfig11ds = async (req, res) => {
             semester,
             academicyear,
             isactive: true
-        }).sort({ subjectname: 1 });
+        }).sort({ createdAt: 1 });
         res.json({ success: true, data: subjects });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -99,7 +99,7 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
                 semester,
                 academicyear,
                 isactive: true
-            }).sort({ subjectname: 1 });
+            }).sort({ createdAt: 1 });
 
             // Fetch Existing Marks to populate the grid
             marks = await StudentMarks11ds.find({
@@ -247,7 +247,7 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             colid: Number(colid),
             semester,
             academicyear
-        }).sort({ subjectname: 1 });
+        }).sort({ createdAt: 1 });
 
         // Extract Attendance
         const attRecord = marks.find(m => m.subjectcode === 'ATTENDANCE');
@@ -256,10 +256,11 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
 
         // Fetch Subject Configs to get REAL Names (in case Marks has codes)
         const subjectCodes = subjectMarks.map(m => m.subjectcode);
-        // Fetch Subject Configs to get REAL Names (in case Marks has codes)
-        // Relaxed query: Match by colid and subjectcode ONLY to ensure we find the name regardless of semester mismatch
+        // Filter by colid + semester + academicyear to get configs for this specific class only
         const subjectConfigs = await SubjectComponentConfig11ds.find({
             colid: Number(colid),
+            semester,
+            academicyear,
             subjectcode: { $in: subjectCodes }
         });
 
@@ -322,12 +323,23 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
                 ann50: m.annual50,
 
                 grandTotal: m.total,
-                grade: m.totalgrade
+                grade: m.totalgrade,
+                compartmentobtained: (m.compartmentobtained !== undefined && m.compartmentobtained !== null)
+                    ? m.compartmentobtained : null // Supplementary exam marks
             };
         });
 
         const percentage = maxTotal > 0 ? ((grandTotal / maxTotal) * 100).toFixed(2) : 0;
         const resultStatus = failCount === 0 ? "PASSED" : (failCount === 1 ? "COMPARTMENT" : "FAILED");
+
+        // Build compartmentSubjects list
+        const compartmentSubjects = subjectsFormatted
+            .filter(s => !s.isadditional && (s.grandTotal || 0) < 33)
+            .map(s => ({
+                subjectname: s.subjectname,
+                finalScore: s.grandTotal || 0,
+                compartmentobtained: s.compartmentobtained // Supplementary exam marks
+            }));
         // Dynamic Rank Calculation
         // Fetch all marks for the batch
         const allBatchMarks = await StudentMarks11ds.find({
@@ -365,6 +377,8 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
                 dob: student.dob,
                 address: student.address,
                 phone: student.phone,
+                contact: student.phone,
+                cbseRegNo: student.cbseno || '',   // CBSE Registration Number from User table
                 photo: student.photo,
 
                 // Attendance Data from Marks Collection
@@ -379,7 +393,8 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             percentage,
             result: resultStatus,
             rank: rank,
-            failCount
+            failCount,
+            compartmentSubjects
         };
 
 

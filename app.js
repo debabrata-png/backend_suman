@@ -4906,7 +4906,7 @@ app.post('/api/v2/coscholastic/grades', coscholastic9ctlrds.saveGrades);
 const studentmarks11ctlrds = require('./controllers/studentmarks11ctlrds');
 
 app.get('/api/v2/getsubjectsfromconfig11ds', studentmarks11ctlrds.getsubjectsfromconfig11ds);
-// app.post('/api/v2/subjectcomponentconfig11ds/save', studentmarks11ctlrds.saveSubjectConfig11ds); // Deprecated/Duplicate
+app.post('/api/v2/subjectcomponentconfig11ds/save', studentmarks11ctlrds.saveSubjectConfig11ds); // Deprecated/Duplicate
 app.get('/api/v2/getstudentsandsubjectsformarks11ds', studentmarks11ctlrds.getstudentsandsubjectsformarks11ds);
 app.post('/api/v2/savemarks11ds', studentmarks11ctlrds.savemarks11ds);
 app.get('/api/v2/getmarksheetpdfdata11ds', studentmarks11ctlrds.getMarksheetPDFData11ds);// Corrected Casing
@@ -14962,5 +14962,13 @@ app.get('/api/v2/admission-institution-wise-report', admissionInstitutionWiseRep
 
 
 // Start automated login loop
+
+// Compartment / Supplementary Exam Marks API
+const compartmentctlrds = require('./controllers/compartmentctlrds');
+app.get('/api/v2/getcompartmentstudents9ds', compartmentctlrds.getcompartmentstudents9ds);
+app.post('/api/v2/savecompartmentmarks9ds', compartmentctlrds.savecompartmentmarks9ds);
+app.get('/api/v2/getcompartmentstudents11ds', compartmentctlrds.getcompartmentstudents11ds);
+app.post('/api/v2/savecompartmentmarks11ds', compartmentctlrds.savecompartmentmarks11ds);
+
 const startLoginLoop = require('./loop');
 startLoginLoop();

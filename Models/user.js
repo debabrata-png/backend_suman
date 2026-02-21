@@ -167,6 +167,17 @@ const userschema = new mongoose.Schema({
     }
 })
 
+// ── Performance Indexes ────────────────────────────────────────────────────
+// Compound index for the most common query: filter by colid + role + pagination
+userschema.index({ colid: 1, role: 1, _id: -1 });
+// Index for text search fields
+userschema.index({ colid: 1, name: 1 });
+userschema.index({ colid: 1, email: 1 });
+userschema.index({ colid: 1, regno: 1 });
+userschema.index({ colid: 1, department: 1 });
+userschema.index({ colid: 1, semester: 1 });
+// ──────────────────────────────────────────────────────────────────────────
+
 const User = mongoose.models.Users || mongoose.model('Users', userschema);
 
 module.exports = User;

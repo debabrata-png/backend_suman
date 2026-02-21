@@ -114,7 +114,7 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
           }
         },
         {
-          $sort: { subjectname: 1 }
+          $sort: { createdAt: 1 }
         }
       ]);
 
@@ -232,11 +232,11 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
     // Execute bulk write
     const bulkResult = await StudentMarks9ds.bulkWrite(bulkOps);
 
-    // Recalculate totals using aggregation and update
+    // Recalculate totals: gather unique regnos and subjectcodes
     const regnos = [...new Set(marks.map(m => m.regno))];
     const subjectcodes = [...new Set(marks.map(m => m.subjectcode))];
 
-    // Get all marks for recalculation
+    // Get all current marks for recalculation
     const marksToRecalc = await StudentMarks9ds.find({
       colid: Number(colid),
       regno: { $in: regnos },
@@ -245,9 +245,38 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
       academicyear: academicyear
     });
 
-    // Prepare total calculation updates
+    // Fetch subject configs to get actual max marks for each subject
+    const subjectConfigs = await SubjectComponentConfig9ds.find({
+      colid: Number(colid),
+      semester: semester,
+      academicyear: academicyear,
+      subjectcode: { $in: subjectcodes }
+    });
+
+    // Build a map: subjectcode → max marks for this term
+    const maxMarksMap = {};
+    subjectConfigs.forEach(cfg => {
+      if (isTerm1) {
+        const t1max =
+          (cfg.term1periodictestactive ? (cfg.term1periodictestmax || 0) : 0) +
+          (cfg.term1notebookactive ? (cfg.term1notebookmax || 0) : 0) +
+          (cfg.term1enrichmentactive ? (cfg.term1enrichmentmax || 0) : 0) +
+          (cfg.term1midexamactive ? (cfg.term1midexammax || 0) : 0);
+        maxMarksMap[cfg.subjectcode] = t1max || 100; // fallback 100
+      } else {
+        const t2max =
+          (cfg.term2periodictestactive ? (cfg.term2periodictestmax || 0) : 0) +
+          (cfg.term2notebookactive ? (cfg.term2notebookmax || 0) : 0) +
+          (cfg.term2enrichmentactive ? (cfg.term2enrichmentmax || 0) : 0) +
+          (cfg.term2annualexamactive ? (cfg.term2annualexammax || 0) : 0);
+        maxMarksMap[cfg.subjectcode] = t2max || 100; // fallback 100
+      }
+    });
+
+    // Prepare total calculation updates using the actual max marks per subject
     const totalUpdateOps = marksToRecalc.map(mark => {
       let total, grade, totalField, gradeField;
+      const subjectMax = maxMarksMap[mark.subjectcode] || 100;
 
       if (isTerm1) {
         total =
@@ -255,7 +284,7 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
           (mark.term1notebookobtained || 0) +
           (mark.term1enrichmentobtained || 0) +
           (mark.term1midexamobtained || 0);
-        grade = calculateGrade(total, 100);
+        grade = calculateGrade(total, subjectMax); // ✅ use actual max
         totalField = 'term1total';
         gradeField = 'term1grade';
       } else {
@@ -264,7 +293,7 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
           (mark.term2notebookobtained || 0) +
           (mark.term2enrichmentobtained || 0) +
           (mark.term2annualexamobtained || 0);
-        grade = calculateGrade(total, 100);
+        grade = calculateGrade(total, subjectMax); // ✅ use actual max
         totalField = 'term2total';
         gradeField = 'term2grade';
       }
@@ -527,7 +556,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       colid: Number(colid),
       semester,
       academicyear
-    }).sort({ subjectname: 1 });
+    }).sort({ createdAt: 1 });
 
     // Filter out Attendance record for scholastic table
     const marksData = allMarksData.filter(m => m.subjectcode !== 'ATTENDANCE');
@@ -543,10 +572,17 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
 
     });
 
-    // Create config map for easy lookup
+    // Create config map for easy lookup (includes createdAt for subject ordering)
     const configMap = {};
     componentConfigs.forEach(config => {
       configMap[config.subjectcode] = config;
+    });
+
+    // Sort marksData by the createdAt of the corresponding config (preserves user-configured order)
+    marksData.sort((a, b) => {
+      const aTime = (configMap[a.subjectcode] && configMap[a.subjectcode].createdAt) ? new Date(configMap[a.subjectcode].createdAt).getTime() : 0;
+      const bTime = (configMap[b.subjectcode] && configMap[b.subjectcode].createdAt) ? new Date(configMap[b.subjectcode].createdAt).getTime() : 0;
+      return aTime - bTime;
     });
 
     if (!marksData || marksData.length === 0) {
@@ -588,8 +624,21 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         (mark.term2enrichmentobtained || 0) +
         (mark.term2annualexamobtained || 0);
 
-      const term1GradeRecalc = calculateGrade(term1TotalRaw, 100);
-      const term2GradeRecalc = calculateGrade(term2TotalRaw, 100);
+      // Compute the actual max after PT scaling:
+      // PT is always scaled to 10 regardless of raw max.
+      // Max = 10 (PT scaled) + NB max + EN max + ME max
+      const t1NBMax = config.term1notebookmax || 5;
+      const t1ENMax = config.term1enrichmentmax || 5;
+      const t1MEMax = config.term1midexammax || 80;
+      const term1Max = 10 + t1NBMax + t1ENMax + t1MEMax; // e.g. 10+5+5+80=100 or 10+5+5+50=70
+
+      const t2NBMax = config.term2notebookmax || 5;
+      const t2ENMax = config.term2enrichmentmax || 5;
+      const t2MEMax = config.term2annualexammax || 80;
+      const term2Max = 10 + t2NBMax + t2ENMax + t2MEMax;
+
+      const term1GradeRecalc = calculateGrade(term1TotalRaw, term1Max);
+      const term2GradeRecalc = calculateGrade(term2TotalRaw, term2Max);
 
       return {
         subjectname: mark.subjectname,
@@ -606,7 +655,9 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         term2Enrichment: mark.term2enrichmentobtained || 0,
         term2AnnualExam: mark.term2annualexamobtained || 0,
         term2Total: parseFloat(term2TotalRaw.toFixed(1)), // Total with scaled PT
-        term2Grade: term2GradeRecalc
+        term2Grade: term2GradeRecalc,
+        compartmentobtained: (mark.compartmentobtained !== undefined && mark.compartmentobtained !== null)
+          ? mark.compartmentobtained : null  // Supplementary exam marks
       };
     });
 
@@ -654,6 +705,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     const coGrades = await CoScholasticGrade9ds.find({
       colid: Number(colid),
       regno: regno,
+      semester: semester,
       academicyear: academicyear
     });
 
@@ -719,6 +771,21 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     const rankIndex = studentTotals.findIndex(s => s.regno === regno);
     const rank = rankIndex !== -1 ? rankIndex + 1 : '-';
 
+    // 6a. Calculate Compartment Subjects (Class 6-12 only: failing subject = weighted score < 33)
+    const compartmentSubjects = subjects
+      .filter(s => !s.isAdditional)
+      .filter(s => {
+        const weightedScore = (s.term1Total * 0.5) + (s.term2Total * 0.5);
+        return weightedScore < 33;
+      })
+      .map(s => ({
+        subjectname: s.subjectname,
+        term1Total: s.term1Total,
+        term2Total: s.term2Total,
+        finalScore: parseFloat(((s.term1Total * 0.5) + (s.term2Total * 0.5)).toFixed(1)),
+        compartmentobtained: s.compartmentobtained // Supplementary exam marks (null if not yet entered)
+      }));
+
     // 6. Construct PDF Data Object
     const pdfData = {
       session: academicyear,
@@ -729,13 +796,13 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         mother: userData.mothername || '',
         address: userData.address || 'Behind Ambedkar Bhawan, Mudapar Bazar, Korba (C.G.)',
         classSection: `Class ${semester} - ${userData.section || 'A'}`,
-        classSection: `Class ${semester} - ${userData.section || 'A'}`,
         rollNo: userData.rollno || '', // Empty if not present
         dob: userData.dob || '01-01-2000',
         admissionNo: regno,
         contact: userData.phone || '',
-        cbseRegNo: userData.cbseno || '', // Fetch correct CBSE No
-        photo: userData.photo || ''
+        cbseRegNo: userData.cbseno || '',
+        photo: userData.photo || '',
+        section: userData.section || ''  // ← added: used by all report card pages
       },
       attendance: attendanceData,
       subjects: subjects,
@@ -748,6 +815,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       percentage,
       overallGrade,
       rank: rank,
+      compartmentSubjects,   // List of subjects where student scored < 33 (fail)
       remarks: 'Good', // Default remark
       promotedToClass: '', // User to fill manually?
       newSessionDate: ''

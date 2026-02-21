@@ -41,6 +41,11 @@ const studentmarks9dsschema = new mongoose.Schema({
 
   // Status
   status: { type: String, default: 'draft' }, // draft, finalized
+  isactive: { type: Boolean, default: true },
+  isadditional: { type: Boolean, default: false },
+
+  // Compartment / Supplementary Exam Marks (does not affect original term marks)
+  compartmentobtained: { type: Number, default: null },
 
   createdat: { type: Date, default: Date.now },
   updatedat: { type: Date, default: Date.now }

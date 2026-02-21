@@ -5,14 +5,14 @@ exports.createorupdatesubjectconfig9ds = async (req, res) => {
   try {
     const { colid, user } = req.query;
     const configData = req.body;
-    
+
     const filter = {
       colid: Number(colid),
       subjectcode: configData.subjectcode,
       semester: configData.semester,
       academicyear: configData.academicyear
     };
-    
+
     const updateData = {
       ...configData,
       name: configData.name || 'system',
@@ -20,13 +20,13 @@ exports.createorupdatesubjectconfig9ds = async (req, res) => {
       colid: Number(colid),
       updatedat: new Date()
     };
-    
+
     const result = await SubjectComponentConfig9ds.findOneAndUpdate(
       filter,
       { $set: updateData },
       { upsert: true, new: true }
     );
-    
+
     res.json({
       success: true,
       message: result.isNew ? 'Subject configuration created successfully' : 'Subject configuration updated successfully',
@@ -46,20 +46,20 @@ exports.createorupdatesubjectconfig9ds = async (req, res) => {
 exports.listsubjectconfig9ds = async (req, res) => {
   try {
     const { colid, semester, academicyear } = req.query;
-    
+
     const filter = {
       colid: Number(colid),
       isactive: true
     };
-    
+
     if (semester) filter.semester = semester;
     if (academicyear) filter.academicyear = academicyear;
-    
+
     const configs = await SubjectComponentConfig9ds.find(filter)
       .select('-__v')
-      .sort({ subjectname: 1 })
+      .sort({ createdAt: 1 })
       .lean();
-    
+
     res.json({
       success: true,
       count: configs.length,
@@ -79,21 +79,21 @@ exports.listsubjectconfig9ds = async (req, res) => {
 exports.getsubjectconfig9ds = async (req, res) => {
   try {
     const { colid, subjectcode, semester, academicyear } = req.query;
-    
+
     const config = await SubjectComponentConfig9ds.findOne({
       colid: Number(colid),
       subjectcode,
       semester,
       academicyear
     }).lean();
-    
+
     if (!config) {
       return res.status(404).json({
         success: false,
         message: 'Subject configuration not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: config
@@ -112,16 +112,16 @@ exports.getsubjectconfig9ds = async (req, res) => {
 exports.deletesubjectconfig9ds = async (req, res) => {
   try {
     const { id } = req.query;
-    
+
     const deletedConfig = await SubjectComponentConfig9ds.findByIdAndDelete(id);
-    
+
     if (!deletedConfig) {
       return res.status(404).json({
         success: false,
         message: 'Subject configuration not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Subject configuration deleted successfully'
@@ -140,7 +140,7 @@ exports.deletesubjectconfig9ds = async (req, res) => {
 exports.getactivecomponents9ds = async (req, res) => {
   try {
     const { colid, subjectcode, semester, academicyear, term } = req.query;
-    
+
     // Define component metadata (used by frontend)
     const componentMetadata = {
       term1: [
@@ -156,7 +156,7 @@ exports.getactivecomponents9ds = async (req, res) => {
         { name: 'term2annualexam', label: 'Term II Annual Exam', maxfield: 'term2annualexammax', activefield: 'term2annualexamactive', obtainedfield: 'term2annualexamobtained' }
       ]
     };
-    
+
     // Use aggregation to get config and transform in one query
     const result = await SubjectComponentConfig9ds.aggregate([
       {
@@ -192,16 +192,16 @@ exports.getactivecomponents9ds = async (req, res) => {
         }
       }
     ]);
-    
+
     if (!result || result.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Subject configuration not found'
       });
     }
-    
+
     const config = result[0];
-    
+
     // Send raw config + metadata (frontend will filter active components)
     res.json({
       success: true,

@@ -28,7 +28,7 @@ const subjectcomponentconfig11dsschema = new mongoose.Schema({
 
     createdat: { type: Date, default: Date.now },
     updatedat: { type: Date, default: Date.now }
-});
+}, { timestamps: true });
 
 // Unique constraint
 subjectcomponentconfig11dsschema.index({

@@ -42,7 +42,10 @@ const studentmarks11dsschema = new mongoose.Schema({
     term2totalpresentdays: { type: Number, default: 0 },
 
     // Status
-    status: { type: String, default: 'draft' }, // draft, finalized
+    status: { type: String, default: 'draft' },
+
+    // Compartment / Supplementary Exam Marks (does not affect original marks)
+    compartmentobtained: { type: Number, default: null },
 
     createdat: { type: Date, default: Date.now },
     updatedat: { type: Date, default: Date.now }

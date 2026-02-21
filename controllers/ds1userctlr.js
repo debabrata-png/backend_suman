@@ -212,7 +212,7 @@ exports.ds1getalluser = async (req, res) => {
       status,
       page = 1,
       limit = 50,
-      excludeRole, // ✅ Destructure to prevent adding to otherFilters
+      excludeRole,
       ...otherFilters
     } = req.query;
 
@@ -237,9 +237,14 @@ exports.ds1getalluser = async (req, res) => {
         }
       }
     });
-    if (role) query.role = role;
-    if (excludeRole) {
-      query.role = { ...(query.role || {}), $ne: excludeRole };
+    if (role && excludeRole) {
+      // Both specified: filter to exact role but exclude the excluded role
+      // If they're the same (contradictory), excludeRole wins → no results for that role
+      query.role = role === excludeRole ? { $ne: excludeRole } : role;
+    } else if (role) {
+      query.role = role;
+    } else if (excludeRole) {
+      query.role = { $ne: excludeRole };
     }
     if (department) query.department = department;
     if (semester) query.semester = semester;
