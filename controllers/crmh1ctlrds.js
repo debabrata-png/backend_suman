@@ -489,19 +489,22 @@ exports.getoverduefollowupsds = async (req, res) => {
 // Get lead analytics (USER-BASED ACCESS)
 exports.getleadanalyticsds = async (req, res) => {
   try {
-    const { colid, user } = req.query;
+    const { colid, user, role } = req.query;
 
     // Match leads where:
     // 1. Lead belongs to this organization (colid matches)
-    // 2. Either lead.user === user (admin/owner) OR lead.assignedto === user (counsellor)
+    // 2. If role is Admin, CRM, or All, see all leads for this colid
+    // 3. Otherwise, only see leads owned or assigned to this user
     let matchQuery = {
-      colid: Number(colid),
-      $or: [
-        { role: { $in: ["Admin", "CRM", "All"] } },
+      colid: Number(colid)
+    };
+
+    if (role !== "Admin" && role !== "CRM" && role !== "All") {
+      matchQuery.$or = [
         { user: user },        // Admin/Owner sees all their organization's leads
         { assignedto: user },   // Counsellor sees leads assigned to them
-      ]
-    };
+      ];
+    }
 
     const totalLeads = await crmh1.countDocuments(matchQuery);
     const hotLeads = await crmh1.countDocuments({ ...matchQuery, lead_temperature: 'Hot' });

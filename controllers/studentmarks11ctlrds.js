@@ -1,8 +1,8 @@
 const StudentMarks11ds = require('../Models/studentmarks11ds');
 const SubjectComponentConfig11ds = require('../Models/subjectcomponentconfig11ds');
 const User = require('../Models/user');
-// const CoScholasticActivity9ds = require('../Models/CoScholasticActivity9ds'); // Reuse or create new if needed? Assuming reuse for now or just generic keys
-// const CoScholasticGrade9ds = require('../Models/CoScholasticGrade9ds');
+const CoScholasticActivity9ds = require('../Models/CoScholasticActivity9ds');
+const CoScholasticGrade9ds = require('../Models/CoScholasticGrade9ds');
 
 // Helper to calculate grade (generic)
 function calculateGrade(obtained, max) {
@@ -334,12 +334,49 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
 
         // Build compartmentSubjects list
         const compartmentSubjects = subjectsFormatted
-            .filter(s => !s.isadditional && (s.grandTotal || 0) < 33)
+            .filter(s => (s.grandTotal || 0) < 33 || s.grade === 'E')
             .map(s => ({
                 subjectname: s.subjectname,
                 finalScore: s.grandTotal || 0,
                 compartmentobtained: s.compartmentobtained // Supplementary exam marks
             }));
+
+        // Fetch Co-Scholastic data
+        let finalCoScholastic = [];
+        try {
+            const coActivities = await CoScholasticActivity9ds.find({
+                colid: Number(colid),
+                isactive: true
+            });
+
+            const coActivityIds = coActivities.map(act => act._id);
+
+            const coGrades = await CoScholasticGrade9ds.find({
+                colid: Number(colid),
+                regno,
+                semester,
+                academicyear,
+                activity: { $in: coActivityIds }
+            }).sort({ createdAt: -1 });
+
+            // Create a lookup for grades
+            const gradeMap = {};
+            coGrades.forEach(g => {
+                const actId = g.activity.toString();
+                if (!gradeMap[actId]) gradeMap[actId] = g;
+            });
+
+            // Format for frontend
+            finalCoScholastic = coActivities.map(act => ({
+                id: act._id,
+                code: act.code || '',
+                area: act.name,
+                grade: gradeMap[act._id.toString()]?.term1Grade || '-', // Fallback to term1Grade or grade
+            }));
+        } catch (e) {
+            console.error("Co-Scholastic fetch error:", e);
+        }
+
         // Dynamic Rank Calculation
         // Fetch all marks for the batch
         const allBatchMarks = await StudentMarks11ds.find({
@@ -388,6 +425,7 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
                 term2workingdays: attRecord ? (attRecord.term2totalworkingdays || 0) : 0
             },
             subjects: subjectsFormatted,
+            coScholastic: finalCoScholastic, // Pass CoScholastic to frontend
             grandTotal,
             maxTotal,
             percentage,
