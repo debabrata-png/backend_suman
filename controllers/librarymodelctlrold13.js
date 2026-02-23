@@ -1,7 +1,7 @@
 const { default: mongoose } = require("mongoose");
-const bookmodel = require("../models/bookmodel2");
-const issuebookmodel = require("../models/issuebookmodel1");
-const librarymodel = require("../models/librarymodel1");
+const bookmodel = require("../Models/bookmodel2");
+const issuebookmodel = require("../Models/issuebookmodel1");
+const librarymodel = require("../Models/librarymodel1");
 const User = require("../Models/user");
 const Ledgerstud = require("../Models/ledgerstud");
 
@@ -10,14 +10,113 @@ exports.bulkCreateBooks = async (req, res) => {
   try {
     const books = req.body;
 
-    const result = await bookmodel.insertMany(books, {
-      ordered: false,
-    });
+    if (!Array.isArray(books) || books.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Payload must be a non-empty array of books",
+      });
+    }
+
+    if (books.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: "Maximum 500 books per request.",
+      });
+    }
+    const validatedBooks = [];
+    const validationFailures = [];
+
+    for (let i = 0; i < books.length; i++) {
+      const book = books[i];
+      const missingFields = [];
+      if (!book.author?.trim()) {
+        missingFields.push("author");
+      }
+      if (!book.accessid?.trim()) {
+        missingFields.push("accessid");
+      }
+      if (!book.libraryid?.trim()) {
+        missingFields.push("libraryid");
+      }
+      if (!book.colid || book.colid === "undefined") {
+        missingFields.push("colid");
+      }
+
+      if (missingFields.length > 0) {
+        validationFailures.push({
+          row: i + 1,
+          data: {
+            bookId: book.bookId || "N/A",
+            title: book.title || "N/A",
+            accessid: book.accessid || "MISSING",
+            author: book.author || "MISSING",
+          },
+          missingFields,
+          reason: `Missing required fields: ${missingFields.join(", ")}`,
+        });
+      } else {
+        validatedBooks.push(book);
+      }
+    }
+    let successCount = 0;
+    let duplicateCount = 0;
+    let duplicateRecords = [];
+
+    if (validatedBooks.length > 0) {
+      try {
+        const result = await bookmodel.insertMany(validatedBooks, {
+          ordered: false,
+          rawResult: true,
+        });
+
+        successCount = result.insertedCount || validatedBooks.length;
+
+      } catch (error) {
+
+        if (error.code === 11000 && error.writeErrors) {
+          successCount = validatedBooks.length - error.writeErrors.length;
+          duplicateCount = error.writeErrors.length;
+
+          error.writeErrors.forEach((writeError) => {
+            const failedBook = validatedBooks[writeError.index];
+            const duplicateField = Object.keys(writeError.err.keyPattern || {})[0] || "unknown";
+
+            duplicateRecords.push({
+              row: writeError.index + 1 + validationFailures.length,
+              data: {
+                bookId: failedBook.bookId || "N/A",
+                title: failedBook.title || "N/A",
+                accessid: failedBook.accessid,
+                author: failedBook.author,
+              },
+              duplicateField,
+              duplicateValue: failedBook[duplicateField],
+              reason: `Duplicate ${duplicateField}: "${failedBook[duplicateField]}" already exists in database`,
+            });
+          });
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    const totalProcessed = books.length;
+    const failedCount = duplicateCount + validationFailures.length;
 
     return res.status(201).json({
       success: true,
       message: "Bulk upload completed",
-      insertedCount: result.length,
+      summary: {
+        totalProcessed,
+        successCount,
+        duplicateCount,
+        validationFailureCount: validationFailures.length,
+        failedCount,
+      },
+      details: {
+        duplicates: duplicateRecords.length > 0 ? duplicateRecords.slice(0, 10) : undefined,
+        validationFailures: validationFailures.length > 0 ? validationFailures.slice(0, 10) : undefined,
+      },
     });
 
   } catch (error) {
