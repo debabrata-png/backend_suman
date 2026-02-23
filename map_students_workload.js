@@ -3,9 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 const STUDENT_FILES = [
-    'PCPS STUDENT DATA.xlsx',
+    'SFS B.SC STUDENT DATA.xlsx',
 ];
-const WORKLOAD_FILE = 'PCPS WORKLOAD.xlsx';
+const WORKLOAD_FILE = 'SFS Work Load B.SC.xlsx';
 const OUTPUT_FILE = 'classenr_pcps_output.xlsx';
 
 const mapData = () => {

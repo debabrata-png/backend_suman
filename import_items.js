@@ -7,7 +7,7 @@ dotenv.config({ path: './config.env' });
 
 const DB = process.env.DATABASE2 || process.env.DATABASE.replace('<PASSWORD>', process.env.DATABASE_PASSWORD);
 
-mongoose.connect("mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
+mongoose.connect("mongodb+srv://erppu_db_user:NIX9cbbnUDGxlOiB@cluster0.eumxu0m.mongodb.net/?appName=Cluster0", {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => console.log('DB connection successful!'));

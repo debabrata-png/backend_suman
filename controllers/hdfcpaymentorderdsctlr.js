@@ -31,8 +31,8 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       feeitem,
       feecategory,
       installment,
-      frontendCallbackUrl,  // ✅ From frontend
-      backendReturnUrl,     // ✅ From frontend
+      frontendCallbackUrl,
+      backendReturnUrl,
       comments,
       notes
     } = req.body;
@@ -52,10 +52,6 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
         message: 'Missing required URLs: frontendCallbackUrl, backendReturnUrl'
       });
     }
-
-    // // console.log('📥 Payment Request URLs:');
-    // // console.log('   Frontend Callback:', frontendCallbackUrl);
-    // // console.log('   Backend Return:', backendReturnUrl);
 
     // Parse and validate amount
     const parsedamount = parseFloat(originalAmount);
@@ -170,9 +166,9 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       status: 'INITIATED',
       initiatedat: new Date(),
       expiresat: new Date(Date.now() + 30 * 60 * 1000),
-      redirecturl: backendReturnUrl,           // ✅ Backend receives POST here
-      frontendcallbackurl: frontendCallbackUrl, // ✅ User is redirected here
-      callbackurl: gatewayconfig.callbackurl,   // ✅ Webhook URL (optional)
+      redirecturl: backendReturnUrl,
+      frontendcallbackurl: frontendCallbackUrl,
+      callbackurl: gatewayconfig.callbackurl,
       feegroup,
       feeitem,
       feecategory,
@@ -196,16 +192,14 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
     // Prepare HDFC payment request
     const sessionparams = {
       order_id: merchanttransactionid,
-      amount: finalamount, // Amount in paise
+      amount: finalamount,
       currency: 'INR',
       customer_id: regno,
       customer_email: studentEmail,
       customer_phone: studentPhone,
-      return_url: backendReturnUrl,  // ✅ HDFC will POST here
+      return_url: backendReturnUrl,
       order_note: paymentPurpose || 'Fee Payment'
     };
-
-    // // console.log('📤 HDFC Session Params:', sessionparams);
 
     // Initialize HDFC Payment Handler
     const handler = HDFCPaymentHandler.getinstance(gatewayconfig);
@@ -241,7 +235,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
         throw new Error('No payment URL received from HDFC');
       }
     } catch (hdfcerror) {
-      // // console.error('HDFC API Error:', hdfcerror);
+      //console.error('HDFC API Error:', hdfcerror);
 
       // Update order status to failed
       neworder.status = 'FAILED';
@@ -250,7 +244,6 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       await neworder.save();
 
       if (hdfcerror instanceof HDFCAPIException) {
-        // ✅ Fix: Ensure valid HTTP status code
         const statuscode = (hdfcerror.httpresponsecode > 0 && hdfcerror.httpresponsecode < 600)
           ? hdfcerror.httpresponsecode
           : 500;
@@ -864,7 +857,6 @@ exports.hdfcreturnurlhandler = async (req, res) => {
       return res.status(404).send('Order not found');
     }
 
-    // ✅ Fetch gateway config
     const gatewayconfig = await hdfcgatewayds.findOne({
       colid: order.colid,
       isactive: true
@@ -872,13 +864,9 @@ exports.hdfcreturnurlhandler = async (req, res) => {
 
     if (gatewayconfig) {
       try {
-        // ✅ Initialize handler with logging enabled
         const handler = HDFCPaymentHandler.getinstance(gatewayconfig);
 
-        // ✅ Call your EXISTING checkorderstatus method
         const statusresponse = await handler.checkorderstatus(hdfcorderid);
-
-        // console.log('✅ HDFC Status API Response:', statusresponse);
 
         // Update order with verified status
         if (statusresponse && statusresponse.status) {
@@ -897,7 +885,6 @@ exports.hdfcreturnurlhandler = async (req, res) => {
           }
         }
       } catch (apierror) {
-        // console.error('❌ HDFC Status API Error:', apierror);
         // Fallback to callback data
         order.status = callbackdata.status === 'CHARGED' ? 'SUCCESS' : callbackdata.status;
         order.paymentdetails = callbackdata;

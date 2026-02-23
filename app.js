@@ -530,6 +530,8 @@ app.get('/api/v2/deleteprassigneds', prassignedsctlr.deleteprassigneds);
 
 // Approval Config Routes
 app.post('/api/v2/addapprovalconfig', approvalconfigdsctlr.addConfig);
+app.post('/api/v2/updateapprovalconfig', approvalconfigdsctlr.updateConfig);
+app.get('/api/v2/deleteapprovalconfig', approvalconfigdsctlr.deleteConfig);
 app.get('/api/v2/getapprovalconfig', approvalconfigdsctlr.getConfig);
 
 const pimprestdsctlr = require('./controllers/pimprestdsctlr');

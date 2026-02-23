@@ -6,7 +6,7 @@ const dotenv = require('dotenv');
 dotenv.config({ path: './config.env' });
 
 
-mongoose.connect("mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
+mongoose.connect("mongodb+srv://erppu_db_user:NIX9cbbnUDGxlOiB@cluster0.eumxu0m.mongodb.net/?appName=Cluster0", {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => console.log('DB connection successful!'));

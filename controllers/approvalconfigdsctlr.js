@@ -20,3 +20,23 @@ exports.getConfig = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+exports.updateConfig = async (req, res) => {
+    try {
+        const { id, ...updateData } = req.body;
+        const updatedConfig = await approvalconfigds.findByIdAndUpdate(id, updateData, { new: true });
+        res.status(200).json({ success: true, data: updatedConfig });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.deleteConfig = async (req, res) => {
+    try {
+        const { id } = req.query;
+        await approvalconfigds.findByIdAndDelete(id);
+        res.status(200).json({ success: true, message: "Approval config deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
