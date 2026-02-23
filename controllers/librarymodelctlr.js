@@ -1,7 +1,7 @@
 const { default: mongoose } = require("mongoose");
-const bookmodel = require("../models/bookmodel2");
-const issuebookmodel = require("../models/issuebookmodel1");
-const librarymodel = require("../models/librarymodel1");
+const bookmodel = require("../Models/bookmodel2");
+const issuebookmodel = require("../Models/issuebookmodel1");
+const librarymodel = require("../Models/librarymodel1");
 const User = require("../Models/user");
 const Ledgerstud = require("../Models/ledgerstud");
 
