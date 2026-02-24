@@ -26,6 +26,12 @@ const storepoorderdsschema = new mongoose.Schema({
     poid: {
         type: String
     },
+    storeid: {
+        type: String
+    },
+    storename: {
+        type: String
+    },
     price: {
         type: Number
     },

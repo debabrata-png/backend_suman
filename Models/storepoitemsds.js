@@ -47,6 +47,12 @@ const storepoitemsdsschema = new mongoose.Schema({
     itemname: {
         type: String
     },
+    storeid: {
+        type: String
+    },
+    storename: {
+        type: String
+    },
     // New Fields for Tax & Classification
     category: { type: String },
     itemtype: { type: String }, // This field already exists, keeping its original definition.
