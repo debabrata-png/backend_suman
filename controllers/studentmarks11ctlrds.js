@@ -346,6 +346,8 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
         try {
             const coActivities = await CoScholasticActivity9ds.find({
                 colid: Number(colid),
+                semester: semester,
+                academicyear: academicyear,
                 isactive: true
             });
 
