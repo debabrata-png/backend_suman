@@ -1,7 +1,8 @@
-const mongoose=require('mongoose');
+const mongoose = require("mongoose");
 
 const applicationFormSchema = new mongoose.Schema({
-  colId: { type: String, required: true},
+  // --- CORE IDENTIFICATION ---
+  colId: { type: String, required: true },
   name: { type: String, required: true },
   email: { type: String, required: true },
   password: { type: String, required: true },
@@ -13,74 +14,127 @@ const applicationFormSchema = new mongoose.Schema({
   city: { type: String },
   state: { type: String },
   country: { type: String },
+  areaType:{ type: String },
   pincode: { type: String },
+  gender: { type: String },
+  nationality: { type: String, default: "Indian" },
+  religion: { type: String },
+  category: { type: String },
+  caste: { type: String },
+  subCaste: { type: String },
+  reservedCategory: { type: String },
+  isDivyangan: { type: String, default: "No" },
+  aadhaarNumber: { type: String },
+  motherTongue: { type: String },
 
-  parentName: { type: String },
-  parentPhoneNumber: { type: String },
-  parentAnnualIncome: { type: String },
-  parentOccupation: { type: String },
+  // --- FAMILY DETAILS ---
+  fatherName: { type: String },
+  fatherEducation: { type: String },
+  fatherOccupation: { type: String },
+  fatherIncome: { type: String },
+  fatherPhone: { type: String },
+  fatherEmail: { type: String },
+  fatherAddress: { type: String },
+  fatherOfficialAddress: { type: String },
+
+  motherName: { type: String },
+  motherEducation: { type: String },
+  motherOccupation: { type: String },
+  motherIncome: { type: String },
+  motherPhone: { type: String },
+  motherEmail: { type: String },
+  motherAddress: { type: String },
+  motherOfficialAddress: { type: String },
 
   guardianName: { type: String },
   guardianPhoneNumber: { type: String },
+  
+  qualification:{ type: String },
+  occupation:{ type: String },
+  annualIncome:{type:String},
+  singleChild: { type: String },
+  siblingAge:{type:String},
+  siblingRelation:{type:String},
+  siblingName: { type: String },
+  siblingSchool:{ type: String },
 
-  category: { type: String },
-  caste: { type: String },
-  reservedCategory: { type: String },
-  religion: { type: String },
-
-  previousQualifyingExamRegNo: { type: String },
-  programOptingFor: { type: String },
-  hostelRequired: { type: String },
-  transportationRequired: { type: String },
-  capID: { type: String },
-  referenceNumber: { type: String },
-  appstatus: { type: String },
-  assignedto: { type: String },
-  year: { type: String },
-
+  // --- ACADEMIC CHOICES ---
+  
+  languagesChosen: { type: [String] },
+  otherLanguagesSpecify:{ type: String },
   language1: { type: String },
   language2: { type: String },
-  aadhaarNumber: { type: String },
+  hostelRequired: { type: String },
+  transportationRequired: { type: String },
 
-  // 10th Details
+  // --- 10th DETAILS ---
   tenthExamName: { type: String },
   tenthBoardName: { type: String },
   tenthMarks: { type: Number },
   tenthSchoolName: { type: String },
   tenthYearOfPassing: { type: String },
   tenthNoOfAttempts: { type: String },
-  tenthSubjects: [{
-    subjectName: { type: String },
-    marksObtained: { type: String }
-  }],
+  tenthSubjects: [
+    {
+      subjectName: { type: String },
+      marksObtained: { type: String },
+    },
+  ],
 
-  // 12th Details
+  // --- 12th DETAILS ---
   twelfthExamName: { type: String },
   twelfthBoardName: { type: String },
+  twelfthRegNo: { type: String },
   twelfthMarks: { type: Number },
   twelfthSchoolName: { type: String },
   twelfthYearOfPassing: { type: String },
   twelfthNoOfAttempts: { type: String },
-  twelfthSubjects: [{
-    subjectName: { type: String },
-    marksObtained: { type: String }
-  }],
+  twelfthSubjects: [
+    {
+      subjectName: { type: String },
+      marksObtained: { type: String },
+    },
+  ],
 
-  // UG Details
+  // --- UG DETAILS ---
   institutionName: { type: String },
   universityName: { type: String },
   ugCGPA: { type: String },
   ugYearOfPassing: { type: String },
   ugNoOfChances: { type: String },
-  semesters: [{
-    semNo: { type: String },
-    marksObtained: { type: String },
-    cgpa: { type: String },
-  }]
-}, { timestamps: true });
+  qualifyingPercentage:{ type: String },
+  qualifyingClass:{ type: String },
+  languagesStudiedPrevious:{ type: [String] },
+  optionalSubjectsStudied:{ type: [String] },
+  semesters: [
+    {
+      semNo: { type: String },
+      marksObtained: { type: String },
+      cgpa: { type: String },
+    },
+  ],
 
-const applicationFormModel = mongoose.model("appmodel1", applicationFormSchema);
+  // --- REGISTRATION & STATUS ---
+  capID: { type: String },
+  referenceNumber: { type: String },
+  appstatus: { type: String, default: "Pending" },
+  assignedto: { type: String },
+  year: { type: String },
+  bankAcno: { type: String },
+  diseCode: { type: String },
+  transfercertificateNum: { type: String },
+  dateOfissue: { type: String },
 
-// export default applicationFormModel;
+  // --- NESTED LOCATIONS ---
+  placeOfBirth: {
+    villageTown: { type: String },
+    taluk: { type: String },
+    district: { type: String },
+    state: { type: String },
+  },
+  ageInYears:{ type: String },
+  applicationNo: { type: Number, unique: true },
+  templateType: { type: String },
+});
 
-module.exports=applicationFormModel;
+module.exports = mongoose.model("UnifiedAdmissionForm", applicationFormSchema);

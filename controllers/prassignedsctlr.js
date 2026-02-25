@@ -74,8 +74,14 @@ exports.getallprassigneds = async (req, res) => {
 
 exports.updateprassigneds = async (req, res) => {
     try {
-        const { id } = req.query;
-        const updatedAssignment = await prassigneds.findByIdAndUpdate(id, req.body, { new: true });
+        const { id, storereqid } = req.query;
+        let updatedAssignment;
+        if (id) {
+            updatedAssignment = await prassigneds.findByIdAndUpdate(id, req.body, { new: true });
+        } else if (storereqid) {
+            updatedAssignment = await prassigneds.findOneAndUpdate({ storereqid }, req.body, { new: true });
+        }
+
         if (!updatedAssignment) return res.status(404).json({ success: false, message: "Assignment not found" });
         res.status(200).json({
             success: true,

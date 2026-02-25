@@ -3736,7 +3736,7 @@ app.post('/api/v2/createApplicationForm', aimdebcontroller.createApplicationForm
 app.get('/api/v2/getApplicationForm', aimdebcontroller.getApplicationForm);
 
 const applicationcontrollerann = require('./controllers/applicationcontrollerann');
-app.post('/api/v2/createApplicationFormann', applicationcontrollerann.createApplicationann);
+app.post('/api/v2/createApplicationFormann', applicationcontrollerann.createApplication);
 
 const applicationreviewctlr = require('./controllers/applicationreviewctlr');
 
