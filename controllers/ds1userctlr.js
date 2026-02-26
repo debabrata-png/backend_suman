@@ -651,7 +651,7 @@ exports.ds1getpurchaseusers = async (req, res) => {
       limit = 10,
     } = req.query;
 
-    const purchaseRoles = ['PE', 'SPE'];
+    const purchaseRoles = ['PE', 'SPE', "OE"];
 
     // Build query
     const query = {};

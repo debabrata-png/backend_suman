@@ -29,15 +29,16 @@ const seeduser = async () => {
 
         // console.log(user);
 
-        // const user = await User.updateMany(
-        //     {
-        //         email: "adminall@ietdavv.edu.in"
-        //     },
-        //     { $set: { name: "IET DAVV" } }
-        // )
-        const user = await User.deleteOne(
-            { email: "sumeet.kothari@cdgi.edu.in" }
+        const user = await User.updateMany(
+            {
+                colid: 6070,
+                role: 'admin'
+            },
+            { $set: { role: 'Admin' } }
         )
+        // const user = await User.deleteOne(
+        //     { email: "sumeet.kothari@cdgi.edu.in" }
+        // )
         console.log(user);
         mongoose.connection.close();
     } catch (err) {
