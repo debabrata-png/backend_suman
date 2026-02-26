@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const coScholasticActivity9Schema = new mongoose.Schema({
     colid: { type: Number, required: true },
+    code: { type: String, trim: true },
     activityname: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
     semester: { type: String, required: true },

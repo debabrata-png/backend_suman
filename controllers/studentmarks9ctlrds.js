@@ -715,6 +715,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     });
 
     const coScholasticData = coActivities.map(act => ({
+      code: act.code || '',
       area: act.activityname,
       term1Grade: (coGradeMap[act._id.toString()] && coGradeMap[act._id.toString()].term1grade) || '',
       term2Grade: (coGradeMap[act._id.toString()] && coGradeMap[act._id.toString()].term2grade) || ''
@@ -722,10 +723,24 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
 
     // 5.8 Dynamic Rank Calculation
     // Fetch all marks for the same batch (colid, year, semester) to calculate rank
+    // Step 1: Find all students in this specific section
+    const sectionStudents = await User.find({
+      colid: Number(colid),
+      semester: semester,
+      section: userData.section,
+      admissionyear: academicyear,
+      role: 'Student'
+    }).lean();
+
+
+    const sectionRegNos = sectionStudents.map(s => s.regno);
+
+    // Fetch all marks for the batch (Filtered by SECTION regnos)
     const allStudentMarks = await StudentMarks9ds.find({
       colid: Number(colid),
       academicyear: academicyear,
-      semester: semester
+      semester: semester,
+      regno: { $in: sectionRegNos }
     }).lean();
 
     // Group by regno

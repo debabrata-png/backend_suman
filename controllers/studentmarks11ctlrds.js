@@ -358,34 +358,49 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
                 regno,
                 semester,
                 academicyear,
-                activity: { $in: coActivityIds }
+                activityid: { $in: coActivityIds }
             }).sort({ createdAt: -1 });
 
             // Create a lookup for grades
             const gradeMap = {};
             coGrades.forEach(g => {
-                const actId = g.activity.toString();
+                const actId = g.activityid.toString();
                 if (!gradeMap[actId]) gradeMap[actId] = g;
             });
 
             // Format for frontend
-            finalCoScholastic = coActivities.map(act => ({
-                id: act._id,
-                code: act.code || '',
-                area: act.name,
-                grade: gradeMap[act._id.toString()]?.term1Grade || '-', // Fallback to term1Grade or grade
-            }));
+            finalCoScholastic = coActivities.map(act => {
+                const gradeData = gradeMap[act._id.toString()] || {};
+                return {
+                    id: act._id,
+                    code: act.code || '',
+                    area: act.name || act.activityname || '',
+                    grade: gradeData.term1grade || gradeData.grade || '-',
+                };
+            });
         } catch (e) {
             console.error("Co-Scholastic fetch error:", e);
         }
 
         // Dynamic Rank Calculation
-        // Fetch all marks for the batch
+        // Step 1: Find all students in this specific section
+        const sectionStudents = await User.find({
+            colid: Number(colid),
+            semester: semester,
+            section: student.section,
+            admissionyear: academicyear,
+            role: 'Student'
+        }).lean();
+
+        const sectionRegNos = sectionStudents.map(s => s.regno);
+
+        // Fetch all marks for the batch (Filtered by SECTION regnos)
         const allBatchMarks = await StudentMarks11ds.find({
             colid: Number(colid),
             semester,
             academicyear,
-            subjectcode: { $ne: 'ATTENDANCE' }
+            subjectcode: { $ne: 'ATTENDANCE' },
+            regno: { $in: sectionRegNos }
         }).lean();
 
         // Group and Sum
@@ -495,3 +510,114 @@ exports.saveSubjectComponentConfig11ds = async (req, res) => {
 
 // Start of getMarksheetPDFData11ds (existing) or End of file
 
+exports.getrankreportds = async (req, res) => {
+    try {
+        const { colid, academicyear, semester, section } = req.query;
+
+        // Validation
+        if (!colid || !academicyear || !semester || !section) {
+            return res.status(400).json({ success: false, message: "Missing required parameters." });
+        }
+
+        // 1. Fetch Students in the specified Section
+        const students = await User.find({
+            colid: Number(colid),
+            admissionyear: academicyear,
+            semester,
+            section,
+            role: 'Student'
+        }).lean();
+
+        if (students.length === 0) {
+            return res.json({ success: true, data: [] });
+        }
+
+        const studentMap = {};
+        const regNos = students.map(s => {
+            studentMap[s.regno] = s;
+            return s.regno;
+        });
+
+        // 2. Fetch marks for those students based on class level logic
+        // We need to differentiate logic slightly if we are querying from Marks 9 or 11
+        // Usually report endpoints are unified, but since they are in different collections
+        // we might have to query both or rely on the correct controller.
+        // Assuming we query StudentMarks9ds for class 9-10 and StudentMarks11ds for 11-12.
+
+        let allMarks = [];
+        const semLower = semester.toLowerCase();
+
+        if (semLower.includes("11") || semLower.includes("12")) {
+            allMarks = await StudentMarks11ds.find({
+                colid: Number(colid),
+                academicyear,
+                semester,
+                regno: { $in: regNos },
+                subjectcode: { $ne: 'ATTENDANCE' }
+            }).lean();
+        } else {
+            const StudentMarks9ds = require('../Models/studentmarks9ds');
+            allMarks = await StudentMarks9ds.find({
+                colid: Number(colid),
+                academicyear,
+                semester,
+                regno: { $in: regNos },
+                subjectcode: { $ne: 'ATTENDANCE' }
+            }).lean();
+        }
+
+        // Group Marks by Regno and Compute Totals
+        const studentTotals = {};
+
+        allMarks.forEach(m => {
+            const rNo = m.regno;
+            if (!studentTotals[rNo]) {
+                studentTotals[rNo] = { totalObtained: 0 };
+            }
+
+            if (semLower.includes("11") || semLower.includes("12")) {
+                // 11-12
+                studentTotals[rNo].totalObtained += (m.total || 0);
+            } else {
+                // Weighted calculation for 9-10 and below
+                const t1Raw = ((m.term1periodictestobtained || 0)) + (m.term1notebookobtained || 0) + (m.term1enrichmentobtained || 0) + (m.term1midexamobtained || 0);
+                const t2Raw = ((m.term2periodictestobtained || 0)) + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0);
+                // 9-10 and below has weighted 50-50 usually, or raw sum of everything.
+                // In previous logic max total was total of 100 per subject.
+                studentTotals[rNo].totalObtained += parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
+            }
+        });
+
+        // 3. Construct Data Array and Sort
+        let reportData = students.map(s => {
+            const studTot = studentTotals[s.regno] ? studentTotals[s.regno].totalObtained : 0;
+            // We need maxTotal for percentage. Assuming 5 Main Subjects * 100 = 500 max.
+            // A true generic way requires fetching config, but for rapid rank table 500 is standard
+            const percentage = studTot > 0 ? ((studTot / 500) * 100).toFixed(2) + "%" : "0%";
+
+            return {
+                regno: s.regno,
+                admissionno: s.regno,
+                rollno: s.rollno || '-',
+                name: s.name,
+                total: studTot,
+                percentage: percentage,
+                rank: 0 // placeholder
+            };
+        });
+
+        // Sort descending by total
+        reportData.sort((a, b) => b.total - a.total);
+
+        // 4. Assign Ranks
+        reportData.forEach((row, index) => {
+            row.rank = index + 1;
+        });
+
+        res.json({ success: true, data: reportData });
+
+    } catch (e) {
+        console.error("Error in getrankreportds:", e);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};

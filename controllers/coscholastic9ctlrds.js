@@ -24,7 +24,7 @@ exports.getActivities = async (req, res) => {
 // Create new activity
 exports.createActivity = async (req, res) => {
     try {
-        const { colid, activityname, description, semester, academicyear } = req.body;
+        const { colid, code, activityname, description, semester, academicyear } = req.body;
 
         const existing = await CoScholasticActivity9ds.findOne({ colid, activityname, semester, academicyear });
         if (existing) {
@@ -33,6 +33,7 @@ exports.createActivity = async (req, res) => {
 
         const newActivity = new CoScholasticActivity9ds({
             colid,
+            code,
             activityname,
             description,
             semester,
@@ -49,11 +50,11 @@ exports.createActivity = async (req, res) => {
 // Update activity
 exports.updateActivity = async (req, res) => {
     try {
-        const { id, activityname, description, semester, academicyear } = req.body;
+        const { id, code, activityname, description, semester, academicyear } = req.body;
 
         const updatedActivity = await CoScholasticActivity9ds.findByIdAndUpdate(
             id,
-            { activityname, description, semester, academicyear },
+            { code, activityname, description, semester, academicyear },
             { new: true }
         );
 

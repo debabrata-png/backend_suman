@@ -4913,6 +4913,8 @@ app.get('/api/v2/getstudentsandsubjectsformarks11ds', studentmarks11ctlrds.getst
 app.post('/api/v2/savemarks11ds', studentmarks11ctlrds.savemarks11ds);
 app.get('/api/v2/getmarksheetpdfdata11ds', studentmarks11ctlrds.getMarksheetPDFData11ds);// Corrected Casing
 app.post('/api/v2/subjectcomponentconfig11ds/save', studentmarks11ctlrds.saveSubjectComponentConfig11ds);
+app.get('/api/v2/getrankreportds', studentmarks11ctlrds.getrankreportds);
+
 
 
 // ===== SUBJECT COMPONENT CONFIGURATION ROUTES (Class 9-10) =====
@@ -14961,6 +14963,10 @@ io.on('connection', (socket) => {
 // Admission Report API
 const admissionInstitutionWiseReport = require('./controllers/admissioninstitutionwisereport');
 app.get('/api/v2/admission-institution-wise-report', admissionInstitutionWiseReport.getAdmissionInstitutionWiseReport);
+
+// Drigable Report API
+const drigablereportRouter = require('./router/drigablereportrouterds.js');
+app.use('/api/v2', drigablereportRouter);
 
 
 // Start automated login loop
