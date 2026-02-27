@@ -7,6 +7,8 @@ const Massignments = require('../Models/massignments');
 // For now sending dummy data for purchase if models are not clear.
 const Prassign = require('../Models/prassigneds');
 const CashApproval = require('../Models/CashApprovalds');
+const Storerequisation = require('../Models/storerequisationds');
+const Storepoorder = require('../Models/storepoorderds');
 
 
 // 1. User Management Report
@@ -46,10 +48,10 @@ exports.getrolespecificreportds = async (req, res) => {
         if (!colid || !role) return res.status(400).json({ status: 'error', message: 'colid1 and role are required' });
 
         if (role.toLowerCase() === 'student') {
-            // Aggregate by program
+            // Aggregate by programcode
             const programStats = await User.aggregate([
                 { $match: { colid: colid, role: { $regex: new RegExp(`^${role}$`, 'i') } } },
-                { $group: { _id: "$program", count: { $sum: 1 } } }
+                { $group: { _id: "$programcode", count: { $sum: 1 } } }
             ]);
 
             // Aggregate by semester
@@ -101,25 +103,34 @@ exports.getlmsreportds = async (req, res) => {
         const totalCourses = await Mfaccourses.countDocuments({ colid: colid });
 
         // Enrollments per course
-        const enrollmentStats = await Classenr1.aggregate([
+        const topCoursesEnrollment = await Classenr1.aggregate([
             { $match: { colid: colid } },
-            { $group: { _id: "$coursecode", studentsCount: { $sum: 1 } } },
-            { $sort: { studentsCount: -1 } },
-            { $limit: 10 } // Top 10 enrolled courses
+            { $group: { _id: "$course", enrollmentCount: { $sum: 1 } } },
+            { $sort: { enrollmentCount: -1 } },
+            { $limit: 10 },
+            { $project: { courseName: "$_id", enrollmentCount: 1, _id: 0 } }
         ]);
 
-        // Assignments per course
-        const assignmentStats = await Massignments.aggregate([
-            { $match: { colid: colid } },
-            { $group: { _id: "$coursecode", assignmentsCount: { $sum: 1 } } }
+        // Assignments per course (Monthly)
+        const monthlyAssignments = await Massignments.aggregate([
+            { $match: { colid: colid, duedate: { $exists: true, $ne: null } } },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$duedate" },
+                        month: { $month: "$duedate" }
+                    },
+                    count: { $sum: 1 }
+                }
+            }
         ]);
 
         res.status(200).json({
             status: 'success',
             data: {
                 totalCourses,
-                enrollmentStats,
-                assignmentStats
+                topCoursesEnrollment,
+                monthlyAssignments
             }
         });
 
@@ -135,19 +146,18 @@ exports.getpurchasereportds = async (req, res) => {
         const colid = parseInt(req.query.colid1);
         if (!colid) return res.status(400).json({ status: 'error', message: 'colid1 is required' });
 
-        // Get count from some purchase tables as examples
-        const prCount = await Prassign.countDocuments({ colid: colid });
-        const cashApprovalCount = await CashApproval.countDocuments({ colid: colid });
+        // Get count from active purchase tables
+        const prCount = await Storerequisation.countDocuments({ colid: colid });
+        const poCount = await Storepoorder.countDocuments({ colid: colid });
 
-        // Generic structure since actual purchase schema might vary widely
         res.status(200).json({
             status: 'success',
             data: {
                 purchaseRequisitions: prCount,
-                cashApprovals: cashApprovalCount,
+                purchaseOrders: poCount,
                 summary: [
                     { category: 'Requisitions', count: prCount },
-                    { category: 'Cash Approvals', count: cashApprovalCount }
+                    { category: 'Purchase Orders', count: poCount }
                 ]
             }
         });
