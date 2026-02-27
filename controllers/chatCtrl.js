@@ -14,7 +14,6 @@ exports.sendMessage = async (req, res) => {
       colid,
     } = req.body;
 
-  
     if (!senderId || !receiverId || !message) {
       return res.status(400).json({
         success: false,
@@ -50,7 +49,7 @@ exports.sendMessage = async (req, res) => {
   }
 };
 
- 
+// ── Existing: requires BOTH userId1 + userId2 (unchanged) ────────────────────
 exports.getChatHistory = async (req, res) => {
   try {
     const { userId1, userId2 } = req.query;
@@ -82,7 +81,7 @@ exports.getChatHistory = async (req, res) => {
     });
   }
 };
- 
+
 exports.getChatList = async (req, res) => {
   try {
     const { userId } = req.query;
@@ -160,7 +159,6 @@ exports.getChatList = async (req, res) => {
   }
 };
 
- 
 exports.markAsRead = async (req, res) => {
   try {
     const { receiverId, senderId } = req.body;
@@ -190,6 +188,42 @@ exports.markAsRead = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to mark messages as read",
+      error: err.message,
+    });
+  }
+};
+ 
+exports.getMentorChatHistory = async (req, res) => {
+  try {
+    const { mentorId, colid } = req.query;
+
+    if (!mentorId || !colid) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required parameters: mentorId and colid are both required",
+      });
+    }
+ 
+    const messages = await ChatMessage.find({
+      colid: Number(colid),
+      $or: [
+        { senderId: mentorId },
+        { receiverId: mentorId },
+      ],
+    })
+      .select("senderName receiverName senderId receiverId timestamp createdAt")
+      .sort({ createdAt: 1 });
+
+    res.status(200).json({
+      success: true,
+      count: messages.length,
+      data: messages,
+    });
+  } catch (err) {
+    console.error("Error fetching mentor chat history:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch mentor chat history",
       error: err.message,
     });
   }

@@ -291,17 +291,58 @@ const users = [
     //     lastlogin: new Date('2027-06-01T10:00:00Z')
     // }
 
+    // {
+    //     name: "Institution of Science and Technology",
+    //     password: "Password@123",
+    //     role: "Admin",
+    //     colid: 6010,
+    //     user: "admin@ist.com",
+    //     email: "admin@ist.com",
+    //     phone: "9999999999",
+    //     regno: "12/0153",
+    //     programcode: "NA",
+    //     admissionyear: "2025-26",
+    //     semester: "8NA",
+    //     section: "NA",
+    //     department: "Administration",
+    //     designation: "Assisatant Professor",
+    //     gender: "Female",
+    //     rollno: "34057",
+    //     status: 1,
+    //     lastlogin: new Date('2027-06-01T10:00:00Z')
+    // },
+    // {
+    //     name: "Institution of Science and Technology",
+    //     password: "Password@123",
+    //     role: "Admin",
+    //     colid: 6010,
+    //     user: "adminall@ist.com",
+    //     email: "adminall@ist.com",
+    //     phone: "9999999999",
+    //     regno: "12/0153",
+    //     programcode: "NA",
+    //     admissionyear: "2025-26",
+    //     semester: "8NA",
+    //     section: "NA",
+    //     department: "Administration",
+    //     designation: "Assisatant Professor",
+    //     gender: "Female",
+    //     rollno: "34057",
+    //     status: 1,
+    //     lastlogin: new Date('2027-06-01T10:00:00Z')
+    // }
+
     {
-        name: "Institution of Science and Technology",
+        name: "JG University",
         password: "Password@123",
         role: "Admin",
-        colid: 6010,
-        user: "admin@ist.com",
-        email: "admin@ist.com",
+        colid: 9050,
+        user: "admin@jguniversity.com",
+        email: "admin@jguniversity.com",
         phone: "9999999999",
         regno: "12/0153",
         programcode: "NA",
-        admissionyear: "2025-26",
+        admissionyear: "2026-27",
         semester: "8NA",
         section: "NA",
         department: "Administration",
@@ -311,26 +352,26 @@ const users = [
         status: 1,
         lastlogin: new Date('2027-06-01T10:00:00Z')
     },
-    {
-        name: "Institution of Science and Technology",
-        password: "Password@123",
-        role: "Admin",
-        colid: 6010,
-        user: "adminall@ist.com",
-        email: "adminall@ist.com",
-        phone: "9999999999",
-        regno: "12/0153",
-        programcode: "NA",
-        admissionyear: "2025-26",
-        semester: "8NA",
-        section: "NA",
-        department: "Administration",
-        designation: "Assisatant Professor",
-        gender: "Female",
-        rollno: "34057",
-        status: 1,
-        lastlogin: new Date('2027-06-01T10:00:00Z')
-    }
+    // {
+    //     name: "Institution of Science and Technology",
+    //     password: "Password@123",
+    //     role: "Admin",
+    //     colid: 6010,
+    //     user: "adminall@ist.com",
+    //     email: "adminall@ist.com",
+    //     phone: "9999999999",
+    //     regno: "12/0153",
+    //     programcode: "NA",
+    //     admissionyear: "2025-26",
+    //     semester: "8NA",
+    //     section: "NA",
+    //     department: "Administration",
+    //     designation: "Assisatant Professor",
+    //     gender: "Female",
+    //     rollno: "34057",
+    //     status: 1,
+    //     lastlogin: new Date('2027-06-01T10:00:00Z')
+    // }
 ];
 
 const connectDB = async () => {

@@ -32,7 +32,7 @@ exports.getallstorerequisationds = async (req, res) => {
 
             const total = await storerequisationds.countDocuments(query);
             const requisitions = await storerequisationds.find(query)
-                .sort({ createdAt: -1 })
+                .sort({ reqdate: -1 })
                 .skip(skip)
                 .limit(limitNum);
 
@@ -49,7 +49,7 @@ exports.getallstorerequisationds = async (req, res) => {
                 }
             });
         } else {
-            const requisitions = await storerequisationds.find(query).sort({ createdAt: -1 });
+            const requisitions = await storerequisationds.find(query).sort({ reqdate: -1 });
             res.status(200).json({
                 success: true,
                 count: requisitions.length,

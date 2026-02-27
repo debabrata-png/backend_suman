@@ -791,7 +791,8 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       .filter(s => !s.isAdditional)
       .filter(s => {
         const weightedScore = (s.term1Total * 0.5) + (s.term2Total * 0.5);
-        return weightedScore < 33;
+        const term1EbutTerm2Passed = (s.term1Grade === 'E' && s.term2Grade !== 'E');
+        return weightedScore < 33 || term1EbutTerm2Passed;
       })
       .map(s => ({
         subjectname: s.subjectname,

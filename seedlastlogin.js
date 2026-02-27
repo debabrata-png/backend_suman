@@ -25,17 +25,17 @@ const connectDB = async () => {
 const seeduser = async () => {
     await connectDB();
     try {
-        // const user = await User.find({ email: "sumeet.kothari@cdgi.edu.in" });
+        const user = await User.find({ colid: 9050, role: "Admin" });
 
-        // console.log(user);
+        console.log(user);
 
-        const user = await User.updateMany(
-            {
-                colid: 6070,
-                role: 'admin'
-            },
-            { $set: { role: 'Admin' } }
-        )
+        // const user = await User.updateMany(
+        //     {
+        //         colid: 9050,
+        //         role: 'admin'
+        //     },
+        //     { $set: { role: 'Admin' } }
+        // )
         // const user = await User.deleteOne(
         //     { email: "sumeet.kothari@cdgi.edu.in" }
         // )

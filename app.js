@@ -4726,6 +4726,64 @@ app.get("/api/v2/exportReport", subgroupreportctlr.exportReport);
 // =======================================================
 
 const chatCtrl = require("./controllers/chatCtrl");
+const { registerMentor, getAllMentors, getMentorById, updateMentor, deleteMentor, saveDomainConfig, getDomains } = require("./controllers/mentorctrlag");
+
+
+app.post("/api/v2/chat/send-message", chatCtrl.sendMessage);
+app.get("/api/v2/chat/history", chatCtrl.getChatHistory);
+app.get("/api/v2/chat/list", chatCtrl.getChatList);
+app.post("/api/v2/chat/mark-read", chatCtrl.markAsRead);
+app.get("/api/v2/chat/mentor-history", chatCtrl.getMentorChatHistory);
+app.post("/api/v2/mentors", registerMentor);
+app.get("/api/v2/mentors", getAllMentors);
+app.post("/api/v2/mentors/domains", saveDomainConfig);
+app.get("/api/v2/mentors/domains", getDomains);
+app.post("/api/v2/mentors/update/:id", updateMentor);
+
+app.get("/api/v2/mentors/delete/:id", deleteMentor);
+
+app.get("/api/v2/mentors/:id", getMentorById);
+//hostel
+
+const {
+  createHostel,
+  bulkUploadHostel,
+  getAllHostels,
+  getAllHostelsNoPagination,
+  getHostelById,
+  updateHostel,
+  deleteHostel,
+  deleteAllHostels,
+  downloadReport
+} = require("./controllers/hostelctrlag");
+app.post("/api/v2/hostel", createHostel);
+app.post("/api/v2/hostel/bulk-upload", bulkUploadHostel);
+app.post("/api/v2/hostel/update/:id", updateHostel);
+
+// REPORT
+app.get("/api/v2/hostel/report", downloadReport);
+
+// READ
+app.get("/api/v2/hostel", getAllHostels);
+app.get("/api/v2/hostel/:id", getHostelById);
+app.get("/api/v2/hostel/delete/:id", deleteHostel);
+app.get("/api/v2/hostel/deleteall", deleteAllHostels);
+app.get("/api/v2/hostel/all", getAllHostelsNoPagination);
+//Admission forms
+const applicationCtrl = require('./controllers/applicationController');
+// Admission Form (template-based)
+app.post('/api/v2/createApplicationForm', applicationCtrl.createApplication);
+app.get('/api/v2/getApplicationForm', applicationCtrl.getFormMetadata);
+// Subject routes
+const subjectCtrl = require('./controllers/subjectController');
+app.post('/api/v2/subjects', subjectCtrl.createSubject);
+app.get('/api/v2/subjects', subjectCtrl.getAllSubjects);
+app.get('/api/v2/subjects/:id', subjectCtrl.getSubjectById);
+app.put('/api/v2/subjects/:id', subjectCtrl.updateSubject);
+app.delete('/api/v2/subjects/:id', subjectCtrl.deleteSubject);
+
+// Form metadata for admission form (programs + subjects by colid)
+app.get('/api/v2/formMetadata', subjectCtrl.getFormMetadata);
 
 
 
