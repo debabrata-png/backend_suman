@@ -682,6 +682,250 @@ app.get('/api/v2/getallvendords', vendordsctlr1.getallvendords);
 app.get('/api/v2/getvendordsbyid', vendordsctlr1.getvendordsbyid);
 
 
+// Purchasing Module Controllers
+const storemasterdsctlr2 = require('./controllers/storemasterdsctlr2');
+const storeuserdsctlr2 = require('./controllers/storeuserdsctlr2');
+const storeitemdsctlr2 = require('./controllers/storeitemdsctlr2');
+const itemmasterdsctlr2 = require('./controllers/itemmasterdsctlr2');
+const itemtypedsctlr2 = require('./controllers/itemtypedsctlr2');
+const requisationdsctlr2 = require('./controllers/requisationdsctlr2');
+const requisationds1ctlr2 = require('./controllers/requisationds1ctlr2');
+const storerequisationdsctlr2 = require('./controllers/storerequisationdsctlr2');
+const storepoorderdsctlr2 = require('./controllers/storepoorderdsctlr2');
+const storepoitemsdsctlr2 = require('./controllers/storepoitemsdsctlr2');
+const vendoritemdsctlr2 = require('./controllers/vendoritemdsctlr2');
+const deliverydsdsctlr2 = require('./controllers/deliverydsdsctlr2');
+const stockregisterdsctlr2 = require('./controllers/stockregisterdsctlr2');
+const vendordsctlr12 = require('./controllers/vendordsctlr12'); // Renamed to avoid conflict
+const approvalconfigdsctlr2 = require('./controllers/approvalconfigdsctlr2');
+
+const prassignedsctlr2 = require('./controllers/prassignedsctlr2');
+app.post('/api/v2/addprassigneds2', prassignedsctlr2.addprassigneds2);
+app.get('/api/v2/getOEUsers2', prassignedsctlr2.getOEUsers2);
+app.get('/api/v2/getallprassigneds2', prassignedsctlr2.getallprassigneds2);
+app.get('/api/v2/getAssignedRequisitions2', prassignedsctlr2.getAssignedRequisitions2);
+app.post('/api/v2/updateprassigneds2', prassignedsctlr2.updateprassigneds2);
+app.get('/api/v2/deleteprassigneds2', prassignedsctlr2.deleteprassigneds2);
+
+// Approval Config Routes
+app.post('/api/v2/addapprovalconfig2', approvalconfigdsctlr2.addConfig2);
+app.post('/api/v2/updateapprovalconfig2', approvalconfigdsctlr2.updateConfig2);
+app.get('/api/v2/deleteapprovalconfig2', approvalconfigdsctlr2.deleteConfig2);
+app.get('/api/v2/getapprovalconfig2', approvalconfigdsctlr2.getConfig2);
+
+const pimprestdsctlr2 = require('./controllers/pimprestdsctlr2');
+app.post('/api/v2/addpimprestds2', pimprestdsctlr2.addpimprestds2);
+app.get('/api/v2/getallpimprestds2', pimprestdsctlr2.getallpimprestds2);
+app.post('/api/v2/updatepimprestds2', pimprestdsctlr2.updatepimprestds2);
+app.get('/api/v2/deletepimprestds2', pimprestdsctlr2.deletepimprestds2);
+
+
+const poconfigdsctlr2 = require('./controllers/poconfigdsctlr2');
+app.post('/api/v2/addpoconfigds2', poconfigdsctlr2.addpoconfigds2);
+app.get('/api/v2/getpoconfigds2', poconfigdsctlr2.getpoconfigds2);
+app.post('/api/v2/updatepoconfigds2', poconfigdsctlr2.updatepoconfigds2);
+// Cash Approval Routes
+// Cash Approval Routes
+const CashApprovaldsctlr2 = require('./controllers/CashApprovaldsctlr2');
+app.get('/api/v2/cashapproval2', CashApprovaldsctlr2.getAllRequests2);
+app.post('/api/v2/cashapproval2', CashApprovaldsctlr2.createRequest2);
+app.get('/api/v2/cashapproval2/:id', CashApprovaldsctlr2.getRequestById2);
+app.post('/api/v2/cashapproval2/delete', CashApprovaldsctlr2.deleteRequest2);
+app.post('/api/v2/cashapproval2/approve', CashApprovaldsctlr2.approveRequest2);
+
+// const programmasterdsRouter = require('./router/programmasterdsRouter');
+// app.use('/api/v2', programmasterdsRouter);
+// const dashboardReportController2 = require('./controllers/dashboardReportController2');
+// app.get('/api/v2/dashboard2/stats', dashboardReportController2.getDashboardStats2);
+
+// Purchasing Module Routes
+// 1. Store Master
+app.post('/api/v2/addstoremasterds2', storemasterdsctlr2.addstoremasterds2);
+app.post('/api/v2/updatestoremasterds2', storemasterdsctlr2.updatestoremasterds2);
+app.get('/api/v2/deletestoremasterds2', storemasterdsctlr2.deletestoremasterds2);
+app.get('/api/v2/getallstoremasterds2', storemasterdsctlr2.getallstoremasterds2);
+app.get('/api/v2/getstoremasterdsbyid2', storemasterdsctlr2.getstoremasterdsbyid2);
+
+// 2. Store User
+app.post('/api/v2/addstoreuserds2', storeuserdsctlr2.addstoreuserds2);
+app.post('/api/v2/updatestoreuserds2', storeuserdsctlr2.updatestoreuserds2);
+app.get('/api/v2/deletestoreuserds2', storeuserdsctlr2.deletestoreuserds2);
+app.get('/api/v2/getallstoreuserds2', storeuserdsctlr2.getallstoreuserds2);
+app.get('/api/v2/getstoreuserdsbyid2', storeuserdsctlr2.getstoreuserdsbyid2);
+const addusercontroller2 = require('./controllers/addusercontroller2');
+app.post('/api/v2/getallusers2', addusercontroller2.getallusersapi2);
+
+// 3. Store Item
+app.post('/api/v2/addstoreitemds2', storeitemdsctlr2.addstoreitemds2);
+app.post('/api/v2/updatestoreitemds2', storeitemdsctlr2.updatestoreitemds2);
+app.get('/api/v2/deletestoreitemds2', storeitemdsctlr2.deletestoreitemds2);
+app.get('/api/v2/getallstoreitemds2', storeitemdsctlr2.getallstoreitemds2);
+app.get('/api/v2/getstoreitemdsbyid2', storeitemdsctlr2.getstoreitemdsbyid2);
+app.post('/api/v2/allotitem2', storeitemdsctlr2.allotItem2);
+
+// 4. Item Master
+app.post('/api/v2/additemmasterds2', itemmasterdsctlr2.additemmasterds2);
+app.post('/api/v2/updateitemmasterds2', itemmasterdsctlr2.updateitemmasterds2);
+app.get('/api/v2/deleteitemmasterds2', itemmasterdsctlr2.deleteitemmasterds2);
+app.get('/api/v2/getallitemmasterds2', itemmasterdsctlr2.getallitemmasterds2);
+app.get('/api/v2/getitemmasterdsbyid2', itemmasterdsctlr2.getitemmasterdsbyid2);
+
+// 5. Item Type
+app.post('/api/v2/additemtypeds2', itemtypedsctlr2.additemtypeds2);
+app.post('/api/v2/updateitemtypeds2', itemtypedsctlr2.updateitemtypeds2);
+app.get('/api/v2/deleteitemtypeds2', itemtypedsctlr2.deleteitemtypeds2);
+app.get('/api/v2/getallitemtypeds2', itemtypedsctlr2.getallitemtypeds2);
+app.get('/api/v2/getitemtypedsbyid2', itemtypedsctlr2.getitemtypedsbyid2);
+
+// 5b. Item Category
+const itemcategorydsctlr2 = require('./controllers/itemcategorydsctlr2');
+// --- Phase 2: Gateway Pass Controller ---
+const gatewaypassdsctlr2 = require('./controllers/gatewaypassdsctlr2');
+app.post('/api/v2/additemcategoryds2', itemcategorydsctlr2.additemcategoryds2);
+app.post('/api/v2/updateitemcategoryds2', itemcategorydsctlr2.updateitemcategoryds2);
+app.get('/api/v2/deleteitemcategoryds2', itemcategorydsctlr2.deleteitemcategoryds2);
+app.get('/api/v2/getallitemcategoryds2', itemcategorydsctlr2.getallitemcategoryds2);
+app.get('/api/v2/getitemcategorydsbyid2', itemcategorydsctlr2.getitemcategorydsbyid2);
+
+// 5a. Item Unit
+const itemunitdsctlr2 = require('./controllers/itemunitdsctlr2');
+app.post('/api/v2/additemunitds2', itemunitdsctlr2.additemunitds2);
+app.post('/api/v2/updateitemunitds2', itemunitdsctlr2.updateitemunitds2);
+app.get('/api/v2/deleteitemunitds2', itemunitdsctlr2.deleteitemunitds2);
+app.get('/api/v2/getallitemunitds2', itemunitdsctlr2.getallitemunitds2);
+app.get('/api/v2/getitemunitdsbyid2', itemunitdsctlr2.getitemunitdsbyid2);
+
+// 6. Requisition (Faculty)
+app.post('/api/v2/addrequisationds2', requisationdsctlr2.addrequisationds2);
+app.post('/api/v2/updaterequisationds2', requisationdsctlr2.updaterequisationds2);
+app.get('/api/v2/deleterequisationds2', requisationdsctlr2.deleterequisationds2);
+app.get('/api/v2/getallrequisationds2', requisationdsctlr2.getallrequisationds2);
+app.get('/api/v2/getrequisationdsbyid2', requisationdsctlr2.getrequisationdsbyid2);
+
+// 6a. Requisition Staging (Level 1 Approval)
+app.post('/api/v2/addrequisationds12', requisationds1ctlr2.addrequisationds12);
+app.get('/api/v2/getallrequisationds12', requisationds1ctlr2.getallrequisationds12);
+app.post('/api/v2/approverequisationds12', requisationds1ctlr2.approverequisationds12);
+app.post('/api/v2/rejectrequisationds12', requisationds1ctlr2.rejectrequisationds12);
+app.get('/api/v2/deleterequisationds12', requisationds1ctlr2.deleterequisationds12);
+
+// 7. Store Requisition (Purchase Request)
+app.post('/api/v2/addstorerequisationds2', storerequisationdsctlr2.addstorerequisationds2);
+app.post('/api/v2/updatestorerequisationds2', storerequisationdsctlr2.updatestorerequisationds2);
+app.get('/api/v2/deletestorerequisationds2', storerequisationdsctlr2.deletestorerequisationds2);
+app.get('/api/v2/getallstorerequisationds2', storerequisationdsctlr2.getallstorerequisationds2);
+app.get('/api/v2/getstorerequisationdsbyid2', storerequisationdsctlr2.getstorerequisationdsbyid2);
+
+// 8. Purchase Order
+app.post('/api/v2/addstorepoorderds2', storepoorderdsctlr2.addstorepoorderds2);
+app.post('/api/v2/updatestorepoorderds2', storepoorderdsctlr2.updatestorepoorderds2);
+app.get('/api/v2/deletestorepoorderds2', storepoorderdsctlr2.deletestorepoorderds2);
+app.get('/api/v2/getallstorepoorderds2', storepoorderdsctlr2.getallstorepoorderds2);
+app.get('/api/v2/getstorepoorderdsbyid2', storepoorderdsctlr2.getstorepoorderdsbyid2);
+app.post('/api/v2/approvestorepo2', storepoorderdsctlr2.approveStorePO2);
+app.post('/api/v2/verifyDynamicStep2', storepoorderdsctlr2.verifyDynamicStep2);
+app.post('/api/v2/sendBackDynamicStep2', storepoorderdsctlr2.sendBackDynamicStep2);
+
+// PE Edit Request Workflow
+app.post('/api/v2/requestpoedit2', storepoorderdsctlr2.requestPOEdit2);
+app.post('/api/v2/approvepoedit2', storepoorderdsctlr2.approvePOEdit2);
+
+// --- Phase 2: Gateway Pass Flow ---
+app.post('/api/v2/addgatewaypass2', gatewaypassdsctlr2.addGatewayPass2);
+app.get('/api/v2/getallgatewaypasses2', gatewaypassdsctlr2.getAllGatewayPasses2);
+app.get('/api/v2/getgatewaypassbyid2', gatewaypassdsctlr2.getGatewayPassById2);
+app.post('/api/v2/updategatewaypass2', gatewaypassdsctlr2.updateGatewayPass2);
+
+// --- Phase 3: Store Budgets & Cash Accounts ---
+const storebudgetdsctlr2 = require('./controllers/storebudgetdsctlr2');
+app.post('/api/v2/addstorebudget2', storebudgetdsctlr2.addStoreBudget2);
+app.get('/api/v2/getstorebudgets2', storebudgetdsctlr2.getStoreBudgets2);
+app.post('/api/v2/addcashaccountbalance2', storebudgetdsctlr2.addCashAccountBalance2);
+app.get('/api/v2/getstorecashaccounts2', storebudgetdsctlr2.getStoreCashAccounts2);
+app.post('/api/v2/deductcashforlocalpo2', storebudgetdsctlr2.deductCashForLocalPO2);
+
+// --- Phase 4: Quality Checks ---
+const qualitycheckdsctlr2 = require('./controllers/qualitycheckdsctlr2');
+app.post('/api/v2/addqualitycheck2', qualitycheckdsctlr2.addQualityCheck2);   // legacy route (keep for backward compat)
+app.post('/api/v2/addqualitycheckds2', qualitycheckdsctlr2.addQualityCheck2); // new route (GRN-based)
+app.get('/api/v2/getallqualitychecks2', qualitycheckdsctlr2.getAllQualityChecks2);   // legacy
+app.get('/api/v2/getallqualitycheckds2', qualitycheckdsctlr2.getAllQualityChecks2);  // new
+app.get('/api/v2/getqualitycheckbyid2/:id', qualitycheckdsctlr2.getQualityCheckById2);    // legacy
+app.get('/api/v2/getqualitycheckdsbyid2/:id', qualitycheckdsctlr2.getQualityCheckById2);  // new
+
+// 9a. PR Configuration
+const prconfigdsctlr2 = require('./controllers/prconfigdsctlr2');
+app.post('/api/v2/addprconfigds2', prconfigdsctlr2.addprconfigds2);
+app.get('/api/v2/getprconfigds2', prconfigdsctlr2.getprconfigds2);
+app.post('/api/v2/updateprconfigds2', prconfigdsctlr2.updateprconfigds2);
+
+// 9. PO Items
+app.post('/api/v2/addstorepoitemsds2', storepoitemsdsctlr2.addstorepoitemsds2);
+app.post('/api/v2/updatestorepoitemsds2', storepoitemsdsctlr2.updatestorepoitemsds2);
+app.get('/api/v2/deletestorepoitemsds2', storepoitemsdsctlr2.deletestorepoitemsds2);
+app.get('/api/v2/getallstorepoitemsds2', storepoitemsdsctlr2.getallstorepoitemsds2);
+app.get('/api/v2/getstorepoitemsdsbyid2', storepoitemsdsctlr2.getstorepoitemsdsbyid2);
+
+// 10. Vendor Items
+app.post('/api/v2/addvendoritemds2', vendoritemdsctlr2.addvendoritemds2);
+app.post('/api/v2/updatevendoritemds2', vendoritemdsctlr2.updatevendoritemds2);
+app.get('/api/v2/deletevendoritemds2', vendoritemdsctlr2.deletevendoritemds2);
+app.get('/api/v2/getallvendoritemds2', vendoritemdsctlr2.getallvendoritemds2);
+app.get('/api/v2/getvendoritemdsbyid2', vendoritemdsctlr2.getvendoritemdsbyid2);
+
+// 11. Delivery
+app.post('/api/v2/adddeliverydsds2', deliverydsdsctlr2.adddeliverydsds2);
+app.post('/api/v2/updatedeliverydsds2', deliverydsdsctlr2.updatedeliverydsds2);
+app.get('/api/v2/deletedeliverydsds2', deliverydsdsctlr2.deletedeliverydsds2);
+app.get('/api/v2/getalldeliverydsds2', deliverydsdsctlr2.getalldeliverydsds2);
+app.get('/api/v2/getdeliverydsdsbyid2', deliverydsdsctlr2.getdeliverydsdsbyid2);
+app.post('/api/v2/markdelivered2', deliverydsdsctlr2.markDelivered2);
+
+// 12. Stock Register
+app.post('/api/v2/addstockregisterds2', stockregisterdsctlr2.addstockregisterds2);
+app.post('/api/v2/updatestockregisterds2', stockregisterdsctlr2.updatestockregisterds2);
+app.get('/api/v2/deletestockregisterds2', stockregisterdsctlr2.deletestockregisterds2);
+app.get('/api/v2/getallstockregisterds2', stockregisterdsctlr2.getallstockregisterds2);
+app.get('/api/v2/getstockregisterdsbyid2', stockregisterdsctlr2.getstockregisterdsbyid2);
+
+// 13. Vendor (Modified to use vendordsctlr12)
+app.post('/api/v2/addvendords2', vendordsctlr12.addvendords2);
+app.post('/api/v2/updatevendords2', vendordsctlr12.updatevendords2);
+app.get('/api/v2/deletevendords2', vendordsctlr12.deletevendords2);
+app.get('/api/v2/getallvendords2', vendordsctlr12.getallvendords2);
+app.get('/api/v2/getvendordsbyid2', vendordsctlr12.getvendordsbyid2);
+
+
+// 14. Delivery Types (Master Data)
+const deliverytypedsctlr2 = require('./controllers/deliverytypedsctlr2');
+app.post('/api/v2/adddeliverytypeds2', deliverytypedsctlr2.adddeliverytypeds2);
+app.get('/api/v2/getalldeliverytypeds2', deliverytypedsctlr2.getalldeliverytypeds2);
+app.post('/api/v2/updatedeliverytypeds2', deliverytypedsctlr2.updatedeliverytypeds2);
+app.get('/api/v2/deletedeliverytypeds2', deliverytypedsctlr2.deletedeliverytypeds2);
+
+// 15. PO Audit Log
+const pologds2 = require('./Models/pologds2');
+app.get('/api/v2/getpologds2', async (req, res) => {
+  try {
+    const { poid, colid } = req.query;
+    const query = { colid: Number(colid) };
+    if (poid) query.poid = poid;
+    const logs = await pologds2.find(query).sort({ timestamp: -1 });
+    res.status(200).json({ success: true, data: { logs } });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Error fetching PO logs', error: e.message });
+  }
+});
+
+
+// 16. GRN (Goods Receipt Note)
+const grndsctlr2 = require('./controllers/grndsctlr2');
+app.post('/api/v2/addgrnds2', grndsctlr2.addgrnds2);
+app.get('/api/v2/getallgrnds2', grndsctlr2.getallgrnds2);
+app.get('/api/v2/getpendinggrnds2', grndsctlr2.getpendinggrnds2);
+app.post('/api/v2/markgrnqcdone2', grndsctlr2.markgrnqcdone2);
+
+
 app.use(passport.initialize());
 app.use(passport.session());
 

@@ -12,7 +12,7 @@ const unifiedlandingpagedsschema = new mongoose.Schema({
     page_slug: {
         type: String,
         required: true,
-        unique: true
+        unique: false
     },
     page_url: {
         type: String // Full URL
