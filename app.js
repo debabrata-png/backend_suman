@@ -4964,6 +4964,26 @@ app.get("/api/v2/generateReport", subgroupreportctlr.generateReport);
 app.get("/api/v2/getSummaryReport", subgroupreportctlr.getSummaryReport);
 app.get("/api/v2/exportReport", subgroupreportctlr.exportReport);
 
+// new fees report endpoint
+const feeController = require('./controllers/feeReportController');
+
+app.get('/api/fees-report/years', feeController.getYears);
+app.get('/api/fees-report/programs', feeController.getPrograms);
+app.get('/api/fees-report/semester-summary', feeController.getSemesterSummary);
+app.get('/api/fees-report/semester-details', feeController.getSemesterDetails);
+app.get('/api/fees-report/program-summary', feeController.getProgramSummary);
+app.get('/api/fees-report/program-details', feeController.getProgramDetails);
+
+
+const oireportController = require('./controllers/oireportController')
+
+app.get('/api/years', oireportController.getAcademicYears)
+app.get('/api/programs', oireportController.getPrograms)
+app.get('/api/studentLedgerSummary', oireportController.studentLedgerSummary)
+app.get('/api/studentLedgerDetails', oireportController.studentLedgerDetails)
+app.get('/api/programFeeSummary', oireportController.programFeeSummary)
+app.get('/api/programFeeDetails', oireportController.programFeeDetails)
+
 
 // ======================================================
 // Amisha's Code Alumni & Hostel and Admission Form
