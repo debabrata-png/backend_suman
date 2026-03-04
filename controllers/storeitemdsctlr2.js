@@ -4,7 +4,7 @@ const stockregisterds2 = require("../Models/stockregisterds2");
 exports.addstoreitemds2 = async (req, res) => {
     try {
         const itemmasterds2 = require('../Models/itemmasterds2');
-        const { itemid, storeid, colid, quantity, user2, storename } = req.body;
+        const { itemid, storeid, colid, quantity, user, storename } = req.body;
 
         // Fetch Item Code from Master
         const itemMaster = await itemmasterds2.findById(itemid);
@@ -25,7 +25,7 @@ exports.addstoreitemds2 = async (req, res) => {
         } else {
             newItem = await storeitemds2.create({
                 colid,
-                user2,
+                user,
                 storeid,
                 storename,
                 itemcode: itemCode,
@@ -47,7 +47,7 @@ exports.addstoreitemds2 = async (req, res) => {
             quantityadded: Number(quantity),
             quantityreturn: 0,
             netquantity: newItem.quantity,
-            user2: user2,
+            user: user,
             colid: colid,
             stockdate: new Date(),
             name: 'Manual Add'
@@ -166,7 +166,7 @@ exports.allotItem2 = async (req, res) => {
         // 3. Add to Stock Register (Outgoing)
         await stockregisterds2.create({
             name: "Item Allotment",
-            user2: userId,
+            user: userId,
             colid: colid,
             storeid: storeId,
             itemid: storeItem.itemcode, // Using code as ID

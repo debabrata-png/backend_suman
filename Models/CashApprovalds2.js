@@ -5,9 +5,9 @@ const cashApprovalSchema = new mongoose.Schema({
         type: Number,
         required: [true, "A Cash Approval must have a colid"],
     },
-    user2: {
+    user: {
         type: String,
-        // required: [true, "A Cash Approval must have a user2"],
+        // required: [true, "A Cash Approval must have a user"],
     },
     name: {
         type: String,

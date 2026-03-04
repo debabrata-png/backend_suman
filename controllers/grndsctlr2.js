@@ -7,7 +7,7 @@ exports.addgrnds2 = async (req, res) => {
         const {
             gatePassNumber, poid, colid,
             storeId, storeName, receivedBy,
-            items, remarks, billAmount, user2
+            items, remarks, billAmount, user
         } = req.body;
 
         // Validate gate pass exists and is not already GRN'd
@@ -31,7 +31,7 @@ exports.addgrnds2 = async (req, res) => {
             lrNo: gatePass.lrNo,
             vehicleNo: gatePass.vehicleNo,
             billAmount: billAmount || gatePass.billAmount || 0,
-            remarks, items, user2,
+            remarks, items, user,
             name: grnNo
         });
 

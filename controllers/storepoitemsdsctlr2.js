@@ -93,7 +93,7 @@ exports.updatestorepoitemsds2 = async (req, res) => {
                 poid: poOrder.poid,
                 po_object_id: poOrder._id,
                 action: 'Modified',
-                user2: req.body.user2 || existingItem.user2,
+                user: req.body.user || existingItem.user,
                 colid: poOrder.colid,
                 remarks: 'Item quantity revised during draft.',
                 changes: [{

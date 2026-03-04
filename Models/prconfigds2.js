@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const prconfigdsSchema = new mongoose.Schema({
     name: { type: String }, // from global1.name
-    user2: { type: String }, // from global1.user2
+    user: { type: String }, // from global1.user
     colid: { type: String }, // from global1.colid
     institutionname: { type: String },
     address: { type: String },

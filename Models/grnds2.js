@@ -31,7 +31,7 @@ const grndsschema = new mongoose.Schema({
         grnQuantity: Number,        // confirmed by store (≤ deliveredQuantity)
         remarks: String
     }],
-    user2: { type: String },
+    user: { type: String },
     name: { type: String, default: 'GRN' }
 }, { timestamps: true });
 

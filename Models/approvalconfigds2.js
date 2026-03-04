@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const approvalconfigschema = new mongoose.Schema({
     colid: { type: Number, required: true },
-    user2: { type: String }, // Created by
+    user: { type: String }, // Created by
     name: { type: String }, // Auto or Custom name
     module: { type: String, required: true }, // e.g. "Purchase Order"
     stepNumber: { type: Number, required: true },

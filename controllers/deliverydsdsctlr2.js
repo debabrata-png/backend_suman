@@ -93,7 +93,7 @@ exports.getdeliverydsdsbyid2 = async (req, res) => {
 // Workflow: Mark Delivered (Full PO with Partial Returns)
 exports.markDelivered2 = async (req, res) => {
     try {
-        const { poid_str, po_db_id, receivedby, note, doclink, user2, colid, name, deliveryDetails } = req.body;
+        const { poid_str, po_db_id, receivedby, note, doclink, user, colid, name, deliveryDetails } = req.body;
         // deliveryDetails: Array of { itemid (PO Item ID), itemcode, receivedQty, returnedQty, price, discount, itemtype, itemname }
 
         if (!deliveryDetails || !Array.isArray(deliveryDetails) || deliveryDetails.length === 0) {
@@ -153,7 +153,7 @@ exports.markDelivered2 = async (req, res) => {
                         itemname: finalItemName,
                         quantity: qtyReceived,
                         type: finalItemType,
-                        user2: user2,
+                        user: user,
                         colid: colid,
                         status: 'Available',
                         name: 'Auto Created'
@@ -175,10 +175,10 @@ exports.markDelivered2 = async (req, res) => {
                         // Usually "quantityreturn" in stock register means "returned TO stock". 
                         // Here we are just NOT adding it. 
                         // Let's stick to adding what we received. 
-                        // But we can log a record for the return if the user2 meant "Log that we returned it to vendor"
+                        // But we can log a record for the return if the user meant "Log that we returned it to vendor"
                         // current model "quantityreturn" might be for that. Let's assume 0 for "added" line.
                         netquantity: qtyReceived,
-                        user2: user2,
+                        user: user,
                         colid: colid,
                         stockdate: new Date(),
                         name: name
@@ -225,7 +225,7 @@ exports.markDelivered2 = async (req, res) => {
             receivedBy: receivedby,
             note: note,
             colid: colid,
-            user2: user2,
+            user: user,
             name: name,
             doclink: doclink
             // Could store JSON of detailed breakdown if schema supports it, strictly not demanded but good practice.

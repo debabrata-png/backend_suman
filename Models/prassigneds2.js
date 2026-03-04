@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const prassignedSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    user2: { type: String, required: true },
+    user: { type: String, required: true },
     colid: { type: Number, required: true },
     prassigneemail: { type: String },
     prassignename: { type: String },

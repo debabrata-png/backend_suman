@@ -5,9 +5,9 @@ const deliverytypedsschema = new mongoose.Schema({
         type: String,
         required: [true, 'Please enter delivery type name']
     },
-    user2: {
+    user: {
         type: String,
-        required: [true, 'Please enter user2']
+        required: [true, 'Please enter user']
     },
     colid: {
         type: Number,

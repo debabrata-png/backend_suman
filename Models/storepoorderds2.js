@@ -5,9 +5,9 @@ const storepoorderdsschema = new mongoose.Schema({
         type: String,
         required: [true, 'Please enter name']
     },
-    user2: {
+    user: {
         type: String,
-        required: [true, 'Please enter user2'],
+        required: [true, 'Please enter user'],
         unique: false
     },
     colid: {

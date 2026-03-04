@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const itemmasterschema = new mongoose.Schema({
     name: { type: String, required: true }, // Internal Name
-    user2: { type: String, required: true },
+    user: { type: String, required: true },
     colid: { type: Number, required: true },
 
     itemname: { type: String },

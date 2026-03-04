@@ -138,12 +138,12 @@ const storerequisationds2 = require("../Models/storerequisationds2");
 
 exports.getAssignedRequisitions2 = async (req, res) => {
     try {
-        const { colid, page, limit, user2 } = req.query;
+        const { colid, page, limit, user } = req.query;
 
-        // 1. Find all assignments for this user2
+        // 1. Find all assignments for this user
         // We fetch ALL assignments first to get the full list of IDs. 
-        // If the list is massive this might be slow, but for a single user2 it should be fine.
-        const assignments = await prassigneds2.find({ colid, prassigneemail: user2 }).select('storereqid');
+        // If the list is massive this might be slow, but for a single user it should be fine.
+        const assignments = await prassigneds2.find({ colid, prassigneemail: user }).select('storereqid');
         const assignedIds = assignments.map(a => a.storereqid);
 
         // 2. Query Store Requisitions using these IDs with pagination

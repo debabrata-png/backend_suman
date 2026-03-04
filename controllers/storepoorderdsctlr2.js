@@ -10,10 +10,10 @@ exports.addstorepoorderds2 = async (req, res) => {
             poid: newPO.poid,
             po_object_id: newPO._id,
             action: 'Created',
-            user2: newPO.user2 || 'System',
-            userName: newPO.creatorName || newPO.user2 || 'System',
+            user: newPO.user || 'System',
+            userName: newPO.creatorName || newPO.user || 'System',
             colid: newPO.colid,
-            remarks: `PO created as ${newPO.postatus || 'Draft'} by ${newPO.creatorName || newPO.user2}`
+            remarks: `PO created as ${newPO.postatus || 'Draft'} by ${newPO.creatorName || newPO.user}`
         });
 
         res.status(201).json({
@@ -117,7 +117,7 @@ exports.getstorepoorderdsbyid2 = async (req, res) => {
 
 exports.approveStorePO2 = async (req, res) => {
     try {
-        const { poid, status, user2 } = req.body;
+        const { poid, status, user } = req.body;
         // Logic to approve PO (finding by poid string or _id depending on usage)
         // Assuming _id for update consistency for now
         const updatedPO = await storepoorderds2.findByIdAndUpdate(poid, { postatus: status }, { new: true });
@@ -168,7 +168,7 @@ exports.verifyDynamicStep2 = async (req, res) => {
             stepNumber: po.currentStep,
             approverEmail: user_email,
             action: 'Approved',
-            user2: user_email, // Using email as username ref
+            user: user_email, // Using email as username ref
             actionDate: new Date()
         });
 
@@ -241,7 +241,7 @@ exports.sendBackDynamicStep2 = async (req, res) => {
             stepNumber: po.currentStep + 1,
             approverEmail: user_email,
             action: 'Sent Back',
-            user2: user_email,
+            user: user_email,
             actionDate: new Date(),
             remarks: remarks || 'Sent back for revisions'
         });
@@ -255,7 +255,7 @@ exports.sendBackDynamicStep2 = async (req, res) => {
 
 exports.requestPOEdit2 = async (req, res) => {
     try {
-        const { id, user2 } = req.body; // Using mongo ID for exact match
+        const { id, user } = req.body; // Using mongo ID for exact match
         const po = await storepoorderds2.findById(id);
         if (!po) return res.status(404).json({ success: false, message: "PO not found" });
 
@@ -267,7 +267,7 @@ exports.requestPOEdit2 = async (req, res) => {
             poid: po.poid,
             po_object_id: po._id,
             action: 'EditRequested',
-            user2: user2 || po.creatorName || 'System',
+            user: user || po.creatorName || 'System',
             colid: po.colid,
             remarks: 'Purchase Executive requested permission to edit a submitted PO.'
         });
@@ -280,7 +280,7 @@ exports.requestPOEdit2 = async (req, res) => {
 
 exports.approvePOEdit2 = async (req, res) => {
     try {
-        const { id, user2, approved } = req.body;
+        const { id, user, approved } = req.body;
         const po = await storepoorderds2.findById(id);
         if (!po) return res.status(404).json({ success: false, message: "PO not found" });
 
@@ -292,7 +292,7 @@ exports.approvePOEdit2 = async (req, res) => {
             poid: po.poid,
             po_object_id: po._id,
             action: approved ? 'EditApproved' : 'EditRejected',
-            user2: user2 || po.creatorName || 'System',
+            user: user || po.creatorName || 'System',
             colid: po.colid,
             remarks: `Purchase Manager ${approved ? 'approved' : 'rejected'} PO edit request.`
         });

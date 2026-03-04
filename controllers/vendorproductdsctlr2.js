@@ -3,7 +3,7 @@ const vendorproductds = require("../Models/vendorsproductds");
 // Add single vendor product
 exports.addvendorproductds2 = async (req, res) => {
   try {
-    const { name, user2, colid, vendorname, productname, price, stock, image, gst, discount } = req.body;
+    const { name, user, colid, vendorname, productname, price, stock, image, gst, discount } = req.body;
 
     // Calculate final price
     const totalprice = price;
@@ -14,7 +14,7 @@ exports.addvendorproductds2 = async (req, res) => {
 
     const newVendorProduct = new vendorproductds({
       name,
-      user2,
+      user,
       colid,
       vendorname,
       productname,
@@ -98,9 +98,9 @@ exports.getvendorproductdsbyvendor2 = async (req, res) => {
   try {
     const { vendorname, colid } = req.query;
 
-    const vendorProducts = await vendorproductds.find({ 
-      vendorname, 
-      colid 
+    const vendorProducts = await vendorproductds.find({
+      vendorname,
+      colid
     }).sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -127,7 +127,7 @@ exports.updatevendorproductds2 = async (req, res) => {
     // Recalculate final price if price, gst, or discount is updated
     if (updateData.price || updateData.gst || updateData.discount) {
       const vendorProduct = await vendorproductds.findById(id);
-      
+
       const price = updateData.price || vendorProduct.price;
       const gst = updateData.gst !== undefined ? updateData.gst : vendorProduct.gst;
       const discount = updateData.discount !== undefined ? updateData.discount : vendorProduct.discount;

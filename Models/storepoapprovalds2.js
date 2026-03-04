@@ -7,7 +7,7 @@ const storepoapprovalschema = new mongoose.Schema({
     approverEmail: { type: String, required: true },
     action: { type: String, default: 'Approved' }, // Approved, Rejected
     actionDate: { type: Date, default: Date.now },
-    user2: { type: String } // Who performed the action
+    user: { type: String } // Who performed the action
 });
 
 const storepoapprovalds2 = mongoose.model('storepoapprovalds2', storepoapprovalschema);

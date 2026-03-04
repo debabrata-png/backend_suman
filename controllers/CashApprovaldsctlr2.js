@@ -23,7 +23,7 @@ exports.getAllRequests2 = async (req, res) => {
         const excludedFields = ["page", "sort", "limit", "fields"];
         excludedFields.forEach((el) => delete queryObj[el]);
 
-        // Advanced filtering if needed, but basic query matching covers colid and user2
+        // Advanced filtering if needed, but basic query matching covers colid and user
         let query = CashApprovalds2.find(queryObj);
 
         // Sorting

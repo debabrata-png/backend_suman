@@ -75,7 +75,7 @@ exports.addQualityCheck2 = async (req, res) => {
                         saved = await storeitemds2.findByIdAndUpdate(existing._id, { $inc: { quantity: Number(item.acceptedQuantity) } }, { new: true });
                     } else {
                         saved = await storeitemds2.create({
-                            colid, user2: inspectorName || 'System',
+                            colid, user: inspectorName || 'System',
                             storeid: poItem.storeid, storename: poItem.storename,
                             itemcode: itemCode, itemname: item.itemname,
                             quantity: Number(item.acceptedQuantity),
@@ -89,7 +89,7 @@ exports.addQualityCheck2 = async (req, res) => {
                         storeid: poItem.storeid, store: poItem.storename || poItem.storeid,
                         itemid: itemCode, item: item.itemname,
                         quantityadded: Number(item.acceptedQuantity), quantityreturn: 0,
-                        netquantity: saved.quantity, user2: inspectorName || 'System',
+                        netquantity: saved.quantity, user: inspectorName || 'System',
                         colid, stockdate: new Date(), name: 'QC Delivery'
                     });
                 }

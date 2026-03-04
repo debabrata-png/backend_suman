@@ -16,7 +16,7 @@ const pologdsschema = new mongoose.Schema({
         enum: ['Created', 'Submitted', 'EditRequested', 'EditApproved', 'EditRejected', 'Modified', 'Approved', 'Rejected'],
         required: true
     },
-    user2: {
+    user: {
         type: String,   // Email or UUID
         required: true
     },

@@ -4,7 +4,7 @@ exports.addpimprestds2 = async (req, res) => {
     try {
         // Ensure required fields are present if not sent by frontend
         if (!req.body.name) req.body.name = req.body.imprestcode;
-        if (!req.body.user2 && req.body.officername) req.body.user2 = req.body.officername;
+        if (!req.body.user && req.body.officername) req.body.user = req.body.officername;
 
         const newImprest = await pimprestds2.create(req.body);
         res.status(201).json({

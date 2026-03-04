@@ -5,7 +5,7 @@ const itemtypeschema = new mongoose.Schema({
         type: String,
         required: true
     },
-    user2: {
+    user: {
         type: String,
         required: true
     },
