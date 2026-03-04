@@ -38,9 +38,7 @@ exports.getallitemcategoryds2 = async (req, res) => {
             ];
         }
         const items = await itemcategoryds2.find(query);
-        const debugPayload = { status: 'success', results: items.length, count: items.length, data: { items } };
-        require('fs').writeFileSync('d:/Campus_technology/purchase_module/server/debug_cat.json', JSON.stringify(debugPayload, null, 2));
-        res.status(200).json(debugPayload);
+        res.status(200).json({ status: 'success', results: items.length, count: items.length, data: { items } });
     } catch (err) {
         console.error("error in itemcategory getall", err);
         res.status(400).json({ status: 'fail', message: err });
