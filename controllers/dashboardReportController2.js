@@ -1,6 +1,6 @@
 const Class = require('../Models/class');
 const Attendance = require('../Models/attendance');
-const User = require('../Models/user2');
+const User = require('../Models/user');
 const LmsVideo = require('../Models/lmsvideos');
 
 exports.getDashboardStats2 = async (req, res) => {

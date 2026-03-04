@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 
 exports.getallusers2 = (req, res) => {
-    //res.cookie("user2","Akshata");
+    //res.cookie("user","Akshata");
     const role = req.cookies['role'];
     if (role == 'Admin') {
         res.status(200).render('addusers', {
@@ -18,7 +18,7 @@ exports.getallusers2 = (req, res) => {
 };
 
 exports.getallusersadmin2 = (req, res) => {
-    //res.cookie("user2","Akshata");
+    //res.cookie("user","Akshata");
     res.status(200).render('addusersadmin', {
         title: 'Add users'
     });
@@ -27,7 +27,7 @@ exports.getallusersadmin2 = (req, res) => {
 };
 
 exports.getunauthorized2 = (req, res) => {
-    //res.cookie("user2","Akshata");
+    //res.cookie("user","Akshata");
     req.flash("error", "Not authorized !!!");
     res.status(200).render('notauthorized', {
         title: 'Not authorized'
@@ -35,7 +35,7 @@ exports.getunauthorized2 = (req, res) => {
 };
 
 exports.getexportdetails2 = (req, res) => {
-    //res.cookie("user2","Akshata");
+    //res.cookie("user","Akshata");
     const role = req.cookies['role'];
     if (role == 'Admin') {
         res.status(200).render('exportdetails', {
@@ -52,16 +52,16 @@ exports.getexportdetails2 = (req, res) => {
 
 
 exports.getlogin2 = (req, res) => {
-    //res.cookie("user2","Akshata");
-    res.clearCookie("user2");
+    //res.cookie("user","Akshata");
+    res.clearCookie("user");
     res.status(200).render('loginnew', {
         title: 'Login to the online portal'
     });
 };
 
 exports.getloginnew2 = (req, res) => {
-    //res.cookie("user2","Akshata");
-    res.clearCookie("user2");
+    //res.cookie("user","Akshata");
+    res.clearCookie("user");
     res.status(200).render('loginnew1', {
         title: 'Login to the online portal',
         college: req.query.institution
@@ -69,8 +69,8 @@ exports.getloginnew2 = (req, res) => {
 };
 
 exports.getlogincol2 = (req, res) => {
-    //res.cookie("user2","Akshata");
-    //res.clearCookie("user2");
+    //res.cookie("user","Akshata");
+    //res.clearCookie("user");
     res.status(200).render('logincol2', {
         title: 'Login to the online portal'
     });
@@ -80,7 +80,7 @@ exports.createusers2 = async (req, res) => {
 
     try {
         const code = req.body.code;
-        const user1 = req.cookies['user2'];
+        const user1 = req.cookies['user'];
         const colid = req.cookies['colid'];
         const regno = "NA";
         const semester = "NA";
@@ -103,7 +103,7 @@ exports.createusers2 = async (req, res) => {
                 regno: regno,
                 status: req.body.status
             });
-            //req.flash("success", "User has been added successfully for user2 " + req.cookies['user2']);
+            //req.flash("success", "User has been added successfully for user " + req.cookies['user']);
             req.flash("success", "User has been added successfully");
             res.status(200).render('addusers', {
                 title: 'User Management'
@@ -119,7 +119,7 @@ exports.createusers2 = async (req, res) => {
 
     } catch (err) {
         req.flash("error", "User could not be added successfully. Error " + err);
-        //req.flash("success", "Category has been added successfully for " + req.cookie.user2);
+        //req.flash("success", "Category has been added successfully for " + req.cookie.user);
         res.status(200).render('addusers', {
             title: 'User Management'
         });
@@ -135,7 +135,7 @@ exports.createusersadmin2 = async (req, res) => {
 
     try {
         const code = req.body.code;
-        //const user1=req.cookies['user2'];
+        //const user1=req.cookies['user'];
         //const colid=req.cookies['colid'];
         const regno = "NA";
         const semester = "NA";
@@ -158,7 +158,7 @@ exports.createusersadmin2 = async (req, res) => {
                 regno: regno,
                 status: req.body.status
             });
-            //req.flash("success", "User has been added successfully for user2 " + req.cookies['user2']);
+            //req.flash("success", "User has been added successfully for user " + req.cookies['user']);
             req.flash("success", "User has been added successfully");
             res.status(200).render('addusers', {
                 title: 'User Management'
@@ -174,7 +174,7 @@ exports.createusersadmin2 = async (req, res) => {
 
     } catch (err) {
         req.flash("error", "User could not be added successfully. Error " + err);
-        //req.flash("success", "Category has been added successfully for " + req.cookie.user2);
+        //req.flash("success", "Category has been added successfully for " + req.cookie.user);
         res.status(200).render('addusers', {
             title: 'User Management'
         });
@@ -188,10 +188,10 @@ exports.createusersadmin2 = async (req, res) => {
 
 
 exports.postlogin2 = async (req, res) => {
-    //res.cookie("user2","Akshata");
+    //res.cookie("user","Akshata");
 
     try {
-        //const user1=req.cookies['user2'];
+        //const user1=req.cookies['user'];
         //const user123= await User.findOne({ email : req.body.email}).exec();
         const email = req.body.email;
         const password = req.body.password;
@@ -211,13 +211,13 @@ exports.postlogin2 = async (req, res) => {
             }
 
             if (role) {
-                res.cookie("user2", String([role.email]));
+                res.cookie("user", String([role.email]));
                 res.cookie("name", String([role.name]));
                 res.cookie("department", String([role.department]));
                 res.cookie("colid", String([role.colid]));
                 res.cookie("role", String([role.role]));
                 res.cookie("photo", String([role.photo]));
-                const token = jwt.sign({ user2: email, colid: String([role.colid]) }, process.env.JWT_SECRET, {
+                const token = jwt.sign({ user: email, colid: String([role.colid]) }, process.env.JWT_SECRET, {
                     expiresIn: process.env.JWT_EXPIRES_IN
                 });
                 res.cookie("token", token);
@@ -249,7 +249,7 @@ exports.postlogin2 = async (req, res) => {
 
             }
 
-            //user2.roles = [role._id];
+            //user.roles = [role._id];
             // req.flash("success", "Login with userid " + [role._id] + " email " + [role.email]);
             // res.status(200).render('login1', {            
             //     title: 'Login'
@@ -263,7 +263,7 @@ exports.postlogin2 = async (req, res) => {
         //console.log(user123);
         //console.log(user123.email);
         // if(user123.email) {
-        //     res.cookie("user2",user123.email);
+        //     res.cookie("user",user123.email);
         //         res.status(200).render('addusers', {            
         //             title: 'Select'         
         //         });
@@ -288,10 +288,10 @@ exports.postlogin2 = async (req, res) => {
 };
 
 exports.postlogin12 = async (req, res) => {
-    //res.cookie("user2","Akshata");
+    //res.cookie("user","Akshata");
 
     try {
-        //const user1=req.cookies['user2'];
+        //const user1=req.cookies['user'];
         User.findOne({
             email: req.body.email
         }).exec((err, user123) => {
@@ -303,7 +303,7 @@ exports.postlogin12 = async (req, res) => {
                 });
             }
             if (user123) {
-                res.cookie("user2", user123.email);
+                res.cookie("user", user123.email);
                 res.status(200).render('addusers', {
                     categories: user123,
                     title: 'Select'
@@ -328,7 +328,7 @@ exports.postlogin12 = async (req, res) => {
 exports.postlogincol2 = async (req, res) => {
 
     try {
-        const user1 = req.cookies['user2'];
+        const user1 = req.cookies['user'];
         const department = req.cookies['department'];
         const name = req.cookies['name'];
         //console.log('Updating');
@@ -337,7 +337,7 @@ exports.postlogincol2 = async (req, res) => {
             email: user1
         });
         res.cookie("colid", req.body.colid);
-        //req.flash("success", "Category has been updated successfully for user2 " + req.cookies['user2']);
+        //req.flash("success", "Category has been updated successfully for user " + req.cookies['user']);
         req.flash("success", "Institution Code has been Updated Successfully");
         res.redirect('/dashboard');
     } catch (err) {
@@ -351,7 +351,7 @@ exports.postlogincol2 = async (req, res) => {
 exports.postlogincol12 = async (req, res) => {
 
     try {
-        const user1 = req.cookies['user2'];
+        const user1 = req.cookies['user'];
         const department = req.cookies['department'];
         const name = req.cookies['name'];
         //console.log('Updating');
@@ -370,7 +370,7 @@ exports.postlogincol12 = async (req, res) => {
         res.cookie("regno", req.body.regno);
         res.cookie("semester", req.body.semester);
         res.cookie("section", req.body.section);
-        //req.flash("success", "Category has been updated successfully for user2 " + req.cookies['user2']);
+        //req.flash("success", "Category has been updated successfully for user " + req.cookies['user']);
         if (req.body.role == "Student") {
             req.flash("success", "Institution Code has been Updated Successfully");
             res.redirect('/viewclassstud');
@@ -392,7 +392,7 @@ exports.postlogincol12 = async (req, res) => {
 exports.postlogincol2 = async (req, res) => {
 
     try {
-        const user1 = req.cookies['user2'];
+        const user1 = req.cookies['user'];
         const department = req.cookies['department'];
         const name = req.cookies['name'];
         //console.log('Updating');
@@ -444,7 +444,7 @@ exports.postlogincol2 = async (req, res) => {
             res.cookie("regno", req.body.regno);
             res.cookie("semester", req.body.semester);
             res.cookie("section", req.body.section);
-            //req.flash("success", "Category has been updated successfully for user2 " + req.cookies['user2']);
+            //req.flash("success", "Category has been updated successfully for user " + req.cookies['user']);
             if (req.body.role == "Student") {
                 req.flash("success", "Institution Code has been Updated Successfully");
                 res.redirect('/viewclassstud');
@@ -473,7 +473,7 @@ exports.postlogincol2 = async (req, res) => {
 
 
 // exports.getallcat2= async (req,res) => {
-//     res.cookie("user2","Akshata");
+//     res.cookie("user","Akshata");
 
 //     try{
 //         const lcat123= await Lcat.find();
@@ -536,7 +536,7 @@ exports.getcat12 = async (req, res) => {
 exports.getedituser2 = async (req, res) => {
 
     try {
-        const user1 = req.cookies['user2'];
+        const user1 = req.cookies['user'];
         if (user1) {
             const leditcat = await User.findById(req.params.id);
             res.status(200).render('edituser', {
@@ -562,7 +562,7 @@ exports.getedituser2 = async (req, res) => {
 exports.updateuser2 = async (req, res) => {
 
     try {
-        const user1 = req.cookies['user2'];
+        const user1 = req.cookies['user'];
         const colid = req.cookies['colid'];
         const department = req.cookies['department'];
         const name = req.cookies['name'];
@@ -584,7 +584,7 @@ exports.updateuser2 = async (req, res) => {
             gender: req.body.gender
         });
 
-        //req.flash("success", "Category has been updated successfully for user2 " + req.cookies['user2']);
+        //req.flash("success", "Category has been updated successfully for user " + req.cookies['user']);
         req.flash("success", "Data has been updated successfully");
         res.redirect('/viewallusers');
     } catch (err) {
@@ -596,7 +596,7 @@ exports.updateuser2 = async (req, res) => {
 
 exports.getviewallusers2 = async (req, res) => {
     try {
-        const user1 = req.cookies['user2'];
+        const user1 = req.cookies['user'];
         const colid = req.cookies['colid'];
         const role = req.cookies['role'];
         if (user1) {
@@ -608,7 +608,7 @@ exports.getviewallusers2 = async (req, res) => {
                 res.status(200).render('viewallusers', {
                     categories: lcat1233,
                     title: 'List all users',
-                    user2: user1
+                    user: user1
 
                 });
 
@@ -634,7 +634,7 @@ exports.getviewallusers2 = async (req, res) => {
 exports.deleteuser2 = async (req, res) => {
 
     try {
-        const user1 = req.cookies['user2'];
+        const user1 = req.cookies['user'];
         await Pub.findByIdAndDelete(req.body.category_id);
 
         req.flash("success", "Data has been deleted successfully");

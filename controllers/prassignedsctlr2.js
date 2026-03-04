@@ -112,7 +112,7 @@ exports.getOEUsers2 = async (req, res) => {
     try {
         const { colid } = req.query;
         // Assuming 'User' model is available or needs to be required
-        const User = require('../Models/user2');
+        const User = require('../Models/user');
 
         const oes = await User.find({
             colid: colid,

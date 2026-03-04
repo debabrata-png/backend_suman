@@ -5050,6 +5050,21 @@ app.delete('/api/v2/subjects/:id', subjectCtrl.deleteSubject);
 app.get('/api/v2/formMetadata', subjectCtrl.getFormMetadata);
 
 
+const crmh1ctlrag = require('./controllers/crmh1ctlrag1.js');
+app.get('/api/v2/searchusersag', crmh1ctlrag.searchusersag);
+app.get('/api/v2/getallleaagag', crmh1ctlrag.getallleadsag);
+app.get('/api/v2/getallleadsag', crmh1ctlrag.getallleadsag);
+app.get('/api/v2/getleadbyidag/:id', crmh1ctlrag.getleadbyidag);
+app.get('/api/v2/gethotleaagag', crmh1ctlrag.gethotleaagag);
+app.get('/api/v2/gettodayfollowupsag', crmh1ctlrag.gettodayfollowupsag);
+app.get('/api/v2/getoverduefollowupsag', crmh1ctlrag.getoverduefollowupsag);
+app.get('/api/v2/getleadanalyticsag', crmh1ctlrag.getleadanalyticsag);
+app.get('/api/v2/checkduplicateag', crmh1ctlrag.checkduplicateag);
+app.get('/api/v2/getcrmhdashboard', crmh1ctlrag.getCrmhDashboard);
+app.get('/api/v2/getallsourcesag', crmh1ctlrag.getallsourcesag);
+app.get('/api/v2/getallprogramcounselorag', crmh1ctlrag.getallprogramcounselorag);
+
+
 
 
 const ds1userctlr = require("./controllers/ds1userctlr");

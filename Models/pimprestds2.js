@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const pimprestSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    user2: { type: String, required: true },
+    user: { type: String, required: true },
     colid: { type: Number, required: true },
     imprestcode: { type: String },
     amount: { type: Number },
