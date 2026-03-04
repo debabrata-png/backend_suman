@@ -317,6 +317,11 @@ exports.getCrmhDashboard = async (req, res) => {
       return res.status(400).json({ success: false, message: 'colid is required' });
     }
 
+    if (!userEmail) {
+      return res.status(400).json({ success: false, message: 'user is required' });
+    }
+
+
     const numColid = Number(colid);
     const baseQuery = { colid: numColid };
     if (role && role !== 'Admin') {
