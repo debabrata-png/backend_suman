@@ -50,6 +50,7 @@ const applicationFormSchema = new mongoose.Schema({
     siblingName: { type: String },
 
     // --- ACADEMIC CHOICES ---
+    programOptingFor: { type: String },
     programAppliedFor: {
         type: String,
         enum: ["B.A.", "B.Com.", "BBA", "B.Sc.", "BCA", "BCA (AI)"],
@@ -108,6 +109,7 @@ const applicationFormSchema = new mongoose.Schema({
     capID: { type: String },
     referenceNumber: { type: String },
     appstatus: { type: String, default: "Pending" },
+    status: { type: String, enum: ["Approved", "Pending", "Rejected"], default: "Pending" },
     assignedto: { type: String },
     year: { type: String },
     bankAcno: { type: String },

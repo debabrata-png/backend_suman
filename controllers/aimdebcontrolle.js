@@ -20,14 +20,22 @@ const AWS = require('aws-sdk');
 
 exports.createApplicationForm = async (req, res) => {
   try {
-    const formData = req.body;
+    const formData = { ...req.body };
+
+    // Provide defaults for required fields that some form templates may not collect
+    if (!formData.email) formData.email = `pending_${Date.now()}@example.com`;
+    if (!formData.password) formData.password = "TemporaryPass123!";
+    if (!formData.phone) formData.phone = "0000000000";
+    if (!formData.name && (formData.firstName || formData.lastName)) {
+      formData.name = [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ");
+    }
 
     const applicationForm = await applicationFormModel.create({
-        ...formData
+      ...formData
     })
     return res.status(201).json({ message: "Application form created successfully", data: applicationForm });
   } catch (error) {
-    //res.status(500).json({ message: "Error creating application form", error: error.message });
+    res.status(400).json({ message: "Error creating application form", error: error.message });
   }
 };
 
@@ -45,34 +53,34 @@ exports.getApplicationForm = async (req, res) => {
   }
 };
 
-exports.getappbyyear= async (req,res) => {
-  try{
-    const colid1=parseInt(req.query.colid);
+exports.getappbyyear = async (req, res) => {
+  try {
+    const colid1 = parseInt(req.query.colid);
     // const lcat1233=await mtestnewm.find({"_id" : ObjectId(req.query.id)});
-    const lcat1233=await applicationFormModel.find().sort( { "twelfthMarks": -1 } )
-    .where('colId')
-            .equals(req.query.colid)
-            .where('year')
-            .equals(req.query.year)
-            .where('programOptingFor')
-            .equals(req.query.program);
-            
-            
-          
-          //console.log(lcat1233);
-          return res.status(200).json({
-              status:'Success',
-              data: {
-                  classes : lcat1233
-              }   
-          });            
-  } catch(err) {
-      // res.status(400).json({
-      //     status:'Failed',
-      //     message: err
-      // });
+    const lcat1233 = await applicationFormModel.find().sort({ "twelfthMarks": -1 })
+      .where('colId')
+      .equals(req.query.colid)
+      .where('year')
+      .equals(req.query.year)
+      .where('programOptingFor')
+      .equals(req.query.program);
 
-  }  
+
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
 };
 
 exports.getadmappcount = async (req, res) => {
@@ -86,7 +94,7 @@ exports.getadmappcount = async (req, res) => {
       {
         $group: {
           // _id: "$programOptingFor",
-           _id: {
+          _id: {
             programOptingFor: "$programOptingFor"
           },
           total_attendance: { $sum: 1 },
@@ -100,44 +108,44 @@ exports.getadmappcount = async (req, res) => {
         classes: lcat1233,
       },
     });
-  }  catch (err) {
+  } catch (err) {
     //res.status(400).json({
-     // status: "Failed",
+    // status: "Failed",
     //  message: err,
-   // });
+    // });
   }
 };
 
-exports.getappbyyearcat= async (req,res) => {
-  try{
-    const colid1=parseInt(req.query.colid);
+exports.getappbyyearcat = async (req, res) => {
+  try {
+    const colid1 = parseInt(req.query.colid);
     // const lcat1233=await mtestnewm.find({"_id" : ObjectId(req.query.id)});
-    const lcat1233=await applicationFormModel.find().sort( { "twelfthMarks": -1 } )
-    .where('colId')
-            .equals(req.query.colid)
-            .where('category')
-            .equals(req.query.category)
-            .where('year')
-            .equals(req.query.year)
-            .where('programOptingFor')
-            .equals(req.query.program);
-            
-            
-          
-          //console.log(lcat1233);
-          return res.status(200).json({
-              status:'Success',
-              data: {
-                  classes : lcat1233
-              }   
-          });            
-  } catch(err) {
-      // res.status(400).json({
-      //     status:'Failed',
-      //     message: err
-      // });
+    const lcat1233 = await applicationFormModel.find().sort({ "twelfthMarks": -1 })
+      .where('colId')
+      .equals(req.query.colid)
+      .where('category')
+      .equals(req.query.category)
+      .where('year')
+      .equals(req.query.year)
+      .where('programOptingFor')
+      .equals(req.query.program);
 
-  }  
+
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
 };
 
 
@@ -218,8 +226,8 @@ exports.addUser = async (req, res) => {
   }
 };
 
-exports.fetchuserbyregno = async (req, res) =>{
-   try {
+exports.fetchuserbyregno = async (req, res) => {
+  try {
     const { regno } = req.params;
 
     // if (!regno) {
@@ -234,7 +242,7 @@ exports.fetchuserbyregno = async (req, res) =>{
 
     res.json(user);
   } catch (error) {
-   
+
   }
 }
 
@@ -256,7 +264,7 @@ exports.releaseadmitCards = async (req, res) => {
       config
     });
   } catch (error) {
-    
+
   }
 };
 
@@ -320,62 +328,62 @@ exports.getadmitcardbyregno = async (req, res) => {
 
 
 exports.createadmitcardtemplate = async (req, res) => {
-    try {
-        const data = req.body;
-        const newadmitcardtemplate = await admitcardtemplatemodel.create(data);
+  try {
+    const data = req.body;
+    const newadmitcardtemplate = await admitcardtemplatemodel.create(data);
 
-        return res.status(201).json({
-                success: true,
-                message: "Admit card template created successfully",
-                data: newadmitcardtemplate
-            });
-    } catch (error) {
-        
-    }
+    return res.status(201).json({
+      success: true,
+      message: "Admit card template created successfully",
+      data: newadmitcardtemplate
+    });
+  } catch (error) {
+
+  }
 }
 
 exports.getadmitcardtemplates = async (req, res) => {
-    try {
-        const templates = await admitcardtemplatemodel.find();
-        // if (!templates || templates.length === 0) {
-        //     return res.status(404).json({
-        //         success: false,
-        //         message: "No admit card templates found"
-        //     });
-        // } else {
-        //     return res.status(200).json(templates);
-        // }
-        return res.status(200).json(templates);
-    } catch (error) {
-    
-    }
+  try {
+    const templates = await admitcardtemplatemodel.find();
+    // if (!templates || templates.length === 0) {
+    //     return res.status(404).json({
+    //         success: false,
+    //         message: "No admit card templates found"
+    //     });
+    // } else {
+    //     return res.status(200).json(templates);
+    // }
+    return res.status(200).json(templates);
+  } catch (error) {
+
+  }
 }
 
 exports.getadmitcardtemplatebyid = async (req, res) => {
-    try {
-        const templateid = req.params.id;
-        const template = await admitcardtemplatemodel.findById(templateid);
+  try {
+    const templateid = req.params.id;
+    const template = await admitcardtemplatemodel.findById(templateid);
 
-        // if (!template) {
-        //     return res.status(404).json({
-        //         success: false,
-        //         message: "Admit card template not found"
-        //     });
-        // } else {
-        //     return res.status(200).json({
-        //         success: true,
-        //         message: "Admit card template retrieved successfully",
-        //         data: template
-        //     });
-        // }
-        return res.status(200).json({
-                success: true,
-                message: "Admit card template retrieved successfully",
-                data: template
-            });
-    } catch (error) {
+    // if (!template) {
+    //     return res.status(404).json({
+    //         success: false,
+    //         message: "Admit card template not found"
+    //     });
+    // } else {
+    //     return res.status(200).json({
+    //         success: true,
+    //         message: "Admit card template retrieved successfully",
+    //         data: template
+    //     });
+    // }
+    return res.status(200).json({
+      success: true,
+      message: "Admit card template retrieved successfully",
+      data: template
+    });
+  } catch (error) {
 
-    }
+  }
 }
 
 
@@ -384,111 +392,111 @@ exports.getadmitcardtemplatebyid = async (req, res) => {
 
 
 exports.createexamapplication = async (req, res) => {
-    try {
-        const examapplicationdata = req.body;
-        const examapplication = await examApplicationmodel.create(examapplicationdata);
-        // if (!examapplication) {
-        //     return res.status(400).json({
-        //         message: "Failed to create exam application",
-        //     });
-        // }
-        return res.status(201).json({
-            message: "Exam application created successfully",
-        });
-    } catch (error) {
-        
-    }
+  try {
+    const examapplicationdata = req.body;
+    const examapplication = await examApplicationmodel.create(examapplicationdata);
+    // if (!examapplication) {
+    //     return res.status(400).json({
+    //         message: "Failed to create exam application",
+    //     });
+    // }
+    return res.status(201).json({
+      message: "Exam application created successfully",
+    });
+  } catch (error) {
+
+  }
 }
 
 exports.getpendingexamapplications = async (req, res) => {
-    try {
-        const examapplications = await examApplicationmodel.find({
-            applicationstatus: "pending"
-        }).sort({ createdAt: 1 }).select("-__v" + " -createdAt -updatedAt");
-        // if (!examapplications) {
-        //     return res.status(200).json({
-        //         message: "No exam applications found",
-        //         data: [],
-        //     });
-        // }
-        return res.status(200).json({
-            message: "Exam applications retrieved successfully",
-            data: examapplications,
-        });
-    } catch (error) {
-        
-    }
+  try {
+    const examapplications = await examApplicationmodel.find({
+      applicationstatus: "pending"
+    }).sort({ createdAt: 1 }).select("-__v" + " -createdAt -updatedAt");
+    // if (!examapplications) {
+    //     return res.status(200).json({
+    //         message: "No exam applications found",
+    //         data: [],
+    //     });
+    // }
+    return res.status(200).json({
+      message: "Exam applications retrieved successfully",
+      data: examapplications,
+    });
+  } catch (error) {
+
+  }
 }
 
 exports.getapprovedexamapplications = async (req, res) => {
-    try {
-        const examapplications = await examApplicationmodel.find({
-            applicationstatus: "approved"
-        }).sort({ createdAt: 1 }).select("-__v  -createdAt -updatedAt");
-        // if (!examapplications) {
-        //     return res.status(200).json({
-        //         message: "No exam applications found",
-        //         data: [],
-        //     });
-        // }
-        return res.status(200).json({
-            message: "Exam applications retrieved successfully",
-            data: examapplications,
-        });
-    } catch (error) {
-    
-    }
+  try {
+    const examapplications = await examApplicationmodel.find({
+      applicationstatus: "approved"
+    }).sort({ createdAt: 1 }).select("-__v  -createdAt -updatedAt");
+    // if (!examapplications) {
+    //     return res.status(200).json({
+    //         message: "No exam applications found",
+    //         data: [],
+    //     });
+    // }
+    return res.status(200).json({
+      message: "Exam applications retrieved successfully",
+      data: examapplications,
+    });
+  } catch (error) {
+
+  }
 }
 
 exports.getrejectedexamapplications = async (req, res) => {
-    try {
-        const examapplications = await examApplicationmodel.find({
-            applicationstatus: "rejected"
-        }).sort({ createdAt: 1 }).select("-__v -createdAt -updatedAt");
-        // if (!examapplications) {
-        //     return res.status(200).json({
-        //         message: "No exam applications found",
-        //         data: [],
-        //     });
-        // }
-        return res.status(200).json({
-            message: "Exam applications retrieved successfully",
-            data: examapplications,
-        });
-    } catch (error) {
-       
-    }
+  try {
+    const examapplications = await examApplicationmodel.find({
+      applicationstatus: "rejected"
+    }).sort({ createdAt: 1 }).select("-__v -createdAt -updatedAt");
+    // if (!examapplications) {
+    //     return res.status(200).json({
+    //         message: "No exam applications found",
+    //         data: [],
+    //     });
+    // }
+    return res.status(200).json({
+      message: "Exam applications retrieved successfully",
+      data: examapplications,
+    });
+  } catch (error) {
+
+  }
 }
 exports.updateexamapplicationstatus = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { applicationstatus } = req.body;
+  try {
+    const { id } = req.params;
+    const { applicationstatus } = req.body;
 
-        // if (!["approved", "rejected"].includes(applicationstatus)) {
-        //     return res.status(400).json({
-        //         message: "Invalid application status",
-        //     });
-        // }
+    // if (!["approved", "rejected"].includes(applicationstatus)) {
+    //     return res.status(400).json({
+    //         message: "Invalid application status",
+    //     });
+    // }
 
-        const updatedApplication = await examApplicationmodel.findByIdAndUpdate(
-            id,
-            { applicationstatus },
-            { new: true }
-        );
+    const updatedApplication = await examApplicationmodel.findByIdAndUpdate(
+      id,
+      { applicationstatus },
+      { new: true }
+    );
 
-        // if (!updatedApplication) {
-        //     return res.status(404).json({
-        //         message: "Exam application not found",
-        //     });
-        // }
+    // if (!updatedApplication) {
+    //     return res.status(404).json({
+    //         message: "Exam application not found",
+    //     });
+    // }
 
-        return res.status(200).json({
-            message: "Exam application status updated successfully",
-            data: updatedApplication,
-        });
-    } catch (error) {
-        
-    }
+    return res.status(200).json({
+      message: "Exam application status updated successfully",
+      data: updatedApplication,
+    });
+  } catch (error) {
+
+  }
 }
 
 
@@ -573,7 +581,7 @@ exports.updateSubjectEnabledStatus = async (req, res) => {
     });
 
   } catch (error) {
-    
+
   }
 };
 
@@ -584,28 +592,28 @@ exports.updateSubjectEnabledStatus = async (req, res) => {
 
 
 
-exports.createexam = async (req, res) =>{
-    try {
-        const data = req.body;
-        const newexam = await exammodel.create({
-            ...data,
-        })
-        // if (!newexam) {
-        //     return res.status(400).json({
-        //         status: false,
-        //         message: "Exam creation failed"
-        //     })
-        // } else {
-            
-        // }
-        return res.status(201).json({
-                status: true,
-                message: "Exam created successfully",
-                data: newexam
-            })
-    } catch (error) {
-        
-    }
+exports.createexam = async (req, res) => {
+  try {
+    const data = req.body;
+    const newexam = await exammodel.create({
+      ...data,
+    })
+    // if (!newexam) {
+    //     return res.status(400).json({
+    //         status: false,
+    //         message: "Exam creation failed"
+    //     })
+    // } else {
+
+    // }
+    return res.status(201).json({
+      status: true,
+      message: "Exam created successfully",
+      data: newexam
+    })
+  } catch (error) {
+
+  }
 }
 
 exports.getexambyyear = async (req, res) => {
@@ -642,7 +650,7 @@ exports.getexambyyear = async (req, res) => {
       data: exam,
     });
   } catch (err) {
-    
+
   }
 };
 
@@ -653,7 +661,7 @@ exports.getExamFilters = async (req, res) => {
     const semesters = await exammodel.distinct("semester");
     return res.status(200).json({ status: true, programs, semesters });
   } catch (err) {
-    
+
   }
 };
 
