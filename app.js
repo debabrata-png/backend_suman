@@ -838,11 +838,24 @@ app.post('/api/v2/updategatewaypass2', gatewaypassdsctlr2.updateGatewayPass2);
 
 // --- Phase 3: Store Budgets & Cash Accounts ---
 const storebudgetdsctlr2 = require('./controllers/storebudgetdsctlr2');
+const headtypemasterctlr2 = require('./controllers/headtypemasterctlr2');
+const localgrnctlr2 = require('./controllers/localgrnctlr2');
+
 app.post('/api/v2/addstorebudget2', storebudgetdsctlr2.addStoreBudget2);
 app.get('/api/v2/getstorebudgets2', storebudgetdsctlr2.getStoreBudgets2);
 app.post('/api/v2/addcashaccountbalance2', storebudgetdsctlr2.addCashAccountBalance2);
 app.get('/api/v2/getstorecashaccounts2', storebudgetdsctlr2.getStoreCashAccounts2);
 app.post('/api/v2/deductcashforlocalpo2', storebudgetdsctlr2.deductCashForLocalPO2);
+app.post('/api/v2/approvelpo2', storebudgetdsctlr2.approveLPO2);
+app.post('/api/v2/rejectlpo2', storebudgetdsctlr2.rejectLPO2);
+app.post('/api/v2/updatelpoactualamount2', storebudgetdsctlr2.updateLpoActualAmount2);
+
+app.post('/api/v2/addheadtypeds2', headtypemasterctlr2.addHeadType2);
+app.get('/api/v2/getallheadtypeds2', headtypemasterctlr2.getHeadTypes2);
+app.post('/api/v2/deleteheadtypeds2', headtypemasterctlr2.deleteHeadType2);
+
+app.post('/api/v2/addlocalgrnds2', localgrnctlr2.addLocalGRN2);
+app.get('/api/v2/getalllocalgrnds2', localgrnctlr2.getLocalGRNs2);
 
 // --- Phase 4: Quality Checks ---
 const qualitycheckdsctlr2 = require('./controllers/qualitycheckdsctlr2');

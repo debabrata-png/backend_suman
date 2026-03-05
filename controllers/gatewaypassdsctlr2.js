@@ -9,7 +9,11 @@ exports.addGatewayPass2 = async (req, res) => {
 
         // Ensure passNumber is unique or generate one
         if (!passData.passNumber) {
-            passData.passNumber = `GP-${Date.now()}`;
+            const dateObj = new Date();
+            const yyyy = dateObj.getFullYear();
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const uniq = String(Date.now()).slice(-4);
+            passData.passNumber = `GP-${yyyy}${mm}${uniq}`;
         }
 
         // Fetch PO details to validate/link

@@ -13,6 +13,14 @@ const storebudgetdsschema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    storeid: {
+        type: String,
+        required: false
+    },
+    storeName: {
+        type: String,
+        required: false
+    },
     allocatedBudget: {
         type: Number,
         default: 0

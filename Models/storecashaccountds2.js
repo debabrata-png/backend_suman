@@ -13,6 +13,10 @@ const storecashaccountdsschema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    approvalThreshold: {
+        type: Number,
+        default: 5000
+    },
     balance: {
         type: Number,
         default: 0

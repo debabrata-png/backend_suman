@@ -78,7 +78,8 @@ exports.deductCashForLocalPO2 = async (req, res) => {
 
         // 4. Update the PO details and status
         poOrder.actualAmount = actualAmount;
-        poOrder.postatus = 'Completed'; // For local purchases, it's instant delivery essentially
+        // Don't mark as completed immediately, just update amount and deduct
+        // Status remains 'Auto Approved' or 'Approved' from the frontend call
         await poOrder.save();
 
         // 5. Update the cash account
@@ -96,3 +97,99 @@ exports.deductCashForLocalPO2 = async (req, res) => {
         res.status(500).json({ success: false, message: "Error processing deduction", error: error.message });
     }
 };
+
+// --- APPROVAL LOGIC ---
+exports.approveLPO2 = async (req, res) => {
+    try {
+        const { poid, colid, approvedBy, remarks } = req.body;
+
+        const poOrder = await storepoorderds2.findOne({ poid, colid });
+        if (!poOrder) return res.status(404).json({ success: false, message: 'PO not found' });
+
+        if (poOrder.postatus !== 'Pending Approval') {
+            return res.status(400).json({ success: false, message: 'PO is not pending approval.' });
+        }
+
+        poOrder.postatus = 'Approved';
+        poOrder.approvals = poOrder.approvals || [];
+        poOrder.approvals.push({
+            approver: approvedBy,
+            status: 'Approved',
+            date: new Date(),
+            remarks: remarks || 'Approved by Higher Authority'
+        });
+        await poOrder.save();
+
+        res.status(200).json({ success: true, message: "LPO Approved Successfully.", data: poOrder });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.rejectLPO2 = async (req, res) => {
+    try {
+        const { poid, colid, rejectedBy, remarks } = req.body;
+
+        const poOrder = await storepoorderds2.findOne({ poid, colid });
+        if (!poOrder) return res.status(404).json({ success: false, message: 'PO not found' });
+
+        poOrder.postatus = 'Rejected';
+        poOrder.approvals = poOrder.approvals || [];
+        poOrder.approvals.push({
+            approver: rejectedBy,
+            status: 'Rejected',
+            date: new Date(),
+            remarks: remarks || 'Rejected by Higher Authority'
+        });
+        await poOrder.save();
+
+        res.status(200).json({ success: true, message: "LPO Rejected Successfully.", data: poOrder });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.updateLpoActualAmount2 = async (req, res) => {
+    try {
+        const { poid, colid, newActualAmount, user } = req.body;
+
+        const poOrder = await storepoorderds2.findOne({ poid, colid });
+        if (!poOrder) return res.status(404).json({ success: false, message: 'PO not found' });
+
+        const account = await storecashaccountds2.findOne({ storeid: poOrder.storeid, colid });
+        if (!account) return res.status(404).json({ success: false, message: 'Store cash account not found' });
+
+        // the initial deduction is based on previous logged actualAmount, or the approx price
+        const previousAmount = poOrder.actualAmount || poOrder.price;
+        const diff = Number(newActualAmount) - previousAmount;
+
+        if (diff > 0 && account.balance < diff) {
+            return res.status(400).json({ success: false, message: `Insufficient cash balance to cover the difference of ₹${diff}` });
+        }
+
+        poOrder.actualAmount = Number(newActualAmount);
+
+        // Flag for re-approval if strictly requested, but for simplicity we allow difference adjustment
+        // as the purchase has likely physically occurred.
+        if (poOrder.postatus === 'Auto Approved' && newActualAmount > account.approvalThreshold) {
+            // Can add remarks or change status depending on strictness
+        }
+
+        if (diff !== 0) {
+            account.balance -= diff;
+            account.transactions.push({
+                amount: Math.abs(diff),
+                type: diff > 0 ? 'DEBIT' : 'CREDIT',
+                poid: poOrder.poid,
+                remarks: `Adjustment for LPO ${poOrder.poid} Actual Amount Update. Diff: ₹${diff}`
+            });
+            await account.save();
+        }
+
+        await poOrder.save();
+        res.status(200).json({ success: true, message: "Actual Amount updated successfully.", data: poOrder, newBalance: account.balance });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
