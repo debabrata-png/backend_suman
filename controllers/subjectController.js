@@ -66,7 +66,7 @@ exports.getFormMetadata = async (req, res) => {
         const { colid } = req.query;
         if (!colid) return res.status(400).json({ success: false, error: 'colid is required' });
 
-        const programs = await MPrograms.find({ colid: Number(colid), status1: 'Active' });
+        const programs = await MPrograms.find({ colid: Number(colid) });
         const subjects = await Subject.find({ colid: Number(colid) });
 
         res.status(200).json({ success: true, programs, subjects });
