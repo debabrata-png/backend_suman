@@ -810,10 +810,10 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         name: userData.name || '',
         father: userData.fathername || '',
         mother: userData.mothername || '',
-        address: userData.address || 'Behind Ambedkar Bhawan, Mudapar Bazar, Korba (C.G.)',
+        address: userData.address || '',
         classSection: `Class ${semester} - ${userData.section || 'A'}`,
         rollNo: userData.rollno || '', // Empty if not present
-        dob: userData.dob || '01-01-2000',
+        dob: userData.dob || '',
         admissionNo: regno,
         contact: userData.phone || '',
         cbseRegNo: userData.cbseno || '',
