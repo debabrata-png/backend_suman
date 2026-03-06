@@ -4998,6 +4998,32 @@ app.get('/api/programFeeSummary', oireportController.programFeeSummary)
 app.get('/api/programFeeDetails', oireportController.programFeeDetails)
 
 
+const oidashboardController = require("./controllers/oidashboardController");
+
+app.get("/api/dashboard/revenue", oidashboardController.revenueDashboard);
+
+const oifreportController = require("./controllers/oifreportController");
+
+// REPORT ROUTES
+
+app.post("/api/report/feesummary", oifreportController.getFeeSummary);
+app.post("/api/report/feedetails", oifreportController.getFeeDetails);
+
+// DROPDOWNS
+
+app.get("/api/report/years", oifreportController.getAcademicYears);
+app.get("/api/report/programs", oifreportController.getPrograms);
+
+
+const oicrmcontroller = require('./controllers/oicrmcontroller')
+
+app.get('/api/reports', oicrmcontroller.getReports)
+
+app.get('/api/export/excel', oicrmcontroller.exportExcel)
+
+app.get('/api/export/pdf', oicrmcontroller.exportPDF)
+
+
 // ======================================================
 // Amisha's Code Alumni & Hostel and Admission Form
 // =======================================================
