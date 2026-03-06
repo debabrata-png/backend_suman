@@ -5023,6 +5023,41 @@ app.get('/api/export/excel', oicrmcontroller.exportExcel)
 
 app.get('/api/export/pdf', oicrmcontroller.exportPDF)
 
+const crmdsreportController = require("./controllers/crmdsReportController");
+
+app.post(
+    "/api/v2/crmds/lead-report",
+    crmdsreportController.crmdsLeadReport
+);
+app.post(
+    "/api/v2/crmds/upcoming-followup-report",
+    crmdsreportController.crmdsUpcomingFollowupReport
+);
+app.post(
+"/api/v2/crmds/get-counsellors",
+crmdsreportController.crmdsGetCounsellors
+);
+
+app.post(
+"/api/v2/crmds/overdue-leads-report",
+crmdsreportController.crmdsOverdueLeadsReport
+);
+
+app.post(
+"/api/v2/crmds/counsellorwiseleads",
+crmdsreportController.crmdsCounsellorWiseTotalLeadsReport
+);
+
+app.post(
+"/api/v2/crmds/sourcewise-report",
+crmdsreportController.crmdsSourceWiseLeadsReport
+);
+
+app.post(
+"/api/v2/crmds/pipelinewise-report",
+crmdsreportController.crmdsPipelineStageWiseReport
+);
+
 
 // ======================================================
 // Amisha's Code Alumni & Hostel and Admission Form
