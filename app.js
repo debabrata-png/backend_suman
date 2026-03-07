@@ -459,6 +459,14 @@ app.get('/api/v2/getalloutcomeag', outcomeagcontroller.getalloutcomeag);
 app.post('/api/v2/updateoutcomeag', outcomeagcontroller.updateoutcomeag);
 app.get('/api/v2/deleteoutcomeag/:id', outcomeagcontroller.deleteoutcomeag);
 
+const categoryag1ctlr = require('./controllers/categoryag1ctlr');
+app.get('/api/v2/geteducationqualificationsag1', categoryag1ctlr.geteducationqualificationsag1);
+app.get('/api/v2/getcategoriesbyedqag1', categoryag1ctlr.getcategoriesbyedqag1);
+app.post('/api/v2/createcategoryag1', categoryag1ctlr.createcategoryag1);
+app.get('/api/v2/getallcategoriesag1', categoryag1ctlr.getallcategoriesag1);
+app.post('/api/v2/updatecategoryag1', categoryag1ctlr.updatecategoryag1);
+app.get('/api/v2/deletecategoryag1/:id', categoryag1ctlr.deletecategoryag1);
+
 const studentadmissioncontrollerds = require('./controllers/studentadmissioncontrollerds');
 app.post('/api/v2/confirmadmissionds', studentadmissioncontrollerds.confirmadmissionds);
 
@@ -5026,36 +5034,36 @@ app.get('/api/export/pdf', oicrmcontroller.exportPDF)
 const crmdsreportController = require("./controllers/crmdsReportController");
 
 app.post(
-    "/api/v2/crmds/lead-report",
-    crmdsreportController.crmdsLeadReport
+  "/api/v2/crmds/lead-report",
+  crmdsreportController.crmdsLeadReport
 );
 app.post(
-    "/api/v2/crmds/upcoming-followup-report",
-    crmdsreportController.crmdsUpcomingFollowupReport
+  "/api/v2/crmds/upcoming-followup-report",
+  crmdsreportController.crmdsUpcomingFollowupReport
 );
 app.post(
-"/api/v2/crmds/get-counsellors",
-crmdsreportController.crmdsGetCounsellors
-);
-
-app.post(
-"/api/v2/crmds/overdue-leads-report",
-crmdsreportController.crmdsOverdueLeadsReport
+  "/api/v2/crmds/get-counsellors",
+  crmdsreportController.crmdsGetCounsellors
 );
 
 app.post(
-"/api/v2/crmds/counsellorwiseleads",
-crmdsreportController.crmdsCounsellorWiseTotalLeadsReport
+  "/api/v2/crmds/overdue-leads-report",
+  crmdsreportController.crmdsOverdueLeadsReport
 );
 
 app.post(
-"/api/v2/crmds/sourcewise-report",
-crmdsreportController.crmdsSourceWiseLeadsReport
+  "/api/v2/crmds/counsellorwiseleads",
+  crmdsreportController.crmdsCounsellorWiseTotalLeadsReport
 );
 
 app.post(
-"/api/v2/crmds/pipelinewise-report",
-crmdsreportController.crmdsPipelineStageWiseReport
+  "/api/v2/crmds/sourcewise-report",
+  crmdsreportController.crmdsSourceWiseLeadsReport
+);
+
+app.post(
+  "/api/v2/crmds/pipelinewise-report",
+  crmdsreportController.crmdsPipelineStageWiseReport
 );
 
 

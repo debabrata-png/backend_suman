@@ -109,95 +109,95 @@ exports.crmdsGetCounsellors = async (req, res) => {
 
 };
 
-exports.crmdsOverdueLeadsReport = async (req,res)=>{
+exports.crmdsOverdueLeadsReport = async (req, res) => {
 
-try{
+    try {
 
-const { counselor, colid } = req.body;
+        const { counselor, colid } = req.body;
 
-const today = new Date();
+        const today = new Date();
 
-let filter = { colid };
+        let filter = { colid };
 
-if(counselor && counselor !== "ALL"){
-filter.assignedto = counselor;
-}
+        if (counselor && counselor !== "ALL") {
+            filter.assignedto = counselor;
+        }
 
-const leads = await CrmLead.find(filter);
+        const leads = await CrmLead.find(filter);
 
-const overdueLeads = leads.filter((lead)=>{
+        const overdueLeads = leads.filter((lead) => {
 
-const pipeline = lead.pipeline_stage;
+            const pipeline = lead.pipeline_stage;
 
-const nextFollowup = lead.next_followup_date;
+            const nextFollowup = lead.next_followup_date;
 
-const lastFollowup = lead.last_contact_date;
+            const lastFollowup = lead.last_contact_date;
 
-const createdDate = lead.createdAt;
+            const createdDate = lead.createdAt;
 
-const ageDays =
-Math.floor(
-(today - new Date(createdDate)) /
-(1000*60*60*24)
-);
+            const ageDays =
+                Math.floor(
+                    (today - new Date(createdDate)) /
+                    (1000 * 60 * 60 * 24)
+                );
 
-let overdue=false;
+            let overdue = false;
 
-/* ACTIVE PIPELINE */
+            /* ACTIVE PIPELINE */
 
-if(
-pipeline !== "Closed" &&
-pipeline !== "Admitted"
-){
+            if (
+                pipeline !== "Closed" &&
+                pipeline !== "Admitted"
+            ) {
 
-if(nextFollowup && nextFollowup < today){
-overdue=true;
-}
+                if (nextFollowup && nextFollowup < today) {
+                    overdue = true;
+                }
 
-if(ageDays > 7 && !nextFollowup){
-overdue=true;
-}
+                if (ageDays > 7 && !nextFollowup) {
+                    overdue = true;
+                }
 
-}
+            }
 
-/* CLOSED / ADMITTED */
+            /* CLOSED / ADMITTED */
 
-else{
+            else {
 
-if(lastFollowup){
+                if (lastFollowup) {
 
-const lastDays =
-Math.floor(
-(today - new Date(lastFollowup)) /
-(1000*60*60*24)
-);
+                    const lastDays =
+                        Math.floor(
+                            (today - new Date(lastFollowup)) /
+                            (1000 * 60 * 60 * 24)
+                        );
 
-if(lastDays > 7){
-overdue=true;
-}
+                    if (lastDays > 7) {
+                        overdue = true;
+                    }
 
-}
+                }
 
-}
+            }
 
-return overdue;
+            return overdue;
 
-});
+        });
 
-res.json({
-success:true,
-count:overdueLeads.length,
-data:overdueLeads
-});
+        res.json({
+            success: true,
+            count: overdueLeads.length,
+            data: overdueLeads
+        });
 
-}catch(err){
+    } catch (err) {
 
-res.status(500).json({
-success:false,
-message:err.message
-});
+        res.status(500).json({
+            success: false,
+            message: err.message
+        });
 
-}
+    }
 
 };
 
@@ -265,114 +265,117 @@ exports.crmdsCounsellorWiseTotalLeadsReport = async (req, res) => {
 
 exports.crmdsSourceWiseLeadsReport = async (req, res) => {
 
-try {
+    try {
 
-const { counselor, startDate, endDate, colid } = req.body;
+        const { counselor, startDate, endDate, colid } = req.body;
 
-let filter = { colid };
+        let filter = { colid };
 
-if (counselor && counselor !== "ALL") {
-filter.assignedto = counselor;
-}
+        if (counselor && counselor !== "ALL") {
+            filter.assignedto = counselor;
+        }
 
-if (startDate && endDate) {
-filter.createdAt = {
-$gte: new Date(startDate),
-$lte: new Date(endDate)
-};
-}
+        if (startDate && endDate) {
+            filter.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        }
 
-const leads = await CrmLead.find(filter).sort({ createdAt:-1 });
+        const leads = await CrmLead.find(filter).sort({ createdAt: -1 });
 
-/* SOURCE SUMMARY */
+        /* SOURCE SUMMARY */
 
-const summaryMap = {};
+        const summaryMap = {};
 
-leads.forEach((lead)=>{
+        leads.forEach((lead) => {
 
-const src = lead.source || "Unknown";
+            const src = lead.source || "Unknown";
 
-if(!summaryMap[src]){
+            if (!summaryMap[src]) {
 
-summaryMap[src] = {
-source:src,
-totalLeads:0
-};
+                summaryMap[src] = {
+                    source: src,
+                    totalLeads: 0
+                };
 
-}
+            }
 
-summaryMap[src].totalLeads++;
+            summaryMap[src].totalLeads++;
 
-});
+        });
 
-const summary = Object.values(summaryMap);
+        const summary = Object.values(summaryMap);
 
-res.json({
-success:true,
-data:leads,
-summary
-});
+        res.json({
+            success: true,
+            data: leads,
+            summary
+        });
 
-} catch(err){
+    } catch (err) {
 
-res.status(500).json({
-success:false,
-message:err.message
-});
+        res.status(500).json({
+            success: false,
+            message: err.message
+        });
 
-}
+    }
 
 };
 
 exports.crmdsPipelineStageWiseReport = async (req, res) => {
-  try {
+    try {
 
-    const { counselor, colid, startDate, endDate } = req.body;
+        const { counselor, colid, startDate, endDate } = req.body;
 
-    let match = {
-      colid: colid
-    };
+        let match = {
+            colid: colid
+        };
 
-    if (counselor && counselor !== "ALL") {
-      match.assignedto = counselor;
-    }
-
-    if (startDate && endDate) {
-      match.createdAt = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate)
-      };
-    }
-
-    const result = await CrmLead.aggregate([
-      { $match: match },
-      {
-        $group: {
-          _id: "$pipeline_stage",   // ✅ correct field
-          total: { $sum: 1 }
+        if (counselor && counselor !== "ALL") {
+            match.assignedto = counselor;
         }
-      },
-      {
-        $project: {
-          stage: "$_id",
-          total: 1,
-          _id: 0
+
+        if (startDate && endDate) {
+            match.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
         }
-      },
-      { $sort: { total: -1 } }
-    ]);
 
-    res.json({
-      success: true,
-      data: result
-    });
+        const result = await CrmLead.aggregate([
+            { $match: match },
+            {
+                $group: {
+                    _id: "$pipeline_stage",   // ✅ correct field
+                    total: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    stage: "$_id",
+                    total: 1,
+                    _id: 0
+                }
+            },
+            { $sort: { total: -1 } }
+        ]);
 
-  } catch (error) {
+        const leads = await CrmLead.find(match).sort({ createdAt: -1 });
 
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+        res.json({
+            success: true,
+            data: leads,
+            summary: result
+        });
 
-  }
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
 };
