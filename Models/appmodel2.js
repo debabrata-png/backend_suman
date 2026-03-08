@@ -53,7 +53,6 @@ const applicationFormSchema = new mongoose.Schema({
     programOptingFor: { type: String },
     programAppliedFor: {
         type: String,
-        enum: ["B.A.", "B.Com.", "BBA", "B.Sc.", "BCA", "BCA (AI)"],
     },
     disciplineSpecificCore: { type: String },
     languagesChosen: { type: [String] },

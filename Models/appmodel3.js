@@ -1,7 +1,7 @@
-const mongoose=require('mongoose');
+const mongoose = require('mongoose');
 
 const applicationFormSchema = new mongoose.Schema({
-  colId: { type: String, required: true},
+  colId: { type: String, required: true },
   name: { type: String, required: true },
   email: { type: String, required: true },
   password: { type: String, required: true },
@@ -83,4 +83,4 @@ const applicationFormModel = mongoose.model("appmodel2", applicationFormSchema);
 
 // export default applicationFormModel;
 
-module.exports=applicationFormModel;
+module.exports = applicationFormModel;
