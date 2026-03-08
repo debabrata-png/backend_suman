@@ -79,7 +79,7 @@ const applicationFormSchema = new mongoose.Schema({
   }]
 });
 
-const applicationFormModel = mongoose.model("appmodel2", applicationFormSchema);
+const applicationFormModel = mongoose.model("appmodel3", applicationFormSchema);
 
 // export default applicationFormModel;
 
