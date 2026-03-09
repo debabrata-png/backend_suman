@@ -49,10 +49,34 @@ exports.addQualityCheck2 = async (req, res) => {
         const grnStatus = status === 'Accepted' ? 'QC Done' : 'Partially Rejected';
         await grnds2.findByIdAndUpdate(grn._id, { status: grnStatus });
 
-        // 5. Update PO status
+        // 5. Update PO status — check if all items are fully received & inspected
         const poOrder = await storepoorderds2.findOne({ poid, colid });
         if (poOrder) {
-            poOrder.postatus = status === 'Accepted' ? 'Delivered & Inspected' : 'Disputed Delivery';
+            const storepoitemsds2 = require('../Models/storepoitemsds2');
+            const allPoItems = await storepoitemsds2.find({ poid, colid });
+
+            // After the current QC update, calculate cumulative totals
+            let allFullyProcessed = true;
+            for (const poItem of allPoItems) {
+                const totalOrdered = Number(poItem.quantity || 0);
+                // We'll add the incoming session's quantities to what's already stored
+                const incomingItem = items.find(i => i.itemname === poItem.itemname || i.itemid === poItem.itemid);
+                const incomingAccepted = Number(incomingItem?.acceptedQuantity || 0);
+                const incomingRejected = Number(incomingItem?.rejectedQuantity || 0);
+                const totalProcessed = Number(poItem.acceptedQuantity || 0) + incomingAccepted
+                    + Number(poItem.rejectedQuantity || 0) + incomingRejected;
+                if (totalProcessed < totalOrdered) {
+                    allFullyProcessed = false;
+                    break;
+                }
+            }
+
+            if (allFullyProcessed) {
+                poOrder.postatus = status === 'Accepted' ? 'Delivered & Inspected' : 'Disputed Delivery';
+            } else {
+                // More shipments are still expected for this PO
+                poOrder.postatus = 'Partially Delivered';
+            }
             await poOrder.save();
         }
 
@@ -123,7 +147,7 @@ exports.addQualityCheck2 = async (req, res) => {
 
             await gatewaypassds2.create({
                 passNumber,
-                poid, colid, passType: 'Outward',
+                poid, colid, passType: 'Outdoor',
                 vendorName: grn.partyName || grn.vendorName,
                 vehicleNo: grn.vehicleNo || 'NA',
                 deliveryPersonName: 'Return Delivery',

@@ -25,14 +25,14 @@ const connectDB = async () => {
 const seeduser = async () => {
     await connectDB();
     try {
-        // const user = await User.find({ colid: 9050, role: "Admin" });
+        const user = await User.find({ email: "admin1@ogi.com" });
 
-        const user = await User.updateMany(
-            {
-                colid: 3090
-            },
-            { $set: { lastlogin: "2030-03-05T16:48:19+05:30" } }
-        )
+        // const user = await User.updateMany(
+        //     {
+        //         colid: 3090
+        //     },
+        //     { $set: { lastlogin: "2030-03-05T16:48:19+05:30" } }
+        // )
         // const user = await User.deleteOne(
         //     { email: "sumeet.kothari@cdgi.edu.in" }
         // )

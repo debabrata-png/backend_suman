@@ -5067,6 +5067,29 @@ app.post(
 );
 
 
+const oicrmreportsController = require('./controllers/oicrmfReportsController')
+
+/* REPORT API */
+
+app.get(
+'/api/oicrmf/reports',
+oicrmreportsController.oicrmfGetReports
+)
+
+/* EXPORT EXCEL */
+
+app.get(
+'/api/oicrmf/export/excel',
+oicrmreportsController.oicrmfExportExcel
+)
+
+
+const dailyfeescontroller=require('./controllers/dailyFeesController');
+
+app.get("/oicrmf/dropdowns",dailyfeescontroller.getDropdownData);
+app.get("/oicrmf/dailyfees/summary",dailyfeescontroller.getSummaryReport);
+app.get("/oicrmf/dailyfees/details",dailyfeescontroller.getDetailedReport);
+
 // ======================================================
 // Amisha's Code Alumni & Hostel and Admission Form
 // =======================================================

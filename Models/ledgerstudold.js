@@ -33,12 +33,6 @@ const ledgerstudschema = new mongoose.Schema({
     amount: {
         type: Number
     },
-    feebook: {
-        type: String
-    },
-    feecounter: {
-        type: String
-    },
     paymode: {
         type: String
     },
@@ -49,12 +43,6 @@ const ledgerstudschema = new mongoose.Schema({
         type: String
     },
     semester: {
-        type: String
-    },
-     cashbook: {
-        type: String
-    },
-     institution: {
         type: String
     },
     type: {
@@ -93,14 +81,6 @@ const ledgerstudschema = new mongoose.Schema({
     }
 })
 //
-
-// Compound indexes for reporting performance
-ledgerstudschema.index({ colid: 1, academicyear: 1 });
-ledgerstudschema.index({ colid: 1, programcode: 1 });
-ledgerstudschema.index({ colid: 1, classdate: 1 });
-ledgerstudschema.index({ colid: 1, regno: 1 });
-
-
 const Ledgerstud=mongoose.model('Ledgerstud',ledgerstudschema);
 
 module.exports=Ledgerstud;
