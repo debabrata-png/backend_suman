@@ -71,6 +71,19 @@ const storepoitemsdsschema = new mongoose.Schema({
     },
     storereqid: {
         type: String // Link to original Store Requisition
+    },
+    // Shipment Tracking Fields
+    gateReceivedQuantity: {
+        type: Number,
+        default: 0
+    },
+    acceptedQuantity: {
+        type: Number,
+        default: 0
+    },
+    rejectedQuantity: {
+        type: Number,
+        default: 0
     }
 })
 //

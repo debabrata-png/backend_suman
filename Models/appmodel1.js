@@ -14,7 +14,7 @@ const applicationFormSchema = new mongoose.Schema({
   city: { type: String },
   state: { type: String },
   country: { type: String },
-  areaType:{ type: String },
+  areaType: { type: String },
   pincode: { type: String },
   gender: { type: String },
   nationality: { type: String, default: "Indian" },
@@ -48,20 +48,20 @@ const applicationFormSchema = new mongoose.Schema({
 
   guardianName: { type: String },
   guardianPhoneNumber: { type: String },
-  
-  qualification:{ type: String },
-  occupation:{ type: String },
-  annualIncome:{type:String},
+
+  qualification: { type: String },
+  occupation: { type: String },
+  annualIncome: { type: String },
   singleChild: { type: String },
-  siblingAge:{type:String},
-  siblingRelation:{type:String},
+  siblingAge: { type: String },
+  siblingRelation: { type: String },
   siblingName: { type: String },
-  siblingSchool:{ type: String },
+  siblingSchool: { type: String },
 
   // --- ACADEMIC CHOICES ---
-  
+
   languagesChosen: { type: [String] },
-  otherLanguagesSpecify:{ type: String },
+  otherLanguagesSpecify: { type: String },
   language1: { type: String },
   language2: { type: String },
   hostelRequired: { type: String },
@@ -102,10 +102,10 @@ const applicationFormSchema = new mongoose.Schema({
   ugCGPA: { type: String },
   ugYearOfPassing: { type: String },
   ugNoOfChances: { type: String },
-  qualifyingPercentage:{ type: String },
-  qualifyingClass:{ type: String },
-  languagesStudiedPrevious:{ type: [String] },
-  optionalSubjectsStudied:{ type: [String] },
+  qualifyingPercentage: { type: String },
+  qualifyingClass: { type: String },
+  languagesStudiedPrevious: { type: [String] },
+  optionalSubjectsStudied: { type: [String] },
   semesters: [
     {
       semNo: { type: String },
@@ -132,7 +132,7 @@ const applicationFormSchema = new mongoose.Schema({
     district: { type: String },
     state: { type: String },
   },
-  ageInYears:{ type: String },
+  ageInYears: { type: String },
   applicationNo: { type: Number, unique: true },
   templateType: { type: String },
 });

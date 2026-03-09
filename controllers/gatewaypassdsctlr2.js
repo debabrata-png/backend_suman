@@ -28,6 +28,18 @@ exports.addGatewayPass2 = async (req, res) => {
 
         const newPass = await gatewaypassds2.create(passData);
 
+        // Update PO Items gateReceivedQuantity for tracking
+        if (passData.passType !== 'Outward' && passData.items && passData.items.length > 0) {
+            for (const item of passData.items) {
+                if (Number(item.deliveredQuantity) > 0 && item.itemid) {
+                    await storepoitemsds2.findOneAndUpdate(
+                        { colid: passData.colid, poid: passData.poid, itemid: item.itemid },
+                        { $inc: { gateReceivedQuantity: Number(item.deliveredQuantity) } }
+                    );
+                }
+            }
+        }
+
         res.status(201).json({
             success: true,
             message: "Gateway Pass generated successfully",

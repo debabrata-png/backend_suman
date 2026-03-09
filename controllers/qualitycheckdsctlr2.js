@@ -60,8 +60,25 @@ exports.addQualityCheck2 = async (req, res) => {
         const storepoitemsds2 = require('../Models/storepoitemsds2');
         const storeitemds2 = require('../Models/storeitemds2');
         const stockregisterds2 = require('../Models/stockregisterds2');
-
+        let outwardItems = [];
         for (const item of items) {
+            // Update PO Item Tracking
+            const poItemQry = { poid, colid, itemname: item.itemname };
+            if (item.itemid) poItemQry.itemid = item.itemid;
+            const foundPoItem = await storepoitemsds2.findOne(poItemQry);
+            if (foundPoItem) {
+                await storepoitemsds2.findByIdAndUpdate(foundPoItem._id, {
+                    $inc: {
+                        acceptedQuantity: Number(item.acceptedQuantity || 0),
+                        rejectedQuantity: Number(item.rejectedQuantity || 0),
+                        gateReceivedQuantity: -(Number(item.rejectedQuantity || 0)) // allow redelivery
+                    }
+                });
+            }
+
+            if (Number(item.rejectedQuantity) > 0) {
+                outwardItems.push(item);
+            }
             if (Number(item.acceptedQuantity) > 0) {
                 const poItemQuery = { poid, colid, itemname: item.itemname };
                 if (item.itemid) poItemQuery.itemid = item.itemid;
@@ -94,6 +111,32 @@ exports.addQualityCheck2 = async (req, res) => {
                     });
                 }
             }
+        }
+
+        if (outwardItems.length > 0) {
+            const gatewaypassds2 = require('../Models/gatewaypassds2');
+            const dateObj = new Date();
+            const yyyy = dateObj.getFullYear();
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const uniq = String(Date.now()).slice(-4);
+            const passNumber = `OUT-${yyyy}${mm}${uniq}`;
+
+            await gatewaypassds2.create({
+                passNumber,
+                poid, colid, passType: 'Outward',
+                vendorName: grn.partyName || grn.vendorName,
+                vehicleNo: grn.vehicleNo || 'NA',
+                deliveryPersonName: 'Return Delivery',
+                contactNo: 'NA',
+                dcInvoiceNo: challanNo || grn.dcInvoiceNo || 'NA',
+                remarks: `System Generated Outward Pass for Rejected items in GRN ${grnNo}. Quality Inspection ID: ${newCheck.inspectionId}`,
+                securityName: inspectorName || 'System QC',
+                items: outwardItems.map(i => ({
+                    itemid: i.itemid, itemname: i.itemname, unit: i.unit,
+                    expectedQuantity: i.rejectedQuantity,
+                    deliveredQuantity: i.rejectedQuantity
+                }))
+            });
         }
 
         res.status(201).json({ success: true, data: newCheck });

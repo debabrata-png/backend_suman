@@ -54,7 +54,8 @@ exports.deletestoreuserds2 = async (req, res) => {
 
 exports.getallstoreuserds2 = async (req, res) => {
     try {
-        const storeUsers = await storeuserds2.find();
+        const query = req.query.colid ? { colid: req.query.colid } : {};
+        const storeUsers = await storeuserds2.find(query);
         res.status(200).json({
             status: 'success',
             results: storeUsers.length,
