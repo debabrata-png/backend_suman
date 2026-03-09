@@ -72,7 +72,7 @@ const storepoorderdsschema = new mongoose.Schema({
     actualAmount: {
         type: Number // Used for Local POs
     }
-})
+}, { timestamps: true });
 
 const storepoorderds2 = mongoose.model('storepoorderds2', storepoorderdsschema);
 

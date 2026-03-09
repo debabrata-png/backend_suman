@@ -137,6 +137,8 @@ exports.addQualityCheck2 = async (req, res) => {
             }
         }
 
+        /* 
+        // Auto-generation is commented out so Security Station handles Gate Pass generation via "Outgoing Deliveries (Returns)"
         if (outwardItems.length > 0) {
             const gatewaypassds2 = require('../Models/gatewaypassds2');
             const dateObj = new Date();
@@ -162,6 +164,7 @@ exports.addQualityCheck2 = async (req, res) => {
                 }))
             });
         }
+        */
 
         res.status(201).json({ success: true, data: newCheck });
     } catch (error) {
