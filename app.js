@@ -433,6 +433,10 @@ const rviewbulkattainment = require('./router/viewbulkattainmentrouter.js');
 const raddattendance = require('./router/addattendancerouter.js');
 const rdeleteattendance = require('./router/deleteattendancerouter.js');
 
+const feesgenerationctlr = require('./controllers/feesgenerationctlr');
+app.post('/api/v2/generatefeeforstudentds', feesgenerationctlr.generateFeeForStudentds);
+app.post('/api/v2/generatefeeforprogramds', feesgenerationctlr.generateFeeForProgramds);
+
 const attendancereportctlr = require('./controllers/attendancereportctlr');
 app.post('/api/v2/getattendancereport', attendancereportctlr.getAttendanceReport);
 
@@ -5066,29 +5070,35 @@ app.post(
   crmdsreportController.crmdsPipelineStageWiseReport
 );
 
+/* Date Wise New Leads */
+app.post(
+  "/api/v2/crmds/datewise-new-leads",
+  crmdsreportController.crmdsDateWiseNewLeadsReport
+);
+
 
 const oicrmreportsController = require('./controllers/oicrmfReportsController')
 
 /* REPORT API */
 
 app.get(
-'/api/oicrmf/reports',
-oicrmreportsController.oicrmfGetReports
+  '/api/oicrmf/reports',
+  oicrmreportsController.oicrmfGetReports
 )
 
 /* EXPORT EXCEL */
 
 app.get(
-'/api/oicrmf/export/excel',
-oicrmreportsController.oicrmfExportExcel
+  '/api/oicrmf/export/excel',
+  oicrmreportsController.oicrmfExportExcel
 )
 
 
-const dailyfeescontroller=require('./controllers/dailyFeesController');
+const dailyfeescontroller = require('./controllers/dailyFeesController');
 
-app.get("/oicrmf/dropdowns",dailyfeescontroller.getDropdownData);
-app.get("/oicrmf/dailyfees/summary",dailyfeescontroller.getSummaryReport);
-app.get("/oicrmf/dailyfees/details",dailyfeescontroller.getDetailedReport);
+app.get("/oicrmf/dropdowns", dailyfeescontroller.getDropdownData);
+app.get("/oicrmf/dailyfees/summary", dailyfeescontroller.getSummaryReport);
+app.get("/oicrmf/dailyfees/details", dailyfeescontroller.getDetailedReport);
 
 // ======================================================
 // Amisha's Code Alumni & Hostel and Admission Form
@@ -15272,7 +15282,8 @@ const server = app.listen(port, () => {
   //console.log(`App running in port ${port}`);
 });
 
-const io = require('socket.io')(server);
+const socketManager = require('./socket');
+const io = socketManager.init(server);
 
 
 io.on('connection', (socket) => {

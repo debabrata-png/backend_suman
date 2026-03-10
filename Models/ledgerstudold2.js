@@ -33,36 +33,6 @@ const ledgerstudschema = new mongoose.Schema({
     amount: {
         type: Number
     },
-     paid: {
-        type: Number
-    },
-     concession: {
-        type: Number
-    },
-     balance: {
-        type: Number
-    },
-     cash: {
-        type: Number
-    },
-     upi: {
-        type: Number
-    },
-     cheque: {
-        type: Number
-    },
-     card: {
-        type: Number
-    },
-     pg: {
-        type: Number
-    },
-     neft: {
-        type: Number
-    },
-    doclink: {
-        type: String
-    },
     feebook: {
         type: String
     },
@@ -109,12 +79,6 @@ const ledgerstudschema = new mongoose.Schema({
         type: Date,
         required: [true,'Please enter paymentdate'],
         unique: false
-    },
-    duedate: {
-        type: Date
-    },
-    paiddate: {
-        type: Date
     },
     status: {
         type: String,

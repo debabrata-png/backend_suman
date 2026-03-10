@@ -46,14 +46,25 @@ exports.crmdsUpcomingFollowupReport = async (req, res) => {
 
     try {
 
-        const { counselor, colid } = req.body;
+        const { counselor, colid, startDate, endDate } = req.body;
 
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         let filter = {
             colid: colid,
-            next_followup_date: { $gte: today }
+            next_followup_date: { $type: "date", $ne: null }
         };
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.next_followup_date = { ...filter.next_followup_date, $gte: start, $lte: end };
+        } else {
+            filter.next_followup_date = { ...filter.next_followup_date, $gte: today };
+        }
 
         if (counselor && counselor !== "ALL") {
             filter.assignedto = counselor;
@@ -143,13 +154,7 @@ exports.crmdsOverdueLeadsReport = async (req, res) => {
 
             let overdue = false;
 
-            /* ACTIVE PIPELINE */
-
-            if (
-                pipeline !== "Closed" &&
-                pipeline !== "Admitted"
-            ) {
-
+            if (pipeline === "New Lead") {
                 if (nextFollowup && nextFollowup < today) {
                     overdue = true;
                 }
@@ -157,27 +162,6 @@ exports.crmdsOverdueLeadsReport = async (req, res) => {
                 if (ageDays > 7 && !nextFollowup) {
                     overdue = true;
                 }
-
-            }
-
-            /* CLOSED / ADMITTED */
-
-            else {
-
-                if (lastFollowup) {
-
-                    const lastDays =
-                        Math.floor(
-                            (today - new Date(lastFollowup)) /
-                            (1000 * 60 * 60 * 24)
-                        );
-
-                    if (lastDays > 7) {
-                        overdue = true;
-                    }
-
-                }
-
             }
 
             return overdue;
@@ -327,14 +311,14 @@ exports.crmdsSourceWiseLeadsReport = async (req, res) => {
 exports.crmdsPipelineStageWiseReport = async (req, res) => {
     try {
 
-        const { counselor, colid, startDate, endDate } = req.body;
+        const { pipelineStage, colid, startDate, endDate } = req.body;
 
         let match = {
             colid: colid
         };
 
-        if (counselor && counselor !== "ALL") {
-            match.assignedto = counselor;
+        if (pipelineStage && pipelineStage !== "ALL") {
+            match.pipeline_stage = pipelineStage;
         }
 
         if (startDate && endDate) {
@@ -348,13 +332,13 @@ exports.crmdsPipelineStageWiseReport = async (req, res) => {
             { $match: match },
             {
                 $group: {
-                    _id: "$pipeline_stage",   // ✅ correct field
+                    _id: "$assignedto",   // Group by counselor
                     total: { $sum: 1 }
                 }
             },
             {
                 $project: {
-                    stage: "$_id",
+                    counselor: { $ifNull: ["$_id", "Unassigned"] },
                     total: 1,
                     _id: 0
                 }
@@ -377,5 +361,59 @@ exports.crmdsPipelineStageWiseReport = async (req, res) => {
             message: error.message
         });
 
+    }
+};
+
+exports.crmdsDateWiseNewLeadsReport = async (req, res) => {
+    try {
+        const { colid, startDate, endDate } = req.body;
+
+        let match = {
+            colid: colid
+        };
+
+        if (startDate && endDate) {
+            match.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        } else {
+            // Default 30 days if no dates provided
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            match.createdAt = { $gte: thirtyDaysAgo };
+        }
+
+        const result = await CrmLead.aggregate([
+            { $match: match },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    total: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    date: "$_id",
+                    total: 1,
+                    _id: 0
+                }
+            },
+            { $sort: { date: 1 } }
+        ]);
+
+        const leads = await CrmLead.find(match).sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            data: leads,
+            summary: result
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 };

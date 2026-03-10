@@ -40,15 +40,6 @@ const feesschema = new mongoose.Schema({
         required: [true,'Please enter feecategory'],
         unique: false
     },
-    studtype: {
-        type: String
-    },
-    domicile: {
-        type: String
-    },
-    feetype: {
-        type: String
-    },
     classdate: {
         type: Date,
         required: [true,'Please enter duedate'],
