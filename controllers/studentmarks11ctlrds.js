@@ -349,7 +349,7 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
                 compartmentobtained: (m.compartmentobtained !== undefined && m.compartmentobtained !== null)
                     ? m.compartmentobtained : null // Supplementary exam marks
             };
-        });
+        }).filter(s => s.grandTotal !== undefined && s.grandTotal !== null);
 
         const percentage = maxTotal > 0 ? ((grandTotal / maxTotal) * 100).toFixed(2) : 0;
         const resultStatus = failCount === 0 ? "PASSED" : (failCount === 1 ? "COMPARTMENT" : "FAILED");

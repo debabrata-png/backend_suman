@@ -55,9 +55,9 @@ const deleteData = async () => {
         // const r1 = await StudentMarks9ds.deleteMany({ colid: TARGET_COLID });
         // console.log(`✅ Deleted ${r1.deletedCount} records from StudentMarks9ds (Class 6-10).`);
 
-        // // -- 2. Student Marks (Class 11-12 / 11ds) ------------------------
-        // const r2 = await StudentMarks11ds.deleteMany({ colid: TARGET_COLID });
-        // console.log(`✅ Deleted ${r2.deletedCount} records from StudentMarks11ds (Class 11-12).`);
+        // -- 2. Student Marks (Class 11-12 / 11ds) ------------------------
+        const r2 = await StudentMarks11ds.deleteMany({ colid: TARGET_COLID });
+        console.log(`✅ Deleted ${r2.deletedCount} records from StudentMarks11ds (Class 11-12).`);
 
         // // ══════════════════════════════════════════════════════════════════
         // // SUBJECT / SCHOLASTIC SUBJECT CONFIG
@@ -67,9 +67,9 @@ const deleteData = async () => {
         // const r3 = await SubjectComponentConfig9ds.deleteMany({ colid: TARGET_COLID });
         // console.log(`✅ Deleted ${r3.deletedCount} records from SubjectComponentConfig9ds.`);
 
-        // // -- 4. Subject Component Config (Class 11-12) ---------------------
-        // const r4 = await SubjectComponentConfig11ds.deleteMany({ colid: TARGET_COLID });
-        // console.log(`✅ Deleted ${r4.deletedCount} records from SubjectComponentConfig11ds.`);
+        // -- 4. Subject Component Config (Class 11-12) ---------------------
+        const r4 = await SubjectComponentConfig11ds.deleteMany({ colid: TARGET_COLID });
+        console.log(`✅ Deleted ${r4.deletedCount} records from SubjectComponentConfig11ds.`);
 
         // // ══════════════════════════════════════════════════════════════════
         // // CO-SCHOLASTIC  (Grades and Activity definitions)
@@ -84,8 +84,8 @@ const deleteData = async () => {
         // console.log(`✅ Deleted ${r6.deletedCount} records from CoScholasticActivity9ds.`);
 
 
-        const r7 = await User.deleteMany({ colid: 3052, role: "Student" });
-        console.log(`Deleted ${r7.deletedCount}`);
+        // const r7 = await User.deleteMany({ colid: 3052, role: "Student" });
+        // console.log(`Deleted ${r7.deletedCount}`);
         console.log("\n✅ All selected deletions complete.");
 
     } catch (err) {
