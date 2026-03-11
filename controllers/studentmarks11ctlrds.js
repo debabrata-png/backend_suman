@@ -301,55 +301,56 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
         let maxTotal = 0;
         let failCount = 0;
 
-        const subjectsFormatted = filteredSubjectMarks.map(m => {
-            grandTotal += (m.total || 0);
-            maxTotal += 100; // Each subject is evaluated out of 100 weighted
+        const subjectsFormatted = filteredSubjectMarks
+            .map(m => {
+                const hasMarks = m.total !== undefined && m.total !== null;
 
-            // Pass Criteria: Traditionally 33%.
-            if ((m.total || 0) < 33) failCount++;
+                if (hasMarks) {
+                    grandTotal += (m.total || 0);
+                    maxTotal += 100; // Each subject is evaluated out of 100 weighted
+                    if ((m.total || 0) < 33) failCount++;
+                }
 
-            // Use Config Name if available, else fallback to Marks Name
-            let realSubjectName = codeToNameMap[m.subjectcode] || m.subjectname;
+                // Use Config Name if available, else fallback to Marks Name
+                let realSubjectName = codeToNameMap[m.subjectcode] || m.subjectname;
 
-            // INTELLIGENT FIX: Check if the mapping inverted the Name/Code (User data issue)
-            // If the Result (realSubjectName) looks like a Code (has numbers) 
-            // AND the Input (m.subjectcode) looks like a Name (no numbers, len > 3), 
-            // REVERT to the Input.
-            const isResultCodeLike = /\d/.test(realSubjectName);
-            const isInputNameLike = !/\d/.test(m.subjectcode) && m.subjectcode.length > 2;
+                // INTELLIGENT FIX: Check if the mapping inverted the Name/Code (User data issue)
+                // If the Result (realSubjectName) looks like a Code (has numbers) 
+                // AND the Input (m.subjectcode) looks like a Name (no numbers, len > 3), 
+                // REVERT to the Input.
+                const isResultCodeLike = /\d/.test(realSubjectName);
+                const isInputNameLike = !/\d/.test(m.subjectcode) && m.subjectcode.length > 2;
 
-            if (isResultCodeLike && isInputNameLike) {
-                //console.log(`DEBUG: Reverting mapping for ${m.subjectcode}. Map gave ${realSubjectName} (Code-like) but Input is Name-like.`);
-                realSubjectName = m.subjectcode; // Keep the name "Biology" instead of "BIO0011"
-            }
+                if (isResultCodeLike && isInputNameLike) {
+                    realSubjectName = m.subjectcode; // Keep the name "Biology" instead of "BIO0011"
+                }
 
-            //console.log(`DEBUG: Final Name: ${realSubjectName}`);
+                return {
+                    subjectname: realSubjectName,
+                    subjectcode: m.subjectcode,
+                    unitpremid: m.unitpremidobtain,
+                    unitpostmid: m.unitpostmidobtain,
+                    unitTotal: m.unittotal,
+                    unit20: m.unit20,
 
+                    hyTh: m.halfyearlythobtain,
+                    hyPr: m.halfyearlypracticalobtain,
+                    hyTotal: m.halfyearlytotal,
+                    hy30: m.halfyearly30,
 
-            return {
-                subjectname: realSubjectName,
-                subjectcode: m.subjectcode,
-                unitpremid: m.unitpremidobtain,
-                unitpostmid: m.unitpostmidobtain,
-                unitTotal: m.unittotal,
-                unit20: m.unit20,
+                    annTh: m.annualthobtain,
+                    annPr: m.annualpracticalobtain,
+                    annTotal: m.annualtotal,
+                    ann50: m.annual50,
 
-                hyTh: m.halfyearlythobtain,
-                hyPr: m.halfyearlypracticalobtain,
-                hyTotal: m.halfyearlytotal,
-                hy30: m.halfyearly30,
-
-                annTh: m.annualthobtain,
-                annPr: m.annualpracticalobtain,
-                annTotal: m.annualtotal,
-                ann50: m.annual50,
-
-                grandTotal: m.total,
-                grade: m.totalgrade,
-                compartmentobtained: (m.compartmentobtained !== undefined && m.compartmentobtained !== null)
-                    ? m.compartmentobtained : null // Supplementary exam marks
-            };
-        }).filter(s => s.grandTotal !== undefined && s.grandTotal !== null);
+                    grandTotal: m.total,
+                    grade: m.totalgrade,
+                    compartmentobtained: (m.compartmentobtained !== undefined && m.compartmentobtained !== null)
+                        ? m.compartmentobtained : null, // Supplementary exam marks
+                    hasMarks: hasMarks // Helper flag for filtering
+                };
+            })
+            .filter(s => s.hasMarks);
 
         const percentage = maxTotal > 0 ? ((grandTotal / maxTotal) * 100).toFixed(2) : 0;
         const resultStatus = failCount === 0 ? "PASSED" : (failCount === 1 ? "COMPARTMENT" : "FAILED");
