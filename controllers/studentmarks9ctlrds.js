@@ -467,6 +467,30 @@ exports.getdistinctsemestersandyears9ds = async (req, res) => {
   }
 };
 
+// Returns distinct sections for a specific class (semester) from User table
+// Used by Class 11/12 subject config so sections reflect actual enrolled students
+exports.getdistinctsectionsbyclass9ds = async (req, res) => {
+  try {
+    const { colid, semester } = req.query;
+    const matchQuery = { colid: Number(colid) };
+    if (semester) matchQuery.semester = semester;
+
+    const result = await User.aggregate([
+      { $match: matchQuery },
+      { $group: { _id: null, sections: { $addToSet: '$section' } } },
+      { $project: { _id: 0, sections: 1 } }
+    ]);
+
+    const sections = (result.length > 0 ? result[0].sections : [])
+      .filter(s => s)
+      .sort();
+
+    res.json({ success: true, sections });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Start of new endpoint code
 const Attendancenew = require('../Models/attendancenew');
 

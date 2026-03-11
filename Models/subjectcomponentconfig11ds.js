@@ -10,8 +10,9 @@ const subjectcomponentconfig11dsschema = new mongoose.Schema({
     subjectname: { type: String, required: true },
 
     // Academic context
-    semester: { type: String, required: true }, // "9" or "10"
+    semester: { type: String, required: true },
     academicyear: { type: String, required: true }, // "2024-25"
+    section: { type: String, default: '' },
 
     unitpremid: { type: Number },
     unitpostmid: { type: Number },
@@ -30,12 +31,13 @@ const subjectcomponentconfig11dsschema = new mongoose.Schema({
     updatedat: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-// Unique constraint
+// Unique constraint — includes section so each stream has independent subjects
 subjectcomponentconfig11dsschema.index({
     colid: 1,
     subjectcode: 1,
     semester: 1,
-    academicyear: 1
+    academicyear: 1,
+    section: 1
 }, { unique: true });
 
 const subjectcomponentconfig11ds = mongoose.model('subjectcomponentconfig11ds', subjectcomponentconfig11dsschema);

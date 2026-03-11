@@ -5412,6 +5412,8 @@ app.get('/api/v2/getstudentmarks9ds', studentmarks9ctlrds.getstudentmarks9ds);
 app.post('/api/v2/finalizestudentmarks9ds', studentmarks9ctlrds.finalizestudentmarks9ds);
 // Get distinct semesters and admission years
 app.get('/api/v2/getdistinctsemestersandyears9ds', studentmarks9ctlrds.getdistinctsemestersandyears9ds);
+// Get sections from User table filtered by class/semester
+app.get('/api/v2/getdistinctsectionsbyclass9ds', studentmarks9ctlrds.getdistinctsectionsbyclass9ds);
 // Student Marks PDF Route (New)
 app.get('/api/v2/getmarksheetpdfdata9ds', studentmarks9ctlrds.getmarksheetpdfdata9ds);
 

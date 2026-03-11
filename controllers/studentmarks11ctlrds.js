@@ -22,13 +22,16 @@ function calculateGrade(obtained, max) {
 // 1. Get Subjects from Config
 exports.getsubjectsfromconfig11ds = async (req, res) => {
     try {
-        const { colid, semester, academicyear } = req.query;
-        const subjects = await SubjectComponentConfig11ds.find({
+        const { colid, semester, academicyear, section } = req.query;
+        const query = {
             colid: Number(colid),
             semester,
             academicyear,
             isactive: true
-        }).sort({ createdAt: 1 });
+        };
+        // Filter by section if provided — differentiates streams for Class 11/12
+        if (section) query.section = section;
+        const subjects = await SubjectComponentConfig11ds.find(query).sort({ createdAt: 1 });
         res.json({ success: true, data: subjects });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -93,13 +96,16 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
             });
 
         } else {
-            // Fetch Configured Subjects
-            subjects = await SubjectComponentConfig11ds.find({
+            // Fetch Configured Subjects — filter by section to get stream-specific subjects
+            const subjectQuery = {
                 colid: Number(colid),
                 semester,
                 academicyear,
                 isactive: true
-            }).sort({ createdAt: 1 });
+            };
+            if (section) subjectQuery.section = section;
+
+            subjects = await SubjectComponentConfig11ds.find(subjectQuery).sort({ createdAt: 1 });
 
             // Fetch Existing Marks to populate the grid
             marks = await StudentMarks11ds.find({
@@ -254,15 +260,25 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
         // Filter out attendance from subjects list for display/calculation
         const subjectMarks = marks.filter(m => m.subjectcode !== 'ATTENDANCE');
 
-        // Fetch Subject Configs to get REAL Names (in case Marks has codes)
+        // Fetch Subject Configs — use student's section to get stream-specific subjects
         const subjectCodes = subjectMarks.map(m => m.subjectcode);
-        // Filter by colid + semester + academicyear to get configs for this specific class only
         const subjectConfigs = await SubjectComponentConfig11ds.find({
             colid: Number(colid),
             semester,
             academicyear,
+            section: student.section || '',
             subjectcode: { $in: subjectCodes }
         });
+        // Fallback: if no configs found with section, try without section filter (backward compat)
+        let finalSubjectConfigs = subjectConfigs;
+        if (finalSubjectConfigs.length === 0) {
+            finalSubjectConfigs = await SubjectComponentConfig11ds.find({
+                colid: Number(colid),
+                semester,
+                academicyear,
+                subjectcode: { $in: subjectCodes }
+            });
+        }
 
         //console.log("DEBUG: Looking for subjects:", subjectCodes);
         //console.log("DEBUG: Found configs:", subjectConfigs.length);
@@ -270,16 +286,22 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
 
 
         const codeToNameMap = {};
-        subjectConfigs.forEach(sc => {
+        finalSubjectConfigs.forEach(sc => {
             codeToNameMap[sc.subjectcode] = sc.subjectname;
         });
 
-        // Calculate Totals / Percentage
+        // Only include subjects that are configured for this student's section/stream.
+        // This prevents other-stream subjects from appearing in the report card.
+        const validSubjectCodes = new Set(finalSubjectConfigs.map(sc => sc.subjectcode));
+        const filteredSubjectMarks = validSubjectCodes.size > 0
+            ? subjectMarks.filter(m => validSubjectCodes.has(m.subjectcode))
+            : subjectMarks; // Fallback: show all if config is empty (backward compat)
+
         let grandTotal = 0;
         let maxTotal = 0;
         let failCount = 0;
 
-        const subjectsFormatted = subjectMarks.map(m => {
+        const subjectsFormatted = filteredSubjectMarks.map(m => {
             grandTotal += (m.total || 0);
             maxTotal += 100; // Each subject is evaluated out of 100 weighted
 
@@ -470,6 +492,7 @@ exports.saveSubjectComponentConfig11ds = async (req, res) => {
             subjectname,
             semester,
             academicyear,
+            section: req.body.section || '',  // section/stream field
             unitpremid,
             unitpostmid,
             halfyearlyth,
@@ -486,7 +509,8 @@ exports.saveSubjectComponentConfig11ds = async (req, res) => {
             colid: Number(colid),
             subjectcode: subjectcode,
             semester: semester,
-            academicyear: academicyear
+            academicyear: academicyear,
+            section: req.body.section || ''
         };
 
         const options = { upsert: true, new: true, setDefaultsOnInsert: true };
