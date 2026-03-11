@@ -86,7 +86,7 @@ exports.createleadds = async (req, res) => {
     req.body.lead_score = initialScore;
     req.body.lead_temperature = getLeadTemperature(initialScore);
 
-    const lead = await crmh1.create(req.body);
+    const lead = new crmh1(req.body);
 
     await enrollInDripCampaign(lead);
     await lead.save();

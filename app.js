@@ -5076,6 +5076,36 @@ app.post(
   crmdsreportController.crmdsDateWiseNewLeadsReport
 );
 
+/* New Reports V2 */
+app.post(
+  "/api/v2/crmds/lead-status-stage-report",
+  crmdsreportController.crmdsLeadStatusStageReportV2
+);
+app.post(
+  "/api/v2/crmds/counsellor-performance-report",
+  crmdsreportController.crmdsCounsellorPerformanceReportV2
+);
+app.post(
+  "/api/v2/crmds/daily-calling-report",
+  crmdsreportController.crmdsDailyCallingReportV2
+);
+app.post(
+  "/api/v2/crmds/untouched-leads-report",
+  crmdsreportController.crmdsUntouchedLeadReportV2
+);
+app.post(
+  "/api/v2/crmds/follow-up-due-report",
+  crmdsreportController.crmdsFollowUpDueReportV2
+);
+app.post(
+  "/api/v2/crmds/sourcewise-enhanced-report",
+  crmdsreportController.crmdsSourceWiseEnhancedReportV2
+);
+app.post(
+  "/api/v2/crmds/conversion-report",
+  crmdsreportController.crmdsConversionReportV2
+);
+
 
 const oicrmreportsController = require('./controllers/oicrmfReportsController')
 
