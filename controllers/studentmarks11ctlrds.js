@@ -303,7 +303,14 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
 
         const subjectsFormatted = filteredSubjectMarks
             .map(m => {
-                const hasMarks = m.total !== undefined && m.total !== null;
+                // A subject has marks if total is > 0 OR if any individual component has been entered (is > 0)
+                const hasMarks = (m.total > 0) ||
+                    (m.unitpremidobtain > 0) ||
+                    (m.unitpostmidobtain > 0) ||
+                    (m.halfyearlythobtain > 0) ||
+                    (m.halfyearlypracticalobtain > 0) ||
+                    (m.annualthobtain > 0) ||
+                    (m.annualpracticalobtain > 0);
 
                 if (hasMarks) {
                     grandTotal += (m.total || 0);
