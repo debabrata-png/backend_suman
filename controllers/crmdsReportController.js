@@ -435,7 +435,7 @@ exports.crmdsLeadStatusStageReportV2 = async (req, res) => {
             match.assignedto = counselor;
         }
 
-        const summary = await CrmLead.aggregate([
+        const summaryRaw = await CrmLead.aggregate([
             { $match: match },
             {
                 $group: {
@@ -453,11 +453,55 @@ exports.crmdsLeadStatusStageReportV2 = async (req, res) => {
                     noOfLeads: "$count",
                     _id: 0
                 }
-            },
-            { $sort: { pipelineStage: 1, counsellorName: 1 } }
+            }
         ]);
 
-        res.json({ success: true, summary });
+        // Fetch all active stages
+        const allStagesDocs = await PipelineStage.find({ colid, isactive: true }).lean();
+        const allStages = allStagesDocs.map(s => s.stagename || s.name).filter(Boolean);
+
+        // Map raw data for quick lookup
+        const summaryMap = {};
+        summaryRaw.forEach(item => {
+            const key = `${item.pipelineStage}_${item.counsellorName}`;
+            summaryMap[key] = item;
+        });
+
+        // Ensure all stages are represented for the selected counselor
+        const finalSummary = [];
+        const counselorToUse = (counselor && counselor !== "ALL") ? counselor : "ALL";
+
+        if (counselorToUse !== "ALL") {
+            // Specific counselor: ensure all stages exist for them
+            allStages.forEach(stage => {
+                const key = `${stage}_${counselorToUse}`;
+                if (summaryMap[key]) {
+                    finalSummary.push(summaryMap[key]);
+                } else {
+                    finalSummary.push({
+                        pipelineStage: stage,
+                        counsellorName: counselorToUse,
+                        noOfLeads: 0
+                    });
+                }
+            });
+        } else {
+            // All counselors: for now, we just return what we have, 
+            // but we add stages that have NO leads at all across all counselors
+            const seenStages = new Set(summaryRaw.map(s => s.pipelineStage));
+            finalSummary.push(...summaryRaw);
+            allStages.forEach(stage => {
+                if (!seenStages.has(stage)) {
+                    finalSummary.push({
+                        pipelineStage: stage,
+                        counsellorName: "N/A",
+                        noOfLeads: 0
+                    });
+                }
+            });
+        }
+
+        res.json({ success: true, summary: finalSummary.sort((a,b) => a.pipelineStage.localeCompare(b.pipelineStage)), allStages });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -525,7 +569,11 @@ exports.crmdsDailyCallingReportV2 = async (req, res) => {
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
 
-        // 1. Get New Leads Assigned per day per counselor
+        // 1. Get All Active Pipeline Stages for this college
+        const activeStagesDocs = await PipelineStage.find({ colid, isactive: true }).lean();
+        const activeStages = activeStagesDocs.map(s => s.stagename || s.name).filter(Boolean);
+
+        // 2. Get New Leads Assigned per day per counselor
         const newLeads = await CrmLead.aggregate([
             { $match: { colid, createdAt: { $gte: start, $lte: end } } },
             {
@@ -539,60 +587,65 @@ exports.crmdsDailyCallingReportV2 = async (req, res) => {
             }
         ]);
 
-        // 2. Get Activities (Calls Done, Connected, Follow Up) per day per counselor
+        // 3. Get Activities per day per counselor, grouped by the dynamic stage (outcome)
+        // Note: Outcome in LeadActivity should match the PipelineStage name for this to work perfectly.
         const activities = await LeadActivity.aggregate([
             { $match: { colid, activity_date: { $gte: start, $lte: end }, activity_type: "call" } },
             {
                 $group: {
                     _id: {
                         date: { $dateToString: { format: "%Y-%m-%d", date: "$activity_date" } },
-                        counselor: "$performed_by"
+                        counselor: "$performed_by",
+                        stage: "$outcome"
                     },
-                    callsDone: { $sum: 1 },
-                    connected: {
-                        $sum: { $cond: [{ $eq: ["$outcome", "Connected"] }, 1, 0] }
-                    },
-                    followUp: {
-                        $sum: { $cond: [{ $eq: ["$outcome", "Follow Up"] }, 1, 0] }
-                    }
+                    count: { $sum: 1 }
                 }
             }
         ]);
 
         // Merge results
         const mergedMap = {};
+        
+        // Initialize with new leads
         newLeads.forEach(item => {
             const key = `${item._id.date}_${item._id.counselor}`;
-            mergedMap[key] = {
-                date: item._id.date,
-                counsellor: item._id.counselor || "Unassigned",
-                newLeadsAssigned: item.count,
-                callsDone: 0,
-                connected: 0,
-                followUp: 0
-            };
+            if (!mergedMap[key]) {
+                mergedMap[key] = {
+                    date: item._id.date,
+                    counsellor: item._id.counselor || "Unassigned",
+                    newLeadsAssigned: 0,
+                    callsDone: 0,
+                    stageCounts: {}
+                };
+                // Initialize active stages with 0
+                activeStages.forEach(s => mergedMap[key].stageCounts[s] = 0);
+            }
+            mergedMap[key].newLeadsAssigned = item.count;
         });
 
+        // Add activities
         activities.forEach(item => {
             const key = `${item._id.date}_${item._id.counselor}`;
             if (!mergedMap[key]) {
                 mergedMap[key] = {
                     date: item._id.date,
-                    counsellor: item._id.counselor,
+                    counsellor: item._id.counselor || "Unassigned",
                     newLeadsAssigned: 0,
                     callsDone: 0,
-                    connected: 0,
-                    followUp: 0
+                    stageCounts: {}
                 };
+                activeStages.forEach(s => mergedMap[key].stageCounts[s] = 0);
             }
-            mergedMap[key].callsDone = item.callsDone;
-            mergedMap[key].connected = item.connected;
-            mergedMap[key].followUp = item.followUp;
+            mergedMap[key].callsDone += item.count;
+            const stage = item._id.stage;
+            if (activeStages.includes(stage)) {
+                mergedMap[key].stageCounts[stage] = (mergedMap[key].stageCounts[stage] || 0) + item.count;
+            }
         });
 
         const summary = Object.values(mergedMap).sort((a, b) => b.date.localeCompare(a.date));
 
-        res.json({ success: true, summary });
+        res.json({ success: true, summary, activeStages });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

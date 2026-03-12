@@ -437,6 +437,10 @@ const feesgenerationctlr = require('./controllers/feesgenerationctlr');
 app.post('/api/v2/generatefeeforstudentds', feesgenerationctlr.generateFeeForStudentds);
 app.post('/api/v2/generatefeeforprogramds', feesgenerationctlr.generateFeeForProgramds);
 
+const feesreportctlr = require('./controllers/feesreportctlr');
+app.get('/api/v2/feesstructurereportds', feesreportctlr.feesStructureReport);
+
+
 const attendancereportctlr = require('./controllers/attendancereportctlr');
 app.post('/api/v2/getattendancereport', attendancereportctlr.getAttendanceReport);
 
@@ -5662,6 +5666,8 @@ const collegerepotdsctlr = require("./controllers/collegerepotdsctlr");
 
 
 app.get("/api/v2/studentledgerreportds", studentledgerdsctlr.studentLedgerReportds);
+app.get("/api/v2/studentledgerdaterangereportds", studentledgerdsctlr.studentLedgerDateRangeReport);
+app.get("/api/v2/getdistinctledgervaluesds", studentledgerdsctlr.getDistinctLedgerValues);
 app.get("/api/v2/collegerepledgerreportds", collegerepotdsctlr.collegeStudentLedgerReportds);
 
 const ledgerstuddsctlr = require("./controllers/ledgerstuddsctlr");
