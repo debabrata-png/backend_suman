@@ -1,7 +1,7 @@
 const User = require("./Models/user");
 const mongoose = require("mongoose");
 
-const colid = [3090, 3091, 3092, 3094, 3096, 3098, 4000, 4004, 4010, 4012, 4014];
+const colid = [3000];
 
 const users = [
     {

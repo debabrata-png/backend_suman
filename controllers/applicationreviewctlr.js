@@ -11,8 +11,8 @@ exports.createapplication = async (req, res) => {
             data: application
         })
     } catch (error) {
-        console.log(error);
-
+        console.error("Error creating application:", error);
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
 
@@ -31,8 +31,8 @@ exports.getallapplicationbycolid = async (req, res) => {
             data: applications
         })
     } catch (error) {
-        console.log(error);
-
+        console.error("Error fetching applications:", error);
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
 
@@ -51,6 +51,8 @@ exports.updateapplicationstatus = async (req, res) => {
             data: updatedapllication
         })
     } catch (error) {
+        console.error("Error updating application status:", error);
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
 
@@ -65,6 +67,8 @@ exports.getapplicationbyid = async (req, res) => {
             data: application
         })
     } catch (error) {
+        console.error("Error fetching application by id:", error);
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
 
@@ -78,6 +82,8 @@ exports.createledgerstud = async (req, res) => {
             data: ledgerstud
         })
     } catch (error) {
+        console.error("Error creating ledgerstud:", error);
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
 
@@ -90,6 +96,11 @@ exports.createuser = async (req, res) => {
             data: user
         })
     } catch (error) {
+        console.error("Error creating user:", error);
+        if (error.code === 11000) {
+            return res.status(400).json({ success: false, message: "User already exists (Email/Reg No conflict)" });
+        }
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
 
@@ -109,7 +120,10 @@ exports.login = async (req, res) => {
         const { colid, name, email: userEmail, regno, role } = user;
 
         return res.status(200).json({ colid, name, email: userEmail, regno, role });
-    } catch (err) { }
+    } catch (err) {
+        console.error("Error in login:", err);
+        return res.status(500).json({ success: false, message: err.message });
+    }
 }
 
 // create fees
@@ -121,6 +135,8 @@ exports.createfees = async (req, res) => {
             data: fees
         })
     } catch (error) {
+        console.error("Error creating fees:", error);
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
 
@@ -140,6 +156,8 @@ exports.filterfees = async (req, res) => {
             data: fees
         })
     } catch (error) {
+        console.error("Error filtering fees:", error);
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
 
@@ -152,5 +170,7 @@ exports.checkregno = async (req, res) => {
 
         return res.json({ exists: !!found });
     } catch (err) {
+        console.error("Error checking regno:", err);
+        return res.status(500).json({ success: false, message: err.message });
     }
-}
+}
