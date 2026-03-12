@@ -774,6 +774,15 @@ app.get('/api/v2/deletestoreitemds2', storeitemdsctlr2.deletestoreitemds2);
 app.get('/api/v2/getallstoreitemds2', storeitemdsctlr2.getallstoreitemds2);
 app.get('/api/v2/getstoreitemdsbyid2', storeitemdsctlr2.getstoreitemdsbyid2);
 app.post('/api/v2/allotitem2', storeitemdsctlr2.allotItem2);
+app.get('/api/v2/getstockreportds2', storeitemdsctlr2.getStockReportds2);
+
+// 3b. Vendors
+const vendordsctlr2 = require('./controllers/vendordsctlr2');
+app.post('/api/v2/addvendords2', vendordsctlr2.addvendords2);
+app.post('/api/v2/updatevendords2', vendordsctlr2.updatevendords2);
+app.get('/api/v2/deletevendords2', vendordsctlr2.deletevendords2);
+app.get('/api/v2/getallvendords2', vendordsctlr2.getallvendords2);
+app.get('/api/v2/getvendordsbyid2', vendordsctlr2.getvendordsbyid2);
 
 // 4. Item Master
 app.post('/api/v2/additemmasterds2', itemmasterdsctlr2.additemmasterds2);
