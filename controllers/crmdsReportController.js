@@ -1,5 +1,6 @@
 const CrmLead = require("../Models/crmh1");
 const LeadActivity = require("../Models/leadactivityds");
+const PipelineStage = require("../Models/PipelineStageag");
 
 /*
 Lead Report
@@ -464,7 +465,7 @@ exports.crmdsLeadStatusStageReportV2 = async (req, res) => {
 
 /*
 2. Counsellor Performance Report
-Columns: Counsellor, Total Leads, Connected, Follow Up, Admission
+Columns: Counsellor, Total Leads, + one column per pipeline stage (dynamic)
 */
 exports.crmdsCounsellorPerformanceReportV2 = async (req, res) => {
     try {
@@ -474,37 +475,40 @@ exports.crmdsCounsellorPerformanceReportV2 = async (req, res) => {
             match.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
         }
 
-        const summary = await CrmLead.aggregate([
+        // Aggregate: group by counsellor + pipeline_stage to get counts
+        const rawData = await CrmLead.aggregate([
             { $match: match },
             {
                 $group: {
-                    _id: "$assignedto",
-                    totalLeads: { $sum: 1 },
-                    connected: {
-                        $sum: { $cond: [{ $in: ["$pipeline_stage", ["Connected", "WhatsApp Conversation", "Follow Up", "Admission Confirmed"]] }, 1, 0] }
+                    _id: {
+                        counsellor: "$assignedto",
+                        stage: "$pipeline_stage"
                     },
-                    followUp: {
-                        $sum: { $cond: [{ $eq: ["$pipeline_stage", "Follow Up"] }, 1, 0] }
-                    },
-                    admission: {
-                        $sum: { $cond: [{ $in: ["$pipeline_stage", ["Admission Confirmed", "Admission In Process"]] }, 1, 0] }
-                    }
+                    count: { $sum: 1 }
                 }
             },
-            {
-                $project: {
-                    counsellor: { $ifNull: ["$_id", "Unassigned"] },
-                    totalLeads: 1,
-                    connected: 1,
-                    followUp: 1,
-                    admission: 1,
-                    _id: 0
-                }
-            },
-            { $sort: { totalLeads: -1 } }
+            { $sort: { "_id.counsellor": 1 } }
         ]);
 
-        res.json({ success: true, summary });
+        // Pivot: build a map { counsellor -> { totalLeads, stageCounts: { stageName: count } } }
+        const counsellorMap = {};
+        rawData.forEach(({ _id, count }) => {
+            const c = _id.counsellor || "Unassigned";
+            const stage = _id.stage || "Unknown";
+            if (!counsellorMap[c]) {
+                counsellorMap[c] = { counsellor: c, totalLeads: 0, stageCounts: {} };
+            }
+            counsellorMap[c].totalLeads += count;
+            counsellorMap[c].stageCounts[stage] = (counsellorMap[c].stageCounts[stage] || 0) + count;
+        });
+
+        // Sort by total leads desc
+        const summary = Object.values(counsellorMap).sort((a, b) => b.totalLeads - a.totalLeads);
+
+        // Collect all distinct stage names seen in this result
+        const allStages = [...new Set(rawData.map(d => d._id.stage || "Unknown"))].sort();
+
+        res.json({ success: true, summary, allStages });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -597,16 +601,25 @@ exports.crmdsDailyCallingReportV2 = async (req, res) => {
 /*
 4. Untouched Lead Report
 Columns: Lead Name, Mobile, Assigned Counsellor, Days Pending
+Excludes leads in final stages (admissions)
 */
 exports.crmdsUntouchedLeadReportV2 = async (req, res) => {
     try {
         const { colid, counselor } = req.body;
+
+        // Fetch stages marked as is_final_stage (admission stages) for this colid
+        const finalStagesDocs = await PipelineStage.find({ colid, isactive: true, is_final_stage: true }).lean();
+        const finalStageNames = finalStagesDocs.map(s => s.stagename || s.name).filter(Boolean);
+
         let filter = {
             colid,
             last_contact_date: null,
+            // Exclude leads in final categories or specifically "Converted" status
             leadstatus: { $ne: "Converted" },
+            pipeline_stage: { $nin: finalStageNames },
             $expr: { $eq: ["$createdAt", "$updatedAt"] }
         };
+        
         if (counselor && counselor !== "ALL") {
             filter.assignedto = counselor;
         }
@@ -621,7 +634,7 @@ exports.crmdsUntouchedLeadReportV2 = async (req, res) => {
             daysPending: Math.floor((today - new Date(lead.createdAt)) / (1000 * 60 * 60 * 24))
         }));
 
-        res.json({ success: true, data });
+        res.json({ success: true, data, finalStageNames });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -630,12 +643,17 @@ exports.crmdsUntouchedLeadReportV2 = async (req, res) => {
 /*
 5. Follow-Up Due Report
 Columns: Lead Name, Mobile, Counsellor, Follow-up Date, Status
+Excludes leads in final stages (admissions)
 */
 exports.crmdsFollowUpDueReportV2 = async (req, res) => {
     try {
         const { colid, counselor, startDate, endDate } = req.body;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+
+        // Fetch stages marked as is_final_stage (admission stages) for this colid
+        const finalStagesDocs = await PipelineStage.find({ colid, isactive: true, is_final_stage: true }).lean();
+        const finalStageNames = finalStagesDocs.map(s => s.stagename || s.name).filter(Boolean);
 
         let filter = { colid };
         if (startDate && endDate) {
@@ -648,8 +666,9 @@ exports.crmdsFollowUpDueReportV2 = async (req, res) => {
             filter.assignedto = counselor;
         }
 
-        // Exclude admitted/converted leads
+        // Exclude admitted/converted leads dynamically
         filter.leadstatus = { $ne: "Converted" };
+        filter.pipeline_stage = { $nin: finalStageNames };
         
         // Dynamic follow-up check: only show if NOT updated after next_followup_date
         filter.$expr = { $lte: ["$updatedAt", "$next_followup_date"] };
@@ -664,7 +683,7 @@ exports.crmdsFollowUpDueReportV2 = async (req, res) => {
             status: lead.pipeline_stage
         }));
 
-        res.json({ success: true, data });
+        res.json({ success: true, data, finalStageNames });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -672,7 +691,7 @@ exports.crmdsFollowUpDueReportV2 = async (req, res) => {
 
 /*
 6. Source Wise Lead Report (Enhanced)
-Columns: Source, Leads, Connected, Admissions
+Columns: Source, Total Leads, Admissions (based on is_final_stage), Conversion %
 */
 exports.crmdsSourceWiseEnhancedReportV2 = async (req, res) => {
     try {
@@ -682,33 +701,51 @@ exports.crmdsSourceWiseEnhancedReportV2 = async (req, res) => {
             match.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
         }
 
-        const summary = await CrmLead.aggregate([
+        // Fetch stages marked as is_final_stage (admission stages) for this colid
+        const finalStagesDocs = await PipelineStage.find({ colid, isactive: true, is_final_stage: true }).lean();
+        const finalStageNames = finalStagesDocs.map(s => s.stagename || s.name).filter(Boolean);
+
+        // Aggregate: pivot by source + pipeline_stage
+        const rawData = await CrmLead.aggregate([
             { $match: match },
             {
                 $group: {
-                    _id: "$source",
-                    leads: { $sum: 1 },
-                    connected: {
-                        $sum: { $cond: [{ $in: ["$pipeline_stage", ["Connected", "WhatsApp Conversation", "Follow Up", "Admission Confirmed"]] }, 1, 0] }
+                    _id: {
+                        source: "$source",
+                        stage: "$pipeline_stage"
                     },
-                    admissions: {
-                        $sum: { $cond: [{ $in: ["$pipeline_stage", ["Admission Confirmed", "Admission In Process"]] }, 1, 0] }
-                    }
+                    count: { $sum: 1 }
                 }
             },
-            {
-                $project: {
-                    source: { $ifNull: ["$_id", "Unknown"] },
-                    leads: 1,
-                    connected: 1,
-                    admissions: 1,
-                    _id: 0
-                }
-            },
-            { $sort: { leads: -1 } }
+            { $sort: { "_id.source": 1 } }
         ]);
 
-        res.json({ success: true, summary });
+        // Pivot into source map
+        const sourceMap = {};
+        rawData.forEach(({ _id, count }) => {
+            const src = _id.source || "Unknown";
+            const stage = _id.stage || "Unknown";
+            if (!sourceMap[src]) {
+                sourceMap[src] = { source: src, leads: 0, admissions: 0, stageCounts: {} };
+            }
+            sourceMap[src].leads += count;
+            sourceMap[src].stageCounts[stage] = (sourceMap[src].stageCounts[stage] || 0) + count;
+            if (finalStageNames.includes(stage)) {
+                sourceMap[src].admissions += count;
+            }
+        });
+
+        // Compute conversion %
+        const summary = Object.values(sourceMap)
+            .map(s => ({
+                ...s,
+                conversionPercent: s.leads > 0 ? +((s.admissions / s.leads) * 100).toFixed(1) : 0
+            }))
+            .sort((a, b) => b.leads - a.leads);
+
+        const allStages = [...new Set(rawData.map(d => d._id.stage || "Unknown"))].sort();
+
+        res.json({ success: true, summary, allStages, finalStageNames });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -716,7 +753,7 @@ exports.crmdsSourceWiseEnhancedReportV2 = async (req, res) => {
 
 /*
 7. Conversion Report
-Columns: Counsellor, Leads, Admissions, Conversion %
+Columns: Counsellor, Leads, Admissions (based on is_final_stage), Conversion %
 */
 exports.crmdsConversionReportV2 = async (req, res) => {
     try {
@@ -726,36 +763,47 @@ exports.crmdsConversionReportV2 = async (req, res) => {
             match.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
         }
 
-        const summary = await CrmLead.aggregate([
+        // Fetch stages marked as is_final_stage (admission stages) for this colid
+        const finalStagesDocs = await PipelineStage.find({ colid, isactive: true, is_final_stage: true }).lean();
+        const finalStageNames = finalStagesDocs.map(s => s.stagename || s.name).filter(Boolean);
+
+        // Aggregate: group by counsellor + stage
+        const rawData = await CrmLead.aggregate([
             { $match: match },
             {
                 $group: {
-                    _id: "$assignedto",
-                    leads: { $sum: 1 },
-                    admissions: {
-                        $sum: { $cond: [{ $in: ["$pipeline_stage", ["Admission Confirmed", "Admission In Process"]] }, 1, 0] }
-                    }
-                }
-            },
-            {
-                $project: {
-                    counsellor: { $ifNull: ["$_id", "Unassigned"] },
-                    leads: 1,
-                    admissions: 1,
-                    conversionPercent: {
-                        $cond: [
-                            { $gt: ["$leads", 0] },
-                            { $multiply: [{ $divide: ["$admissions", "$leads"] }, 100] },
-                            0
-                        ]
+                    _id: {
+                        counsellor: "$assignedto",
+                        stage: "$pipeline_stage"
                     },
-                    _id: 0
+                    count: { $sum: 1 }
                 }
             },
-            { $sort: { conversionPercent: -1 } }
+            { $sort: { "_id.counsellor": 1 } }
         ]);
 
-        res.json({ success: true, summary });
+        // Pivot into counsellor map
+        const counsellorMap = {};
+        rawData.forEach(({ _id, count }) => {
+            const c = _id.counsellor || "Unassigned";
+            const stage = _id.stage || "Unknown";
+            if (!counsellorMap[c]) {
+                counsellorMap[c] = { counsellor: c, leads: 0, admissions: 0 };
+            }
+            counsellorMap[c].leads += count;
+            if (finalStageNames.includes(stage)) {
+                counsellorMap[c].admissions += count;
+            }
+        });
+
+        const summary = Object.values(counsellorMap)
+            .map(r => ({
+                ...r,
+                conversionPercent: r.leads > 0 ? +((r.admissions / r.leads) * 100).toFixed(1) : 0
+            }))
+            .sort((a, b) => b.conversionPercent - a.conversionPercent);
+
+        res.json({ success: true, summary, finalStageNames });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
