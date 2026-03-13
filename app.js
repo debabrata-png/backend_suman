@@ -5143,6 +5143,11 @@ app.get("/oicrmf/dropdowns", dailyfeescontroller.getDropdownData);
 app.get("/oicrmf/dailyfees/summary", dailyfeescontroller.getSummaryReport);
 app.get("/oicrmf/dailyfees/details", dailyfeescontroller.getDetailedReport);
 
+const orcrmReportController2 = require("./controllers/oicrmcreportcontroller2");
+app.get("/pipeline-summary", orcrmReportController2.getPipelineSummary);
+
+app.get("/institution-details", orcrmReportController2.getInstitutionDetails);
+
 // ======================================================
 // Amisha's Code Alumni & Hostel and Admission Form
 // =======================================================
@@ -5667,6 +5672,7 @@ const collegerepotdsctlr = require("./controllers/collegerepotdsctlr");
 
 app.get("/api/v2/studentledgerreportds", studentledgerdsctlr.studentLedgerReportds);
 app.get("/api/v2/studentledgerdaterangereportds", studentledgerdsctlr.studentLedgerDateRangeReport);
+app.get("/api/v2/programwisecashbookreportds", studentledgerdsctlr.programWiseCashbookReport);
 app.get("/api/v2/getdistinctledgervaluesds", studentledgerdsctlr.getDistinctLedgerValues);
 app.get("/api/v2/collegerepledgerreportds", collegerepotdsctlr.collegeStudentLedgerReportds);
 

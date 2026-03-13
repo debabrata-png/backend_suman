@@ -157,6 +157,79 @@ exports.studentLedgerDateRangeReport = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GET /api/v2/programwisecashbookreportds
+// Required: colid, fromdate, todate
+// Aggregates collection by programcode
+// ─────────────────────────────────────────────────────────────────────────────
+exports.programWiseCashbookReport = async (req, res) => {
+  try {
+    const { colid, fromdate, todate } = req.query;
+
+    if (!colid) return res.status(400).json({ success: false, message: "colid is required" });
+    if (!fromdate || !todate) return res.status(400).json({ success: false, message: "fromdate and todate are required" });
+
+    const from = new Date(fromdate);
+    const to = new Date(todate);
+    to.setHours(23, 59, 59, 999);
+
+    if (isNaN(from) || isNaN(to))
+      return res.status(400).json({ success: false, message: "Invalid date format. Use YYYY-MM-DD" });
+
+    const matchStage = { 
+      colid: Number(colid), 
+      classdate: { $gte: from, $lte: to } 
+    };
+
+    const reportRows = await Ledgerstud.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: "$programcode",
+          Cash:       { $sum: { $ifNull: ["$cash",       0] } },
+          UPI:        { $sum: { $ifNull: ["$upi",        0] } },
+          NEFT:       { $sum: { $ifNull: ["$neft",       0] } },
+          Cheque:     { $sum: { $ifNull: ["$cheque",     0] } },
+          PG:         { $sum: { $ifNull: ["$pg",         0] } },
+          totalAmount:     { $sum: { $ifNull: ["$amount",     0] } },
+          totalPaid:       { $sum: { $ifNull: ["$paid",       0] } },
+          totalConcession: { $sum: { $ifNull: ["$concession", 0] } },
+          totalBalance:    { $sum: { $ifNull: ["$balance",    0] } },
+          txnCount:        { $sum: 1 },
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          programcode: { $ifNull: ["$_id", "Unknown"] },
+          Cash: 1, UPI: 1, NEFT: 1, Cheque: 1, PG: 1,
+          totalPaidByPaymode: {
+            $add: ["$Cash", "$UPI", "$NEFT", "$Cheque", "$PG"]
+          },
+          totalAmount: 1, totalPaid: 1, totalConcession: 1, totalBalance: 1, txnCount: 1,
+        }
+      },
+      { $sort: { programcode: 1 } },
+    ]);
+
+    const grandTotals = calcGrandTotals(reportRows);
+
+    return res.status(200).json({
+      success: true,
+      filters: { colid, fromdate, todate },
+      data: reportRows,
+      grandTotals,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error generating program wise cashbook report",
+      error: error.message,
+    });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET /api/v2/getdistinctledgervaluesds
 // Returns distinct values for any allowed field (feeitem, programcode,
 // academicyear, semester) from the Ledgerstud collection.
