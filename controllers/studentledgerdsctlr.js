@@ -61,11 +61,16 @@ exports.studentLedgerDateRangeReport = async (req, res) => {
 
     // ── Shared group fields ────────────────────────────────────────────────
     const paymodeGroup = {
-      totalCash: { $sum: { $ifNull: ["$cash", 0] } },
-      totalUPI: { $sum: { $ifNull: ["$upi", 0] } },
-      totalNEFT: { $sum: { $ifNull: ["$neft", 0] } },
-      totalCheque: { $sum: { $ifNull: ["$cheque", 0] } },
-      totalPG: { $sum: { $ifNull: ["$pg", 0] } },
+      totalCash:       { $sum: { $ifNull: ["$cash",       0] } },
+      totalUPI:        { $sum: { $ifNull: ["$upi",        0] } },
+      totalNEFT:       { $sum: { $ifNull: ["$neft",       0] } },
+      totalCheque:     { $sum: { $ifNull: ["$cheque",     0] } },
+      totalPG:         { $sum: { $ifNull: ["$pg",         0] } },
+      totalAmount:     { $sum: { $ifNull: ["$amount",     0] } },
+      totalPaid:       { $sum: { $ifNull: ["$paid",       0] } },
+      totalConcession: { $sum: { $ifNull: ["$concession", 0] } },
+      totalBalance:    { $sum: { $ifNull: ["$balance",    0] } },
+      txnCount:        { $sum: 1 },
     };
 
     const paymodeProject = {
@@ -81,6 +86,7 @@ exports.studentLedgerDateRangeReport = async (req, res) => {
       totalAmount: 1, totalPaid: 1, totalConcession: 1, totalBalance: 1, txnCount: 1,
     };
 
+    let reportRows;
     if (groupby === "student") {
       // ── Student-wise view ──────────────────────────────────────────────
       reportRows = await Ledgerstud.aggregate([
@@ -89,11 +95,6 @@ exports.studentLedgerDateRangeReport = async (req, res) => {
           $group: {
             _id: { regno: "$regno", student: "$student", feeitem: "$feeitem" },
             ...paymodeGroup,
-            totalAmount: { $sum: { $ifNull: ["$amount", 0] } },
-            totalPaid: { $sum: { $ifNull: ["$paid", 0] } },
-            totalConcession: { $sum: { $ifNull: ["$concession", 0] } },
-            totalBalance: { $sum: { $ifNull: ["$balance", 0] } },
-            txnCount: { $sum: 1 },
           }
         },
         {
