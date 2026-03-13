@@ -138,7 +138,7 @@ const storerequisationds2 = require("../Models/storerequisationds2");
 
 exports.getAssignedRequisitions2 = async (req, res) => {
     try {
-        const { colid, page, limit, user } = req.query;
+        const { colid, page, limit, user, reqstatus } = req.query;
 
         // 1. Find all assignments for this user
         // We fetch ALL assignments first to get the full list of IDs. 
@@ -148,6 +148,7 @@ exports.getAssignedRequisitions2 = async (req, res) => {
 
         // 2. Query Store Requisitions using these IDs with pagination
         const query = { _id: { $in: assignedIds } };
+        if (reqstatus) query.reqstatus = reqstatus;
 
         if (page && limit) {
             const pageNum = parseInt(page);
