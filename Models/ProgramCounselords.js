@@ -20,6 +20,9 @@ const ProgramCounselorSchema = new mongoose.Schema({
     institution: {
         type: String
     },
+    education_qualification: {
+        type: String
+    },
     program_type: {
         type: String
     },

@@ -1,7 +1,7 @@
 const User = require("./Models/user");
 const mongoose = require("mongoose");
 
-const colid = [3000];
+const colid = [3098, 3090, 3091, 4000, 3098, 3096, 4004, 4008, 4010, 4012, 4014];
 
 const users = [
     {
@@ -11,7 +11,7 @@ const users = [
 
 const connectDB = async () => {
     try {
-        await mongoose.connect("mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
+        await mongoose.connect("mongodb+srv://erppu_db_user:NIX9cbbnUDGxlOiB@cluster0.eumxu0m.mongodb.net/?appName=Cluster0", {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });

@@ -14,12 +14,13 @@ exports.createprogramcounselords = async (req, res) => {
 // Get all programs
 exports.getallprogramcounselords = async (req, res) => {
     try {
-        const { colid, category, is_active } = req.query;
+        const { colid, category, is_active, education_qualification } = req.query;
 
         let query = { colid: Number(colid) };
 
         if (category) query.category = category;
         if (is_active) query.is_active = is_active;
+        if (education_qualification) query.education_qualification = education_qualification;
 
         const programs = await ProgramCounselords.find(query).sort({ category: 1, course_name: 1 });
 

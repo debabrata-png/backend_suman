@@ -30,11 +30,13 @@ exports.getcategoriesbyedqag1 = async (req, res) => {
             return res.status(400).json({ success: false, message: 'education_qualification is required' });
         }
 
-        const categories = await categoryag1.distinct("category_name", {
+        const categories = await categoryag1.find({
             colid: Number(colid),
             is_active: 'Yes',
             education_qualification: education_qualification
         })
+            .select('category_name category_code description createdAt updatedAt')
+            .lean();
 
         res.status(200).json({ success: true, data: categories });
     } catch (err) {
@@ -131,29 +133,6 @@ exports.deletecategoryag1 = async (req, res) => {
         }
 
         res.status(200).json({ success: true, message: 'Category deleted successfully' });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-exports.getcounselorbyedpds = async (req, res) => {
-    try {
-        const { colid, category_name, education_qualification } = req.query;
-        if (!colid) {
-            return res.status(400).json({ success: false, message: 'colid is required' });
-        }
-        if (!education_qualification) {
-            return res.status(400).json({ success: false, message: 'education_qualification is required' });
-        }
-
-        const counsellors = await categoryag1.distinct('counsellors', {
-            colid: Number(colid),
-            is_active: 'Yes',
-            category_name: category_name,
-            education_qualification: education_qualification
-        })
-
-        res.status(200).json({ success: true, data: { counsellors: counsellors } });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

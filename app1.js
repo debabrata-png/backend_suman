@@ -18,17 +18,13 @@ const FacebookStrategy = require('passport-facebook').Strategy;
 const dotenv = require('dotenv');
 dotenv.config({ path: './config.env' });
 
-require('./controllers/listener'); // Load the listener module first
-const emitter = require('./controllers/emitter'); // Load the module that contains the emit call
-
-console.log('[APP]: Application running.');
-
+require('./controllers/eventlistener');
 
 const DB = process.env.DATABASE.replace('<PASSWORD>', process.env.DATABASE_PASSWORD);
 const DB1 = process.env.DATABASE2;
 
 mongoose.connect(DB1).then(con => {
-  console.log('Connected');
+    console.log('Connected');
 })
 
 // mongoose.connect(DB1, {
@@ -82,9 +78,9 @@ var usernames = [];
 const app = express();
 
 app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
 });
 
 // const http = require('http');
@@ -100,14 +96,27 @@ app.use(function (req, res, next) {
 //app.set('view engine', 'pug');
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json());
 app.use(session({
-  name: "my_session",
-  secret: "my_secret",
-  resave: false
+    name: "my_session",
+    secret: "my_secret",
+    resave: false
 }));
 app.use(flash());
 app.use(cookieParser());
+
+
+const port = process.env.PORT || 3001;
+
+
+
+const server = app.listen(port, () => {
+    //console.log(`App running in port ${port}`);
+});
+
+
+const socketManager = require("./socket");
+socketManager.init(server);
 
 //app.use(nocache());
 //app.use(helmet());
@@ -177,7 +186,7 @@ app.use("/addteachingfeedback", express.static(path.join(__dirname, 'public')));
 app.use("/adddeptfeedback", express.static(path.join(__dirname, 'public')));
 //app.use("/viewanswer", express.static(path.join(__dirname, 'public')));
 //app.use(express.static(`${__dirname}/admin-theme`));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.urlencoded({ extended: false }));
 
 
 const router1 = require('./router/approuter.js');
@@ -198,8 +207,6 @@ const rpatadd = require('./router/addpatentrouter.js');
 const rpatview = require('./router/viewpatentrouter.js');
 const rpatedit = require('./router/editpatentrouter.js');
 const rpatdel = require('./router/deletepatentrouter.js');
-const universityadmissionreportdsController = require('./controllers/universityadmissionreportds.js');
-const admissioncoursewisereportdsController = require('./controllers/admissioncoursewisereportds.js');
 
 const rbookadd = require('./router/addbookrouter.js');
 const rbookview = require('./router/viewbookrouter.js');
@@ -433,77 +440,6 @@ const rviewbulkattainment = require('./router/viewbulkattainmentrouter.js');
 const raddattendance = require('./router/addattendancerouter.js');
 const rdeleteattendance = require('./router/deleteattendancerouter.js');
 
-const feesgenerationctlr = require('./controllers/feesgenerationctlr');
-app.post('/api/v2/generatefeeforstudentds', feesgenerationctlr.generateFeeForStudentds);
-app.post('/api/v2/generatefeeforprogramds', feesgenerationctlr.generateFeeForProgramds);
-
-const feesreportctlr = require('./controllers/feesreportctlr');
-app.get('/api/v2/feesstructurereportds', feesreportctlr.feesStructureReport);
-
-
-const attendancereportctlr = require('./controllers/attendancereportctlr');
-app.post('/api/v2/getattendancereport', attendancereportctlr.getAttendanceReport);
-
-const examadmitcontrollerds = require('./controllers/examadmitcontrollerds');
-app.post('/api/v2/examadmitcontrollerds/release', examadmitcontrollerds.releaseAdmitCard);
-app.get('/api/v2/examadmitcontrollerds/:regno', examadmitcontrollerds.getAdmitCard);
-
-
-const comunicationdsctlr = require('./controllers/comunicationdsctlr');
-app.post('/api/v2/createcomunication', comunicationdsctlr.createCommunication);
-app.post('/api/v2/getcomunication', comunicationdsctlr.getCommunications);
-app.post('/api/v2/updatecomunication', comunicationdsctlr.updateCommunication);
-app.post('/api/v2/deletecomunication', comunicationdsctlr.deleteCommunication);
-
-const pipelinestageagcontroller = require('./controllers/pipelinestageagcontroller');
-app.post('/api/v2/createpipelinestageag', pipelinestageagcontroller.createpipelinestageag);
-app.get('/api/v2/getallpipelinestageag', pipelinestageagcontroller.getallpipelinestageag);
-app.post('/api/v2/updatepipelinestageag', pipelinestageagcontroller.updatepipelinestageag);
-app.get('/api/v2/deletepipelinestageag/:id', pipelinestageagcontroller.deletepipelinestageag);
-
-const outcomeagcontroller = require('./controllers/outcomeagcontroller');
-app.post('/api/v2/createoutcomeag', outcomeagcontroller.createoutcomeag);
-app.get('/api/v2/getalloutcomeag', outcomeagcontroller.getalloutcomeag);
-app.post('/api/v2/updateoutcomeag', outcomeagcontroller.updateoutcomeag);
-app.get('/api/v2/deleteoutcomeag/:id', outcomeagcontroller.deleteoutcomeag);
-
-const categoryag1ctlr = require('./controllers/categoryag1ctlr');
-app.get('/api/v2/geteducationqualificationsag1', categoryag1ctlr.geteducationqualificationsag1);
-app.get('/api/v2/getcategoriesbyedqag1', categoryag1ctlr.getcategoriesbyedqag1);
-app.post('/api/v2/createcategoryag1', categoryag1ctlr.createcategoryag1);
-app.get('/api/v2/getallcategoriesag1', categoryag1ctlr.getallcategoriesag1);
-app.post('/api/v2/updatecategoryag1', categoryag1ctlr.updatecategoryag1);
-app.get('/api/v2/deletecategoryag1/:id', categoryag1ctlr.deletecategoryag1);
-app.get("/api/v2/getcounselorbyedpds", categoryag1ctlr.getcounselorbyedpds);
-
-const studentadmissioncontrollerds = require('./controllers/studentadmissioncontrollerds');
-app.post('/api/v2/confirmadmissionds', studentadmissioncontrollerds.confirmadmissionds);
-
-const filemasterdsctlr = require('./controllers/filemasterdsctlr');
-app.post('/api/v2/filemasterdsctlr/create', filemasterdsctlr.createfilemasterds);
-app.post('/api/v2/filemasterdsctlr/get', filemasterdsctlr.getfilemasterds);
-app.post('/api/v2/filemasterdsctlr/update', filemasterdsctlr.updatefilemasterds);
-app.post('/api/v2/filemasterdsctlr/delete', filemasterdsctlr.deletefilemasterds);
-
-const filemovementdsctlr = require('./controllers/filemovementdsctlr');
-app.post('/api/v2/filemovementdsctlr/create', filemovementdsctlr.createfilemovementds);
-app.post('/api/v2/filemovementdsctlr/get', filemovementdsctlr.getfilemovementds);
-app.post('/api/v2/filemovementdsctlr/update', filemovementdsctlr.updatefilemovementds);
-app.post('/api/v2/filemovementdsctlr/delete', filemovementdsctlr.deletefilemovementds);
-app.post('/api/v2/filemovementdsctlr/delete', filemovementdsctlr.deletefilemovementds);
-app.post('/api/v2/filemovementdsctlr/searchfaculty', filemovementdsctlr.searchfaculty);
-app.post('/api/v2/filemovementdsctlr/getdepartments', filemovementdsctlr.getDistinctDepartments);
-
-const exammarks2dsctlr = require('./controllers/exammarks2dsctlr');
-app.get('/api/v2/getexammarks2ds', exammarks2dsctlr.getexammarks2ds);
-app.post('/api/v2/createexammarks2ds', exammarks2dsctlr.createexammarks2ds);
-app.post('/api/v2/updateexammarks2ds', exammarks2dsctlr.updateexammarks2ds);
-app.post('/api/v2/updateexammarks2ds', exammarks2dsctlr.updateexammarks2ds);
-app.post('/api/v2/deleteexammarks2ds', exammarks2dsctlr.deleteexammarks2ds);
-
-const attendancetimereportctlr = require('./controllers/attendancetimereportctlr');
-app.post('/api/v2/getattendancetimereport', attendancetimereportctlr.getattendancetimereport);
-
 const rviewiamarkssummary = require('./router/viewiamarkssummaryrouter.js');
 const rfilteriamarkssummary = require('./router/filteriamarkssummaryrouter.js');
 
@@ -514,455 +450,10 @@ const redituser = require('./router/edituserrouter.js');
 const rdeleteuser = require('./router/deleteuserrouter.js');
 
 const rselectprograminst = require('./router/selectprograminstrouter.js');
-// const rleadadmin = require('./routes/leadadminrouterds.js');
 
 
 const User = require('./Models/user');
 const Admusers = require('./Models/admusers');
-
-// Purchasing Module Controllers
-const storemasterdsctlr = require('./controllers/storemasterdsctlr');
-const storeuserdsctlr = require('./controllers/storeuserdsctlr');
-const storeitemdsctlr = require('./controllers/storeitemdsctlr');
-const itemmasterdsctlr = require('./controllers/itemmasterdsctlr');
-const itemtypedsctlr = require('./controllers/itemtypedsctlr');
-const requisationdsctlr = require('./controllers/requisationdsctlr');
-const requisationds1ctlr = require('./controllers/requisationds1ctlr');
-const storerequisationdsctlr = require('./controllers/storerequisationdsctlr');
-const storepoorderdsctlr = require('./controllers/storepoorderdsctlr');
-const storepoitemsdsctlr = require('./controllers/storepoitemsdsctlr');
-const vendoritemdsctlr = require('./controllers/vendoritemdsctlr');
-const deliverydsdsctlr = require('./controllers/deliverydsdsctlr');
-const stockregisterdsctlr = require('./controllers/stockregisterdsctlr');
-const vendordsctlr1 = require('./controllers/vendordsctlr1'); // Renamed to avoid conflict
-const approvalconfigdsctlr = require('./controllers/approvalconfigdsctlr');
-
-const prassignedsctlr = require('./controllers/prassignedsctlr');
-app.post('/api/v2/addprassigneds', prassignedsctlr.addprassigneds);
-app.get('/api/v2/getOEUsers', prassignedsctlr.getOEUsers);
-app.get('/api/v2/getallprassigneds', prassignedsctlr.getallprassigneds);
-app.get('/api/v2/getAssignedRequisitions', prassignedsctlr.getAssignedRequisitions);
-app.post('/api/v2/updateprassigneds', prassignedsctlr.updateprassigneds);
-app.get('/api/v2/deleteprassigneds', prassignedsctlr.deleteprassigneds);
-
-// Approval Config Routes
-app.post('/api/v2/addapprovalconfig', approvalconfigdsctlr.addConfig);
-app.post('/api/v2/updateapprovalconfig', approvalconfigdsctlr.updateConfig);
-app.get('/api/v2/deleteapprovalconfig', approvalconfigdsctlr.deleteConfig);
-app.get('/api/v2/getapprovalconfig', approvalconfigdsctlr.getConfig);
-
-const pimprestdsctlr = require('./controllers/pimprestdsctlr');
-app.post('/api/v2/addpimprestds', pimprestdsctlr.addpimprestds);
-app.get('/api/v2/getallpimprestds', pimprestdsctlr.getallpimprestds);
-app.post('/api/v2/updatepimprestds', pimprestdsctlr.updatepimprestds);
-app.get('/api/v2/deletepimprestds', pimprestdsctlr.deletepimprestds);
-
-
-const poconfigdsctlr = require('./controllers/poconfigdsctlr');
-app.post('/api/v2/addpoconfigds', poconfigdsctlr.addpoconfigds);
-app.get('/api/v2/getpoconfigds', poconfigdsctlr.getpoconfigds);
-app.post('/api/v2/updatepoconfigds', poconfigdsctlr.updatepoconfigds);
-// Cash Approval Routes
-// Cash Approval Routes
-const CashApprovaldsctlr = require('./controllers/CashApprovaldsctlr');
-app.get('/api/v2/cashapproval', CashApprovaldsctlr.getAllRequests);
-app.post('/api/v2/cashapproval', CashApprovaldsctlr.createRequest);
-app.get('/api/v2/cashapproval/:id', CashApprovaldsctlr.getRequestById);
-app.post('/api/v2/cashapproval/delete', CashApprovaldsctlr.deleteRequest);
-app.post('/api/v2/cashapproval/approve', CashApprovaldsctlr.approveRequest);
-
-// const programmasterdsRouter = require('./router/programmasterdsRouter');
-// app.use('/api/v2', programmasterdsRouter);
-
-const dashboardReportController = require('./controllers/dashboardReportController');
-app.get('/api/v2/dashboard/stats', dashboardReportController.getDashboardStats);
-
-// Purchasing Module Routes
-// 1. Store Master
-app.post('/api/v2/addstoremasterds', storemasterdsctlr.addstoremasterds);
-app.post('/api/v2/updatestoremasterds', storemasterdsctlr.updatestoremasterds);
-app.get('/api/v2/deletestoremasterds', storemasterdsctlr.deletestoremasterds);
-app.get('/api/v2/getallstoremasterds', storemasterdsctlr.getallstoremasterds);
-app.get('/api/v2/getstoremasterdsbyid', storemasterdsctlr.getstoremasterdsbyid);
-
-// 2. Store User
-app.post('/api/v2/addstoreuserds', storeuserdsctlr.addstoreuserds);
-app.post('/api/v2/updatestoreuserds', storeuserdsctlr.updatestoreuserds);
-app.get('/api/v2/deletestoreuserds', storeuserdsctlr.deletestoreuserds);
-app.get('/api/v2/getallstoreuserds', storeuserdsctlr.getallstoreuserds);
-app.get('/api/v2/getstoreuserdsbyid', storeuserdsctlr.getstoreuserdsbyid);
-const addusercontroller = require('./controllers/addusercontroller');
-app.post('/api/v2/getallusers', addusercontroller.getallusersapi);
-
-// 3. Store Item
-app.post('/api/v2/addstoreitemds', storeitemdsctlr.addstoreitemds);
-app.post('/api/v2/updatestoreitemds', storeitemdsctlr.updatestoreitemds);
-app.get('/api/v2/deletestoreitemds', storeitemdsctlr.deletestoreitemds);
-app.get('/api/v2/getallstoreitemds', storeitemdsctlr.getallstoreitemds);
-app.get('/api/v2/getstoreitemdsbyid', storeitemdsctlr.getstoreitemdsbyid);
-app.post('/api/v2/allotitem', storeitemdsctlr.allotItem);
-
-// 4. Item Master
-app.post('/api/v2/additemmasterds', itemmasterdsctlr.additemmasterds);
-app.post('/api/v2/updateitemmasterds', itemmasterdsctlr.updateitemmasterds);
-app.get('/api/v2/deleteitemmasterds', itemmasterdsctlr.deleteitemmasterds);
-app.get('/api/v2/getallitemmasterds', itemmasterdsctlr.getallitemmasterds);
-app.get('/api/v2/getitemmasterdsbyid', itemmasterdsctlr.getitemmasterdsbyid);
-
-// 5. Item Type
-app.post('/api/v2/additemtypeds', itemtypedsctlr.additemtypeds);
-app.post('/api/v2/updateitemtypeds', itemtypedsctlr.updateitemtypeds);
-app.get('/api/v2/deleteitemtypeds', itemtypedsctlr.deleteitemtypeds);
-app.get('/api/v2/getallitemtypeds', itemtypedsctlr.getallitemtypeds);
-app.get('/api/v2/getitemtypedsbyid', itemtypedsctlr.getitemtypedsbyid);
-
-// 5a. Item Unit
-const itemunitdsctlr = require('./controllers/itemunitdsctlr');
-app.post('/api/v2/additemunitds', itemunitdsctlr.additemunitds);
-app.post('/api/v2/updateitemunitds', itemunitdsctlr.updateitemunitds);
-app.get('/api/v2/deleteitemunitds', itemunitdsctlr.deleteitemunitds);
-app.get('/api/v2/getallitemunitds', itemunitdsctlr.getallitemunitds);
-app.get('/api/v2/getitemunitdsbyid', itemunitdsctlr.getitemunitdsbyid);
-
-// 6. Requisition (Faculty)
-app.post('/api/v2/addrequisationds', requisationdsctlr.addrequisationds);
-app.post('/api/v2/updaterequisationds', requisationdsctlr.updaterequisationds);
-app.get('/api/v2/deleterequisationds', requisationdsctlr.deleterequisationds);
-app.get('/api/v2/getallrequisationds', requisationdsctlr.getallrequisationds);
-app.get('/api/v2/getrequisationdsbyid', requisationdsctlr.getrequisationdsbyid);
-
-// 6a. Requisition Staging (Level 1 Approval)
-app.post('/api/v2/addrequisationds1', requisationds1ctlr.addrequisationds1);
-app.get('/api/v2/getallrequisationds1', requisationds1ctlr.getallrequisationds1);
-app.post('/api/v2/approverequisationds1', requisationds1ctlr.approverequisationds1);
-app.post('/api/v2/rejectrequisationds1', requisationds1ctlr.rejectrequisationds1);
-app.get('/api/v2/deleterequisationds1', requisationds1ctlr.deleterequisationds1);
-
-// 7. Store Requisition (Purchase Request)
-app.post('/api/v2/addstorerequisationds', storerequisationdsctlr.addstorerequisationds);
-app.post('/api/v2/updatestorerequisationds', storerequisationdsctlr.updatestorerequisationds);
-app.get('/api/v2/deletestorerequisationds', storerequisationdsctlr.deletestorerequisationds);
-app.get('/api/v2/getallstorerequisationds', storerequisationdsctlr.getallstorerequisationds);
-app.get('/api/v2/getstorerequisationdsbyid', storerequisationdsctlr.getstorerequisationdsbyid);
-
-// 8. Purchase Order
-app.post('/api/v2/addstorepoorderds', storepoorderdsctlr.addstorepoorderds);
-app.post('/api/v2/updatestorepoorderds', storepoorderdsctlr.updatestorepoorderds);
-app.get('/api/v2/deletestorepoorderds', storepoorderdsctlr.deletestorepoorderds);
-app.get('/api/v2/getallstorepoorderds', storepoorderdsctlr.getallstorepoorderds);
-app.get('/api/v2/getstorepoorderdsbyid', storepoorderdsctlr.getstorepoorderdsbyid);
-app.post('/api/v2/approvestorepo', storepoorderdsctlr.approveStorePO);
-// app.post('/api/v2/verifypolevel1', storepoorderdsctlr.verifyLevel1); // Deprecated
-// app.post('/api/v2/verifypolevel2', storepoorderdsctlr.verifyLevel2); // Deprecated
-app.post('/api/v2/verifyDynamicStep', storepoorderdsctlr.verifyDynamicStep);
-
-// 9a. PR Configuration
-const prconfigdsctlr = require('./controllers/prconfigdsctlr');
-app.post('/api/v2/addprconfigds', prconfigdsctlr.addprconfigds);
-app.get('/api/v2/getprconfigds', prconfigdsctlr.getprconfigds);
-app.post('/api/v2/updateprconfigds', prconfigdsctlr.updateprconfigds);
-
-// 9. PO Items
-app.post('/api/v2/addstorepoitemsds', storepoitemsdsctlr.addstorepoitemsds);
-app.post('/api/v2/updatestorepoitemsds', storepoitemsdsctlr.updatestorepoitemsds);
-app.get('/api/v2/deletestorepoitemsds', storepoitemsdsctlr.deletestorepoitemsds);
-app.get('/api/v2/getallstorepoitemsds', storepoitemsdsctlr.getallstorepoitemsds);
-app.get('/api/v2/getstorepoitemsdsbyid', storepoitemsdsctlr.getstorepoitemsdsbyid);
-
-// 10. Vendor Items
-app.post('/api/v2/addvendoritemds', vendoritemdsctlr.addvendoritemds);
-app.post('/api/v2/updatevendoritemds', vendoritemdsctlr.updatevendoritemds);
-app.get('/api/v2/deletevendoritemds', vendoritemdsctlr.deletevendoritemds);
-app.get('/api/v2/getallvendoritemds', vendoritemdsctlr.getallvendoritemds);
-app.get('/api/v2/getvendoritemdsbyid', vendoritemdsctlr.getvendoritemdsbyid);
-
-// 11. Delivery
-app.post('/api/v2/adddeliverydsds', deliverydsdsctlr.adddeliverydsds);
-app.post('/api/v2/updatedeliverydsds', deliverydsdsctlr.updatedeliverydsds);
-app.get('/api/v2/deletedeliverydsds', deliverydsdsctlr.deletedeliverydsds);
-app.get('/api/v2/getalldeliverydsds', deliverydsdsctlr.getalldeliverydsds);
-app.get('/api/v2/getdeliverydsdsbyid', deliverydsdsctlr.getdeliverydsdsbyid);
-app.post('/api/v2/markdelivered', deliverydsdsctlr.markDelivered);
-
-// 12. Stock Register
-app.post('/api/v2/addstockregisterds', stockregisterdsctlr.addstockregisterds);
-app.post('/api/v2/updatestockregisterds', stockregisterdsctlr.updatestockregisterds);
-app.get('/api/v2/deletestockregisterds', stockregisterdsctlr.deletestockregisterds);
-app.get('/api/v2/getallstockregisterds', stockregisterdsctlr.getallstockregisterds);
-app.get('/api/v2/getstockregisterdsbyid', stockregisterdsctlr.getstockregisterdsbyid);
-
-// 13. Vendor (Modified to use vendordsctlr1)
-app.post('/api/v2/addvendords', vendordsctlr1.addvendords);
-app.post('/api/v2/updatevendords', vendordsctlr1.updatevendords);
-app.get('/api/v2/deletevendords', vendordsctlr1.deletevendords);
-app.get('/api/v2/getallvendords', vendordsctlr1.getallvendords);
-app.get('/api/v2/getvendordsbyid', vendordsctlr1.getvendordsbyid);
-
-
-// Purchasing Module Controllers
-const storemasterdsctlr2 = require('./controllers/storemasterdsctlr2');
-const storeuserdsctlr2 = require('./controllers/storeuserdsctlr2');
-const storeitemdsctlr2 = require('./controllers/storeitemdsctlr2');
-const itemmasterdsctlr2 = require('./controllers/itemmasterdsctlr2');
-const itemtypedsctlr2 = require('./controllers/itemtypedsctlr2');
-const requisationdsctlr2 = require('./controllers/requisationdsctlr2');
-const requisationds1ctlr2 = require('./controllers/requisationds1ctlr2');
-const storerequisationdsctlr2 = require('./controllers/storerequisationdsctlr2');
-const storepoorderdsctlr2 = require('./controllers/storepoorderdsctlr2');
-const storepoitemsdsctlr2 = require('./controllers/storepoitemsdsctlr2');
-const vendoritemdsctlr2 = require('./controllers/vendoritemdsctlr2');
-const deliverydsdsctlr2 = require('./controllers/deliverydsdsctlr2');
-const stockregisterdsctlr2 = require('./controllers/stockregisterdsctlr2');
-const vendordsctlr12 = require('./controllers/vendordsctlr12'); // Renamed to avoid conflict
-const approvalconfigdsctlr2 = require('./controllers/approvalconfigdsctlr2');
-
-const prassignedsctlr2 = require('./controllers/prassignedsctlr2');
-app.post('/api/v2/addprassigneds2', prassignedsctlr2.addprassigneds2);
-app.get('/api/v2/getOEUsers2', prassignedsctlr2.getOEUsers2);
-app.get('/api/v2/getallprassigneds2', prassignedsctlr2.getallprassigneds2);
-app.get('/api/v2/getAssignedRequisitions2', prassignedsctlr2.getAssignedRequisitions2);
-app.post('/api/v2/updateprassigneds2', prassignedsctlr2.updateprassigneds2);
-app.get('/api/v2/deleteprassigneds2', prassignedsctlr2.deleteprassigneds2);
-
-// Approval Config Routes
-app.post('/api/v2/addapprovalconfig2', approvalconfigdsctlr2.addConfig2);
-app.post('/api/v2/updateapprovalconfig2', approvalconfigdsctlr2.updateConfig2);
-app.get('/api/v2/deleteapprovalconfig2', approvalconfigdsctlr2.deleteConfig2);
-app.get('/api/v2/getapprovalconfig2', approvalconfigdsctlr2.getConfig2);
-
-const pimprestdsctlr2 = require('./controllers/pimprestdsctlr2');
-app.post('/api/v2/addpimprestds2', pimprestdsctlr2.addpimprestds2);
-app.get('/api/v2/getallpimprestds2', pimprestdsctlr2.getallpimprestds2);
-app.post('/api/v2/updatepimprestds2', pimprestdsctlr2.updatepimprestds2);
-app.get('/api/v2/deletepimprestds2', pimprestdsctlr2.deletepimprestds2);
-
-
-const poconfigdsctlr2 = require('./controllers/poconfigdsctlr2');
-app.post('/api/v2/addpoconfigds2', poconfigdsctlr2.addpoconfigds2);
-app.get('/api/v2/getpoconfigds2', poconfigdsctlr2.getpoconfigds2);
-app.post('/api/v2/updatepoconfigds2', poconfigdsctlr2.updatepoconfigds2);
-// Cash Approval Routes
-// Cash Approval Routes
-const CashApprovaldsctlr2 = require('./controllers/CashApprovaldsctlr2');
-app.get('/api/v2/cashapproval2', CashApprovaldsctlr2.getAllRequests2);
-app.post('/api/v2/cashapproval2', CashApprovaldsctlr2.createRequest2);
-app.get('/api/v2/cashapproval2/:id', CashApprovaldsctlr2.getRequestById2);
-app.post('/api/v2/cashapproval2/delete', CashApprovaldsctlr2.deleteRequest2);
-app.post('/api/v2/cashapproval2/approve', CashApprovaldsctlr2.approveRequest2);
-
-// const programmasterdsRouter = require('./router/programmasterdsRouter');
-// app.use('/api/v2', programmasterdsRouter);
-// const dashboardReportController2 = require('./controllers/dashboardReportController2');
-// app.get('/api/v2/dashboard2/stats', dashboardReportController2.getDashboardStats2);
-
-// Purchasing Module Routes
-// 1. Store Master
-app.post('/api/v2/addstoremasterds2', storemasterdsctlr2.addstoremasterds2);
-app.post('/api/v2/updatestoremasterds2', storemasterdsctlr2.updatestoremasterds2);
-app.get('/api/v2/deletestoremasterds2', storemasterdsctlr2.deletestoremasterds2);
-app.get('/api/v2/getallstoremasterds2', storemasterdsctlr2.getallstoremasterds2);
-app.get('/api/v2/getstoremasterdsbyid2', storemasterdsctlr2.getstoremasterdsbyid2);
-
-// 2. Store User
-app.post('/api/v2/addstoreuserds2', storeuserdsctlr2.addstoreuserds2);
-app.post('/api/v2/updatestoreuserds2', storeuserdsctlr2.updatestoreuserds2);
-app.get('/api/v2/deletestoreuserds2', storeuserdsctlr2.deletestoreuserds2);
-app.get('/api/v2/getallstoreuserds2', storeuserdsctlr2.getallstoreuserds2);
-app.get('/api/v2/getstoreuserdsbyid2', storeuserdsctlr2.getstoreuserdsbyid2);
-const addusercontroller2 = require('./controllers/addusercontroller2');
-app.post('/api/v2/getallusers2', addusercontroller2.getallusersapi2);
-
-// 3. Store Item
-app.post('/api/v2/addstoreitemds2', storeitemdsctlr2.addstoreitemds2);
-app.post('/api/v2/updatestoreitemds2', storeitemdsctlr2.updatestoreitemds2);
-app.get('/api/v2/deletestoreitemds2', storeitemdsctlr2.deletestoreitemds2);
-app.get('/api/v2/getallstoreitemds2', storeitemdsctlr2.getallstoreitemds2);
-app.get('/api/v2/getstoreitemdsbyid2', storeitemdsctlr2.getstoreitemdsbyid2);
-app.post('/api/v2/allotitem2', storeitemdsctlr2.allotItem2);
-app.get('/api/v2/getstockreportds2', storeitemdsctlr2.getStockReportds2);
-
-// 3b. Vendors
-const vendordsctlr2 = require('./controllers/vendordsctlr2');
-app.post('/api/v2/addvendords2', vendordsctlr2.addvendords2);
-app.post('/api/v2/updatevendords2', vendordsctlr2.updatevendords2);
-app.get('/api/v2/deletevendords2', vendordsctlr2.deletevendords2);
-app.get('/api/v2/getallvendords2', vendordsctlr2.getallvendords2);
-app.get('/api/v2/getvendordsbyid2', vendordsctlr2.getvendordsbyid2);
-
-// 4. Item Master
-app.post('/api/v2/additemmasterds2', itemmasterdsctlr2.additemmasterds2);
-app.post('/api/v2/updateitemmasterds2', itemmasterdsctlr2.updateitemmasterds2);
-app.get('/api/v2/deleteitemmasterds2', itemmasterdsctlr2.deleteitemmasterds2);
-app.get('/api/v2/getallitemmasterds2', itemmasterdsctlr2.getallitemmasterds2);
-app.get('/api/v2/getitemmasterdsbyid2', itemmasterdsctlr2.getitemmasterdsbyid2);
-
-// 5. Item Type
-app.post('/api/v2/additemtypeds2', itemtypedsctlr2.additemtypeds2);
-app.post('/api/v2/updateitemtypeds2', itemtypedsctlr2.updateitemtypeds2);
-app.get('/api/v2/deleteitemtypeds2', itemtypedsctlr2.deleteitemtypeds2);
-app.get('/api/v2/getallitemtypeds2', itemtypedsctlr2.getallitemtypeds2);
-app.get('/api/v2/getitemtypedsbyid2', itemtypedsctlr2.getitemtypedsbyid2);
-
-// 5b. Item Category
-const itemcategorydsctlr2 = require('./controllers/itemcategorydsctlr2');
-// --- Phase 2: Gateway Pass Controller ---
-const gatewaypassdsctlr2 = require('./controllers/gatewaypassdsctlr2');
-app.post('/api/v2/additemcategoryds2', itemcategorydsctlr2.additemcategoryds2);
-app.post('/api/v2/updateitemcategoryds2', itemcategorydsctlr2.updateitemcategoryds2);
-app.get('/api/v2/deleteitemcategoryds2', itemcategorydsctlr2.deleteitemcategoryds2);
-app.get('/api/v2/getallitemcategoryds2', itemcategorydsctlr2.getallitemcategoryds2);
-app.get('/api/v2/getitemcategorydsbyid2', itemcategorydsctlr2.getitemcategorydsbyid2);
-
-// 5a. Item Unit
-const itemunitdsctlr2 = require('./controllers/itemunitdsctlr2');
-app.post('/api/v2/additemunitds2', itemunitdsctlr2.additemunitds2);
-app.post('/api/v2/updateitemunitds2', itemunitdsctlr2.updateitemunitds2);
-app.get('/api/v2/deleteitemunitds2', itemunitdsctlr2.deleteitemunitds2);
-app.get('/api/v2/getallitemunitds2', itemunitdsctlr2.getallitemunitds2);
-app.get('/api/v2/getitemunitdsbyid2', itemunitdsctlr2.getitemunitdsbyid2);
-
-// 6. Requisition (Faculty)
-app.post('/api/v2/addrequisationds2', requisationdsctlr2.addrequisationds2);
-app.post('/api/v2/updaterequisationds2', requisationdsctlr2.updaterequisationds2);
-app.get('/api/v2/deleterequisationds2', requisationdsctlr2.deleterequisationds2);
-app.get('/api/v2/getallrequisationds2', requisationdsctlr2.getallrequisationds2);
-app.get('/api/v2/getrequisationdsbyid2', requisationdsctlr2.getrequisationdsbyid2);
-
-// 6a. Requisition Staging (Level 1 Approval)
-app.post('/api/v2/addrequisationds12', requisationds1ctlr2.addrequisationds12);
-app.get('/api/v2/getallrequisationds12', requisationds1ctlr2.getallrequisationds12);
-app.post('/api/v2/approverequisationds12', requisationds1ctlr2.approverequisationds12);
-app.post('/api/v2/rejectrequisationds12', requisationds1ctlr2.rejectrequisationds12);
-app.get('/api/v2/deleterequisationds12', requisationds1ctlr2.deleterequisationds12);
-
-// 7. Store Requisition (Purchase Request)
-app.post('/api/v2/addstorerequisationds2', storerequisationdsctlr2.addstorerequisationds2);
-app.post('/api/v2/updatestorerequisationds2', storerequisationdsctlr2.updatestorerequisationds2);
-app.get('/api/v2/deletestorerequisationds2', storerequisationdsctlr2.deletestorerequisationds2);
-app.get('/api/v2/getallstorerequisationds2', storerequisationdsctlr2.getallstorerequisationds2);
-app.get('/api/v2/getstorerequisationdsbyid2', storerequisationdsctlr2.getstorerequisationdsbyid2);
-
-// 8. Purchase Order
-app.post('/api/v2/addstorepoorderds2', storepoorderdsctlr2.addstorepoorderds2);
-app.post('/api/v2/updatestorepoorderds2', storepoorderdsctlr2.updatestorepoorderds2);
-app.get('/api/v2/deletestorepoorderds2', storepoorderdsctlr2.deletestorepoorderds2);
-app.get('/api/v2/getallstorepoorderds2', storepoorderdsctlr2.getallstorepoorderds2);
-app.get('/api/v2/getstorepoorderdsbyid2', storepoorderdsctlr2.getstorepoorderdsbyid2);
-app.post('/api/v2/approvestorepo2', storepoorderdsctlr2.approveStorePO2);
-app.post('/api/v2/verifyDynamicStep2', storepoorderdsctlr2.verifyDynamicStep2);
-app.post('/api/v2/sendBackDynamicStep2', storepoorderdsctlr2.sendBackDynamicStep2);
-
-// PE Edit Request Workflow
-app.post('/api/v2/requestpoedit2', storepoorderdsctlr2.requestPOEdit2);
-app.post('/api/v2/approvepoedit2', storepoorderdsctlr2.approvePOEdit2);
-
-// --- Phase 2: Gateway Pass Flow ---
-app.post('/api/v2/addgatewaypass2', gatewaypassdsctlr2.addGatewayPass2);
-app.get('/api/v2/getallgatewaypasses2', gatewaypassdsctlr2.getAllGatewayPasses2);
-app.get('/api/v2/getgatewaypassbyid2', gatewaypassdsctlr2.getGatewayPassById2);
-app.post('/api/v2/updategatewaypass2', gatewaypassdsctlr2.updateGatewayPass2);
-
-// --- Phase 3: Store Budgets & Cash Accounts ---
-const storebudgetdsctlr2 = require('./controllers/storebudgetdsctlr2');
-const headtypemasterctlr2 = require('./controllers/headtypemasterctlr2');
-const localgrnctlr2 = require('./controllers/localgrnctlr2');
-
-app.post('/api/v2/addstorebudget2', storebudgetdsctlr2.addStoreBudget2);
-app.get('/api/v2/getstorebudgets2', storebudgetdsctlr2.getStoreBudgets2);
-app.post('/api/v2/addcashaccountbalance2', storebudgetdsctlr2.addCashAccountBalance2);
-app.get('/api/v2/getstorecashaccounts2', storebudgetdsctlr2.getStoreCashAccounts2);
-app.post('/api/v2/deductcashforlocalpo2', storebudgetdsctlr2.deductCashForLocalPO2);
-app.post('/api/v2/approvelpo2', storebudgetdsctlr2.approveLPO2);
-app.post('/api/v2/rejectlpo2', storebudgetdsctlr2.rejectLPO2);
-app.post('/api/v2/updatelpoactualamount2', storebudgetdsctlr2.updateLpoActualAmount2);
-
-app.post('/api/v2/addheadtypeds2', headtypemasterctlr2.addHeadType2);
-app.get('/api/v2/getallheadtypeds2', headtypemasterctlr2.getHeadTypes2);
-app.post('/api/v2/deleteheadtypeds2', headtypemasterctlr2.deleteHeadType2);
-
-app.post('/api/v2/addlocalgrnds2', localgrnctlr2.addLocalGRN2);
-app.get('/api/v2/getalllocalgrnds2', localgrnctlr2.getLocalGRNs2);
-
-// --- Phase 4: Quality Checks ---
-const qualitycheckdsctlr2 = require('./controllers/qualitycheckdsctlr2');
-app.post('/api/v2/addqualitycheck2', qualitycheckdsctlr2.addQualityCheck2);   // legacy route (keep for backward compat)
-app.post('/api/v2/addqualitycheckds2', qualitycheckdsctlr2.addQualityCheck2); // new route (GRN-based)
-app.get('/api/v2/getallqualitychecks2', qualitycheckdsctlr2.getAllQualityChecks2);   // legacy
-app.get('/api/v2/getallqualitycheckds2', qualitycheckdsctlr2.getAllQualityChecks2);  // new
-app.get('/api/v2/getqualitycheckbyid2/:id', qualitycheckdsctlr2.getQualityCheckById2);    // legacy
-app.get('/api/v2/getqualitycheckdsbyid2/:id', qualitycheckdsctlr2.getQualityCheckById2);  // new
-
-// 9a. PR Configuration
-const prconfigdsctlr2 = require('./controllers/prconfigdsctlr2');
-app.post('/api/v2/addprconfigds2', prconfigdsctlr2.addprconfigds2);
-app.get('/api/v2/getprconfigds2', prconfigdsctlr2.getprconfigds2);
-app.post('/api/v2/updateprconfigds2', prconfigdsctlr2.updateprconfigds2);
-
-// 9. PO Items
-app.post('/api/v2/addstorepoitemsds2', storepoitemsdsctlr2.addstorepoitemsds2);
-app.post('/api/v2/updatestorepoitemsds2', storepoitemsdsctlr2.updatestorepoitemsds2);
-app.get('/api/v2/deletestorepoitemsds2', storepoitemsdsctlr2.deletestorepoitemsds2);
-app.get('/api/v2/getallstorepoitemsds2', storepoitemsdsctlr2.getallstorepoitemsds2);
-app.get('/api/v2/getstorepoitemsdsbyid2', storepoitemsdsctlr2.getstorepoitemsdsbyid2);
-
-// 10. Vendor Items
-app.post('/api/v2/addvendoritemds2', vendoritemdsctlr2.addvendoritemds2);
-app.post('/api/v2/updatevendoritemds2', vendoritemdsctlr2.updatevendoritemds2);
-app.get('/api/v2/deletevendoritemds2', vendoritemdsctlr2.deletevendoritemds2);
-app.get('/api/v2/getallvendoritemds2', vendoritemdsctlr2.getallvendoritemds2);
-app.get('/api/v2/getvendoritemdsbyid2', vendoritemdsctlr2.getvendoritemdsbyid2);
-
-// 11. Delivery
-app.post('/api/v2/adddeliverydsds2', deliverydsdsctlr2.adddeliverydsds2);
-app.post('/api/v2/updatedeliverydsds2', deliverydsdsctlr2.updatedeliverydsds2);
-app.get('/api/v2/deletedeliverydsds2', deliverydsdsctlr2.deletedeliverydsds2);
-app.get('/api/v2/getalldeliverydsds2', deliverydsdsctlr2.getalldeliverydsds2);
-app.get('/api/v2/getdeliverydsdsbyid2', deliverydsdsctlr2.getdeliverydsdsbyid2);
-app.post('/api/v2/markdelivered2', deliverydsdsctlr2.markDelivered2);
-
-// 12. Stock Register
-app.post('/api/v2/addstockregisterds2', stockregisterdsctlr2.addstockregisterds2);
-app.post('/api/v2/updatestockregisterds2', stockregisterdsctlr2.updatestockregisterds2);
-app.get('/api/v2/deletestockregisterds2', stockregisterdsctlr2.deletestockregisterds2);
-app.get('/api/v2/getallstockregisterds2', stockregisterdsctlr2.getallstockregisterds2);
-app.get('/api/v2/getstockregisterdsbyid2', stockregisterdsctlr2.getstockregisterdsbyid2);
-
-// 13. Vendor (Modified to use vendordsctlr12)
-app.post('/api/v2/addvendords2', vendordsctlr12.addvendords2);
-app.post('/api/v2/updatevendords2', vendordsctlr12.updatevendords2);
-app.get('/api/v2/deletevendords2', vendordsctlr12.deletevendords2);
-app.get('/api/v2/getallvendords2', vendordsctlr12.getallvendords2);
-app.get('/api/v2/getvendordsbyid2', vendordsctlr12.getvendordsbyid2);
-
-
-// 14. Delivery Types (Master Data)
-const deliverytypedsctlr2 = require('./controllers/deliverytypedsctlr2');
-app.post('/api/v2/adddeliverytypeds2', deliverytypedsctlr2.adddeliverytypeds2);
-app.get('/api/v2/getalldeliverytypeds2', deliverytypedsctlr2.getalldeliverytypeds2);
-app.post('/api/v2/updatedeliverytypeds2', deliverytypedsctlr2.updatedeliverytypeds2);
-app.get('/api/v2/deletedeliverytypeds2', deliverytypedsctlr2.deletedeliverytypeds2);
-
-// 15. PO Audit Log
-const pologds2 = require('./Models/pologds2');
-app.get('/api/v2/getpologds2', async (req, res) => {
-  try {
-    const { poid, colid } = req.query;
-    const query = { colid: Number(colid) };
-    if (poid) query.poid = poid;
-    const logs = await pologds2.find(query).sort({ timestamp: -1 });
-    res.status(200).json({ success: true, data: { logs } });
-  } catch (e) {
-    res.status(500).json({ success: false, message: 'Error fetching PO logs', error: e.message });
-  }
-});
-
-
-// 16. GRN (Goods Receipt Note)
-const grndsctlr2 = require('./controllers/grndsctlr2');
-app.post('/api/v2/addgrnds2', grndsctlr2.addgrnds2);
-app.get('/api/v2/getallgrnds2', grndsctlr2.getallgrnds2);
-app.get('/api/v2/getpendinggrnds2', grndsctlr2.getpendinggrnds2);
-app.post('/api/v2/markgrnqcdone2', grndsctlr2.markgrnqcdone2);
 
 
 app.use(passport.initialize());
@@ -979,11 +470,11 @@ app.use(passport.session());
 //   });
 
 passport.serializeUser(function (user, done) {
-  done(null, user);
+    done(null, user);
 });
 
 passport.deserializeUser(function (user, done) {
-  done(null, user);
+    done(null, user);
 });
 
 //web app 3 localhost
@@ -1026,116 +517,116 @@ const callbackurlserver4 = "https://canvasapi5.azurewebsites.net/auth/google/cal
 // ));
 
 passport.use(
-  new GoogleStrategy(
-    {
-      clientID: clientidserver4, // "1002415317254-hs8nnlhhsvsq4qkmhq9tjhhot7tssu7s.apps.googleusercontent.com", // "1002415317254-pfv44icpr9pieueilcg9fke58c4fc4sc.apps.googleusercontent.com",
-      clientSecret: clientsecretserver4, // "RTzL-OWFmo4ufaMdeMG3AcAO", // "LSwjYPPE0HYOJerRnO0EJcBw",
-      callbackURL: callbackurlserver4, // 'https://ctnodeapp1.azurewebsites.net/auth/google/callback'
-      scope: ['profile', 'email']
-    },
-    (accessToken, refreshToken, profile, done) => {
-      console.log('output');
-      console.log(profile);
+    new GoogleStrategy(
+        {
+            clientID: clientidserver4, // "1002415317254-hs8nnlhhsvsq4qkmhq9tjhhot7tssu7s.apps.googleusercontent.com", // "1002415317254-pfv44icpr9pieueilcg9fke58c4fc4sc.apps.googleusercontent.com",
+            clientSecret: clientsecretserver4, // "RTzL-OWFmo4ufaMdeMG3AcAO", // "LSwjYPPE0HYOJerRnO0EJcBw",
+            callbackURL: callbackurlserver4, // 'https://ctnodeapp1.azurewebsites.net/auth/google/callback'
+            scope: ['profile', 'email']
+        },
+        (accessToken, refreshToken, profile, done) => {
+            console.log('output');
+            console.log(profile);
 
-      console.log(profile.id + ' ' + profile._json.email + ' ' + profile._json.picture);
-      Admusers.findOne({ email: profile._json.email }).then(existingUser => {
-        if (existingUser) {
-          // we already have a record with the given profile ID
-          Admusers.findOneAndUpdate({ email: profile._json.email }, {
-            photo: profile._json.picture,
-            student: profile._json.name,
-            username: profile._json.email
-          })
-            .then(user => done(null, user));
-          //done(null, existingUser);
-        } else {
-          const password1 = Math.floor((Math.random() * 10000) + 1);
-          //   const pub1= Admusers.create({
-          //     name: 'Online',
-          //     colid: 30,
-          //     user: 'Online',
-          //     student:profile._json.name,
-          //     address:'NA',
-          //     city:'NA',
-          //     country:'NA',
-          //     email:profile._json.email,
-          //     phone:'99',
-          //     refer:'NA',
-          //     referuser:'Online',
-          //     username:profile._json.email,
-          //     password:password1,
-          //     photo:profile._json.picture,
-          //     status1: 'Accepted',
-          //     comments: 'NA'
-          // });
-          new Admusers({
-            name: profile._json.name,
-            user: profile._json.email,
-            student: profile._json.name,
-            password: 'Password@123',
-            username: profile._json.email,
-            email: profile._json.email,
-            photo: profile._json.picture,
-            phone: "9999999999",
-            colid: 30,
-            status1: 'Accepted',
-            comments: 'NA'
-          })
-            .save()
-            .then(user => done(null, user));
+            console.log(profile.id + ' ' + profile._json.email + ' ' + profile._json.picture);
+            Admusers.findOne({ email: profile._json.email }).then(existingUser => {
+                if (existingUser) {
+                    // we already have a record with the given profile ID
+                    Admusers.findOneAndUpdate({ email: profile._json.email }, {
+                        photo: profile._json.picture,
+                        student: profile._json.name,
+                        username: profile._json.email
+                    })
+                        .then(user => done(null, user));
+                    //done(null, existingUser);
+                } else {
+                    const password1 = Math.floor((Math.random() * 10000) + 1);
+                    //   const pub1= Admusers.create({
+                    //     name: 'Online',
+                    //     colid: 30,
+                    //     user: 'Online',
+                    //     student:profile._json.name,
+                    //     address:'NA',
+                    //     city:'NA',
+                    //     country:'NA',
+                    //     email:profile._json.email,
+                    //     phone:'99',
+                    //     refer:'NA',
+                    //     referuser:'Online',
+                    //     username:profile._json.email,
+                    //     password:password1,
+                    //     photo:profile._json.picture,
+                    //     status1: 'Accepted',
+                    //     comments: 'NA'
+                    // });
+                    new Admusers({
+                        name: profile._json.name,
+                        user: profile._json.email,
+                        student: profile._json.name,
+                        password: 'Password@123',
+                        username: profile._json.email,
+                        email: profile._json.email,
+                        photo: profile._json.picture,
+                        phone: "9999999999",
+                        colid: 30,
+                        status1: 'Accepted',
+                        comments: 'NA'
+                    })
+                        .save()
+                        .then(user => done(null, user));
+                }
+            });
         }
-      });
-    }
-  )
+    )
 );
 
 app.get(
-  '/auth/google',
-  passport.authenticate('google', {
-    scope: ['profile', 'email']
-  })
+    '/auth/google',
+    passport.authenticate('google', {
+        scope: ['profile', 'email']
+    })
 );
 
 app.get('/auth/google1/:colid', function (req, res, next) {
-  req._toParam = req.params.colid;
-  passport.authenticate(
-    'google', { scope: ['profile', 'email'] }
-  )(req, res, next);
+    req._toParam = req.params.colid;
+    passport.authenticate(
+        'google', { scope: ['profile', 'email'] }
+    )(req, res, next);
 })
 
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  function (req, res) {
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    function (req, res) {
 
-    console.log(req.user.name + ' ' + req.user.email + ' ' + req.user.colid + ' ' + req.user.photo + ' ' + req._toParam);
-    res.redirect('https://epaathsala.in');
-    //   res.cookie("user",req.user.email);
-    //   res.cookie("name",req.user.name);
-    //   res.cookie("department",req.user.department);
-    //   res.cookie("colid",req.user.colid);
-    //   res.cookie("photo",req.user.photo);
-    //   const token=jwt.sign({ user: req.user.email, colid: req.user.colid }, process.env.JWT_SECRET, {
-    //     expiresIn: process.env.JWT_EXPIRES_IN
-    // });
-    //res.cookie("colid",String([role.colid]));
-    // res.cookie("role",req.user.role);
-    // res.cookie("token",token);
-    // if(req.user.colid==25) {
-    //   res.redirect('/logincol');
-    // } else {
-    //   res.cookie("regno",req.user.regno);
-    //   res.cookie("semester",req.user.semester);
-    //   res.cookie("section",req.user.section);
-    //   //res.redirect('/dashboard');
-    //   if (req.user.role=="Student") {
-    //     req.flash("success", "You are logged in successfully");
-    //     res.redirect('/viewclassstud');
-    //    } else {
-    //     req.flash("success", "You are logged in Successfully");
-    //     res.redirect('/dashboard');
-    //    }
-    // }
-  });
+        console.log(req.user.name + ' ' + req.user.email + ' ' + req.user.colid + ' ' + req.user.photo + ' ' + req._toParam);
+        res.redirect('https://epaathsala.in');
+        //   res.cookie("user",req.user.email);
+        //   res.cookie("name",req.user.name);
+        //   res.cookie("department",req.user.department);
+        //   res.cookie("colid",req.user.colid);
+        //   res.cookie("photo",req.user.photo);
+        //   const token=jwt.sign({ user: req.user.email, colid: req.user.colid }, process.env.JWT_SECRET, {
+        //     expiresIn: process.env.JWT_EXPIRES_IN
+        // });
+        //res.cookie("colid",String([role.colid]));
+        // res.cookie("role",req.user.role);
+        // res.cookie("token",token);
+        // if(req.user.colid==25) {
+        //   res.redirect('/logincol');
+        // } else {
+        //   res.cookie("regno",req.user.regno);
+        //   res.cookie("semester",req.user.semester);
+        //   res.cookie("section",req.user.section);
+        //   //res.redirect('/dashboard');
+        //   if (req.user.role=="Student") {
+        //     req.flash("success", "You are logged in successfully");
+        //     res.redirect('/viewclassstud');
+        //    } else {
+        //     req.flash("success", "You are logged in Successfully");
+        //     res.redirect('/dashboard');
+        //    }
+        // }
+    });
 
 const fappid = "1991144837709170";
 const fappsecret = "c54e2718464cb2596a8205a0ff13b24e";
@@ -1147,59 +638,59 @@ const rurl = "http://localhost:3000/auth/facebook/callback";
 const rurl2 = "https://ctnodeapps2.azurewebsites.net/auth/facebook/callback";
 
 passport.use(
-  new FacebookStrategy(
-    {
-      clientID: fappid2, // "1002415317254-hs8nnlhhsvsq4qkmhq9tjhhot7tssu7s.apps.googleusercontent.com", // "1002415317254-pfv44icpr9pieueilcg9fke58c4fc4sc.apps.googleusercontent.com",
-      clientSecret: fappsecret2, // "RTzL-OWFmo4ufaMdeMG3AcAO", // "LSwjYPPE0HYOJerRnO0EJcBw",
-      callbackURL: rurl2, // 'https://ctnodeapp1.azurewebsites.net/auth/google/callback'
-      profileFields: ['id', 'emails', 'link', 'locale', 'name', 'photos',
-        'timezone', 'updated_time', 'verified', 'displayName']
-    },
-    (accessToken, refreshToken, profile, done) => {
-      //console.log(profile);
-      //console.log(profile.emails[0].value);
-      //console.log(profile.photos[0].value);
-      //console.log(`https://graph.facebook.com/${profile.id}/picture?width=200&height=200&access_token=${accessToken}`);
-      //console.log(profile.id + ' ' + profile._json.email + ' ' + profile._json.picture);
-      User.findOne({ email: profile._json.email }).then(existingUser => {
-        if (existingUser) {
-          // we already have a record with the given profile ID
-          User.findOneAndUpdate({ email: profile._json.email }, {
-            photo: profile.photos[0].value
-          })
-            .then(user => done(null, user));
-          //done(null, existingUser);
-        } else {
-          const password1 = Math.floor((Math.random() * 10000) + 1);
-          new User({
-            name: profile._json.name,
-            password: password1,
-            email: profile._json.email,
-            photo: profile.photos[0].value,
-            phone: "9999999999",
-            role: "Faculty",
-            colid: 25,
-            regno: "NA",
-            semester: "NA",
-            section: "NA",
-            admissionyear: "NA",
-            programcode: "NA",
-            department: "Admin",
-            status: 1
-          })
-            .save()
-            .then(user => done(null, user));
+    new FacebookStrategy(
+        {
+            clientID: fappid2, // "1002415317254-hs8nnlhhsvsq4qkmhq9tjhhot7tssu7s.apps.googleusercontent.com", // "1002415317254-pfv44icpr9pieueilcg9fke58c4fc4sc.apps.googleusercontent.com",
+            clientSecret: fappsecret2, // "RTzL-OWFmo4ufaMdeMG3AcAO", // "LSwjYPPE0HYOJerRnO0EJcBw",
+            callbackURL: rurl2, // 'https://ctnodeapp1.azurewebsites.net/auth/google/callback'
+            profileFields: ['id', 'emails', 'link', 'locale', 'name', 'photos',
+                'timezone', 'updated_time', 'verified', 'displayName']
+        },
+        (accessToken, refreshToken, profile, done) => {
+            //console.log(profile);
+            //console.log(profile.emails[0].value);
+            //console.log(profile.photos[0].value);
+            //console.log(`https://graph.facebook.com/${profile.id}/picture?width=200&height=200&access_token=${accessToken}`);
+            //console.log(profile.id + ' ' + profile._json.email + ' ' + profile._json.picture);
+            User.findOne({ email: profile._json.email }).then(existingUser => {
+                if (existingUser) {
+                    // we already have a record with the given profile ID
+                    User.findOneAndUpdate({ email: profile._json.email }, {
+                        photo: profile.photos[0].value
+                    })
+                        .then(user => done(null, user));
+                    //done(null, existingUser);
+                } else {
+                    const password1 = Math.floor((Math.random() * 10000) + 1);
+                    new User({
+                        name: profile._json.name,
+                        password: password1,
+                        email: profile._json.email,
+                        photo: profile.photos[0].value,
+                        phone: "9999999999",
+                        role: "Faculty",
+                        colid: 25,
+                        regno: "NA",
+                        semester: "NA",
+                        section: "NA",
+                        admissionyear: "NA",
+                        programcode: "NA",
+                        department: "Admin",
+                        status: 1
+                    })
+                        .save()
+                        .then(user => done(null, user));
+                }
+            });
         }
-      });
-    }
-  )
+    )
 );
 
 app.get(
-  '/auth/facebook',
-  passport.authenticate('facebook', {
-    scope: ['public_profile', 'email']
-  })
+    '/auth/facebook',
+    passport.authenticate('facebook', {
+        scope: ['public_profile', 'email']
+    })
 );
 
 // app.get(
@@ -1208,32 +699,34 @@ app.get(
 // );
 
 app.get('/auth/facebook/callback',
-  passport.authenticate('facebook', { failureRedirect: '/login' }),
-  function (req, res) {
-    //console.log(req.user.name + ' ' + req.user.email + ' ' + req.user.colid + ' ' + req.user.photo);
-    res.cookie("user", req.user.email);
-    res.cookie("name", req.user.name);
-    res.cookie("department", req.user.department);
-    res.cookie("colid", req.user.colid);
-    res.cookie("photo", req.user.photo);
-    //res.cookie("colid",String([role.colid]));
-    res.cookie("role", req.user.role);
-    if (req.user.colid == 25) {
-      res.redirect('/logincol');
-    } else {
-      res.cookie("regno", req.user.regno);
-      res.cookie("semester", req.user.semester);
-      res.cookie("section", req.user.section);
-      //res.redirect('/dashboard');
-      if (req.user.role == "Student") {
-        req.flash("success", "You are logged in successfully");
-        res.redirect('/viewclassstud');
-      } else {
-        req.flash("success", "You are logged in Successfully");
-        res.redirect('/dashboard');
-      }
-    }
-  });
+    passport.authenticate('facebook', { failureRedirect: '/login' }),
+    function (req, res) {
+        //console.log(req.user.name + ' ' + req.user.email + ' ' + req.user.colid + ' ' + req.user.photo);
+        res.cookie("user", req.user.email);
+        res.cookie("name", req.user.name);
+        res.cookie("department", req.user.department);
+        res.cookie("colid", req.user.colid);
+        res.cookie("photo", req.user.photo);
+        //res.cookie("colid",String([role.colid]));
+        res.cookie("role", req.user.role);
+        if (req.user.colid == 25) {
+            res.redirect('/logincol');
+        } else {
+            res.cookie("regno", req.user.regno);
+            res.cookie("semester", req.user.semester);
+            res.cookie("section", req.user.section);
+            //res.redirect('/dashboard');
+            if (req.user.role == "Student") {
+                req.flash("success", "You are logged in successfully");
+                res.redirect('/viewclassstud');
+            } else {
+                req.flash("success", "You are logged in Successfully");
+                res.redirect('/dashboard');
+            }
+        }
+    });
+
+
 
 
 
@@ -1257,106 +750,106 @@ app.get('/auth/facebook/callback',
 // });
 
 app.get('/ejs2', (req, res) => {
-  //console.log(req.body);
-  res.status(200).render('d12', {
-    title: 'EJS pages'
-  });
+    //console.log(req.body);
+    res.status(200).render('d12', {
+        title: 'EJS pages'
+    });
 
 }).post('/ejs2', (req, res, next) => {
-  //console.log(req.body.name);
-  res.status(200).render('d12', {
-    title: 'EJS pages'
-  });
+    //console.log(req.body.name);
+    res.status(200).render('d12', {
+        title: 'EJS pages'
+    });
 
 });
 
 app.get('/chat23', (req, res) => {
-  res.sendFile(__dirname + '/public/socket1.html');
+    res.sendFile(__dirname + '/public/socket1.html');
 });
 
 app.get('/chat', (req, res) => {
-  const user1 = req.cookies['user'];
-  res.status(200).render('chat', {
-    title: 'Community Chat Window',
-    user1: user1
-  });
+    const user1 = req.cookies['user'];
+    res.status(200).render('chat', {
+        title: 'Community Chat Window',
+        user1: user1
+    });
 });
 
 app.get('/chat1', (req, res) => {
-  const user1 = req.cookies['user'];
-  const colid = req.cookies['colid'];
-  res.status(200).render('chat1', {
-    title: 'Community Chat Window',
-    user1: user1,
-    colid: colid
-  });
+    const user1 = req.cookies['user'];
+    const colid = req.cookies['colid'];
+    res.status(200).render('chat1', {
+        title: 'Community Chat Window',
+        user1: user1,
+        colid: colid
+    });
 });
 
 app.get('/classchat/:id', (req, res) => {
-  const user1 = req.cookies['user'];
-  const colid = req.cookies['colid'];
+    const user1 = req.cookies['user'];
+    const colid = req.cookies['colid'];
 
-  res.status(200).render('classchat', {
-    title: 'Classchat Online',
-    user1: user1,
-    colid: colid,
-    classid: req.params.id
-  });
+    res.status(200).render('classchat', {
+        title: 'Classchat Online',
+        user1: user1,
+        colid: colid,
+        classid: req.params.id
+    });
 });
 
 app.get('/classchatstud/:id', (req, res) => {
-  const user1 = req.cookies['user'];
-  const colid = req.cookies['colid'];
+    const user1 = req.cookies['user'];
+    const colid = req.cookies['colid'];
 
-  res.status(200).render('classchatstud', {
-    title: 'Classchat Online',
-    user1: user1,
-    colid: colid,
-    classid: req.params.id
-  });
+    res.status(200).render('classchatstud', {
+        title: 'Classchat Online',
+        user1: user1,
+        colid: colid,
+        classid: req.params.id
+    });
 });
 
 app.get('/classchatapp/:id', (req, res) => {
 
-  res.status(200).render('classchatstud', {
-    title: 'Classchat Online',
-    user1: req.query.user,
-    colid: req.query.colid,
-    classid: req.params.id
-  });
+    res.status(200).render('classchatstud', {
+        title: 'Classchat Online',
+        user1: req.query.user,
+        colid: req.query.colid,
+        classid: req.params.id
+    });
 });
 
 app.get('/classboard/:id', (req, res) => {
-  const user1 = req.cookies['user'];
-  const colid = req.cookies['colid'];
+    const user1 = req.cookies['user'];
+    const colid = req.cookies['colid'];
 
-  res.status(200).render('classboard4', {
-    title: 'Classboard Online',
-    user1: user1,
-    colid: colid,
-    classid: req.params.id
-  });
+    res.status(200).render('classboard4', {
+        title: 'Classboard Online',
+        user1: user1,
+        colid: colid,
+        classid: req.params.id
+    });
 });
 
 app.get('/classboardstud/:id', (req, res) => {
-  const user1 = req.cookies['user'];
-  const colid = req.cookies['colid'];
-  res.status(200).render('classboard4stud', {
-    title: 'Classboard Online',
-    user1: user1,
-    colid: colid,
-    classid: req.params.id
-  });
+    const user1 = req.cookies['user'];
+    const colid = req.cookies['colid'];
+    res.status(200).render('classboard4stud', {
+        title: 'Classboard Online',
+        user1: user1,
+        colid: colid,
+        classid: req.params.id
+    });
 });
 
 app.get('/webvideo1', (req, res) => {
-  const user1 = req.cookies['user'];
-  const colid = req.cookies['colid'];
-  res.status(200).render('webvideo1', {
-    title: 'Web video Online',
-    user1: user1,
-    colid: colid
-  });
+    const user1 = req.cookies['user'];
+    const colid = req.cookies['colid'];
+    res.status(200).render('webvideo1', {
+        title: 'Web video Online',
+        user1: user1,
+        colid: colid
+    });
 });
 
 // app.get('/', (req,res) => {
@@ -1390,22 +883,22 @@ const multer = require('multer');
 const aws = require('aws-sdk');
 const multerS3 = require('multer-s3');
 aws.config.update({
-  accessKey: process.env.AWS_ACCESS_KEY_ID, // 'AKIAUAC655EBDFT6YKIL',
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, // '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',
-  region: 'us-east-2'
+    accessKey: process.env.AWS_ACCESS_KEY_ID, // 'AKIAUAC655EBDFT6YKIL',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, // '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',
+    region: 'us-east-2'
 });
 
 const s3 = new aws.S3({});
 
 var upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: 'campustech1',
-    key: function (req, file, cb) {
-      //console.log(file);
-      cb(null, Date.now().toString() + '-' + file.originalname); //use Date.now() for unique file keys
-    }
-  })
+    storage: multerS3({
+        s3: s3,
+        bucket: 'campustech1',
+        key: function (req, file, cb) {
+            //console.log(file);
+            cb(null, Date.now().toString() + '-' + file.originalname); //use Date.now() for unique file keys
+        }
+    })
 });
 
 //app.post('/uploadfile1', upload.array('upl',1), fucontroller.postfileupload);
@@ -1435,8 +928,6 @@ app.use('/addpatent', rpatadd);
 app.use('/viewpatent', rpatview);
 app.use('/editpatent', rpatedit);
 app.use('/deletepatent', rpatdel);
-app.get('/api/v2/universityadmissionreportds', universityadmissionreportdsController.universityadmissionreportds);
-app.get('/api/v2/admissioncoursewisereportds', admissioncoursewisereportdsController.admissioncoursewisereportds);
 
 app.use('/addcompany', rcompanyadd);
 app.use('/viewcompany', rcompanyview);
@@ -1684,14 +1175,6 @@ app.use('/deleteuser', rdeleteuser);
 
 app.use('/selectprograminst', rselectprograminst);
 
-// Program Counselor Master
-const programcounselorcontrollerds = require('./controllers/programcounselorcontrollerds');
-app.post('/api/v2/createprogramcounselords', programcounselorcontrollerds.createprogramcounselords);
-app.get('/api/v2/getallprogramcounselords', programcounselorcontrollerds.getallprogramcounselords);
-app.get('/api/v2/getprogramcounselorbyidds/:id', programcounselorcontrollerds.getprogramcounselorbyidds);
-app.post('/api/v2/updateprogramcounselords', programcounselorcontrollerds.updateprogramcounselords);
-app.get('/api/v2/deleteprogramcounselords/:id', programcounselorcontrollerds.deleteprogramcounselords);
-
 const naaccontroller = require('./controllers/naacpivotcontroller');
 app.get('/naacpivot', naaccontroller.viewnaacpivot);
 app.post('/filterclassdata', naaccontroller.filterclassdata);
@@ -1703,8 +1186,6 @@ app.get('/generateotp', naaccontroller.generateotp);
 app.get('/getcoattainment', naaccontroller.getco);
 app.get('/viewstudcount', naaccontroller.getstudcount);
 app.get('/getcourseattendance/:id', naaccontroller.getcourseattendance);
-
-// app.use(rleadadmin);
 
 
 const apicontroller = require('./controllers/apicontroller');
@@ -1768,11 +1249,6 @@ app.get('/api/v1/rvalueaddedcourses', rapicontroller.getviewaddonc);
 app.get('/api/v1/rvalueaddedclass', rapicontroller.getviewvacclass);
 app.get('/api/v1/rgetvacattend/:id', rapicontroller.getvacattend);
 app.get('/api/v1/renrollstud', rapicontroller.getenrollstud);
-
-// Report Card Config Routes
-const schreportcardconfigdsctlr = require('./controllers/schreportcardconfigdsctlr');
-app.post('/api/v2/saveschreportconfds', schreportcardconfigdsctlr.saveschreportconfds);
-app.get('/api/v2/getschreportconfds', schreportcardconfigdsctlr.getschreportconfds);
 app.get('/api/v1/rgetvacenroll', rapicontroller.getvacenroll);
 app.get('/api/v1/rgetvacclasstoday', rapicontroller.getvacclasstoday);
 app.get('/api/v1/rgetviewclub', rapicontroller.getviewclub);
@@ -1780,7 +1256,7 @@ app.get('/api/v1/rgetcirculars', rapicontroller.getcirculars);
 app.get('/api/v1/rgetassignmentlist', rapicontroller.getassignmentlist);
 
 app.get("/where", (req, res) => {
-  res.status(301).redirect("https://www.google.com")
+    res.status(301).redirect("https://www.google.com")
 });
 
 
@@ -4018,9 +3494,6 @@ app.get('/api/v2/getappbyyear', aimdebcontroller.getappbyyear);
 app.post('/api/v2/createApplicationForm', aimdebcontroller.createApplicationForm);
 app.get('/api/v2/getApplicationForm', aimdebcontroller.getApplicationForm);
 
-const applicationcontrollerann = require('./controllers/applicationcontrollerann');
-app.post('/api/v2/createApplicationFormann', applicationcontrollerann.createApplication);
-
 const applicationreviewctlr = require('./controllers/applicationreviewctlr');
 
 app.get("/api/v2/checkregno", applicationreviewctlr.checkregno);
@@ -4149,7 +3622,6 @@ app.get("/api/v2/report/issued-monthly", librarymodelctlr.getIssuedMonthly);
 app.get("/api/v2/report/status-breakdown", librarymodelctlr.getStatusBreakdown);
 app.get("/api/v2/report/top-books", librarymodelctlr.getTopBooks);
 app.get("/api/v2/report/library-wise", librarymodelctlr.getLibraryWise);
-app.post("/api/v2/books/bulk-upload", librarymodelctlr.bulkCreateBooks);
 // app.post("/api/v2/login", librarymodelctlr.login);
 
 // app.post("/api/v2/createledgerstud", librarymodelctlr.createledgerstud);
@@ -4311,13 +3783,6 @@ app.post("/api/v2/createenrollment", classattendancectlr.createenrollment);
 app.post("/api/v2/markclassattendance", classattendancectlr.markclassattendance);
 app.get("/api/v2/getattendancebyclass", classattendancectlr.getattendancebyclass);
 
-const classattendanceds2 = require("./controllers/classattendanceds2.js");
-
-app.get("/api/v2/getabsentstudents", classattendanceds2.getabsentstudentsds);
-app.get("/api/v2/getstudentattendance", classattendanceds2.getstudentattendanceds);
-app.get("/api/v2/getrequestedattendance", classattendanceds2.getrequestedattendanceds);
-app.post("/api/v2/updateattendancerequest", classattendanceds2.updateattendancerequestds);
-app.post("/api/v2/marksupplementaryattendance", classattendanceds2.marksupplementaryattendanceds);
 
 const rubricmodulectlr = require("./controllers/rubricmodulectlr");
 
@@ -4554,22 +4019,7 @@ app.delete("/api/v2/deletedeductionj", salarycontlr.deletedeductionj);
 
 app.get("/api/v2/getipj", salarycontlr.getipj);
 
-
-// ======================
-// LAW MANAGEMENT SYSTEM ENDPOINTS
-// ======================
-
 const lawdsctlr = require("./controllers/lawdsctlr.js");
-const lawcourtdsctlr = require("./controllers/lawcourtdsctlr.js");
-const lawcasetypedsctlr = require("./controllers/lawcasetypedsctlr.js");
-const lawclerkdsctlr = require("./controllers/lawclerkdsctlr.js");
-const lawjrlawyerdsctlr = require("./controllers/lawjrlawyerdsctlr.js");
-const laweditlogdsctlr = require("./controllers/laweditlogdsctlr.js");
-const lawopponentlawyerdsctlr = require("./controllers/lawopponentlawyerdsctlr.js");
-const lawopponentclerkdsctlr = require("./controllers/lawopponentclerkdsctlr.js");
-const lawdatefordsctlr = require("./controllers/lawdatefordsctlr.js");
-const lawappointmentdsctlr = require("./controllers/lawappointmentdsctlr.js");
-const lawpaymentdsctlr = require("./controllers/lawpaymentdsctlr.js");
 
 // User Authentication Endpoints
 app.post("/api/v2/registeruser", lawdsctlr.registeruser);
@@ -4584,182 +4034,9 @@ app.get("/api/v2/getallcases", lawdsctlr.getallcases);
 app.get("/api/v2/getcasebyid", lawdsctlr.getcasebyid);
 app.post("/api/v2/updatecase", lawdsctlr.updatecase);
 app.get("/api/v2/deletecase", lawdsctlr.deletecase);
+
+// Dashboard Endpoint
 app.get("/api/v2/getdashboardstats", lawdsctlr.getdashboardstats);
-app.get("/api/v2/searchcases", lawdsctlr.searchcases);
-app.get("/api/v2/getupcomingcases", lawdsctlr.getupcomingcases);
-
-// ======================
-// SETTINGS - COURT MANAGEMENT
-// ======================
-app.post("/api/v2/createlawcourtds", lawcourtdsctlr.createlawcourtds);
-app.get("/api/v2/getalllawcourtds", lawcourtdsctlr.getalllawcourtds);
-app.get("/api/v2/getlawcourtdsbyid", lawcourtdsctlr.getlawcourtdsbyid);
-app.post("/api/v2/updatelawcourtds", lawcourtdsctlr.updatelawcourtds);
-app.get("/api/v2/deletelawcourtds", lawcourtdsctlr.deletelawcourtds);
-
-// ======================
-// SETTINGS - CASE TYPE MANAGEMENT
-// ======================
-app.post("/api/v2/createlawcasetypeds", lawcasetypedsctlr.createlawcasetypeds);
-app.get("/api/v2/getalllawcasetypeds", lawcasetypedsctlr.getalllawcasetypeds);
-app.get("/api/v2/getlawcasetypedsbyid", lawcasetypedsctlr.getlawcasetypedsbyid);
-app.post("/api/v2/updatelawcasetypeds", lawcasetypedsctlr.updatelawcasetypeds);
-app.get("/api/v2/deletelawcasetypeds", lawcasetypedsctlr.deletelawcasetypeds);
-
-// ======================
-// SETTINGS - LAW CLERK MANAGEMENT
-// ======================
-app.post("/api/v2/createlawclerkds", lawclerkdsctlr.createlawclerkds);
-app.get("/api/v2/getalllawclerkds", lawclerkdsctlr.getalllawclerkds);
-app.get("/api/v2/getlawclerkdsbyid", lawclerkdsctlr.getlawclerkdsbyid);
-app.post("/api/v2/updatelawclerkds", lawclerkdsctlr.updatelawclerkds);
-app.get("/api/v2/deletelawclerkds", lawclerkdsctlr.deletelawclerkds);
-
-// ======================
-// SETTINGS - JR LAWYER MANAGEMENT
-// ======================
-app.post("/api/v2/createlawjrlawyerds", lawjrlawyerdsctlr.createlawjrlawyerds);
-app.get("/api/v2/getalllawjrlawyerds", lawjrlawyerdsctlr.getalllawjrlawyerds);
-app.get("/api/v2/getlawjrlawyerdsbyid", lawjrlawyerdsctlr.getlawjrlawyerdsbyid);
-app.post("/api/v2/updatelawjrlawyerds", lawjrlawyerdsctlr.updatelawjrlawyerds);
-app.get("/api/v2/deletelawjrlawyerds", lawjrlawyerdsctlr.deletelawjrlawyerds);
-
-// ======================
-// SETTINGS - OPPONENT LAWYER MANAGEMENT
-// ======================
-app.post("/api/v2/createlawopponentlawyerds", lawopponentlawyerdsctlr.createlawopponentlawyerds);
-app.get("/api/v2/getalllawopponentlawyerds", lawopponentlawyerdsctlr.getalllawopponentlawyerds);
-app.get("/api/v2/getlawopponentlawyerdsbyid", lawopponentlawyerdsctlr.getlawopponentlawyerdsbyid);
-app.post("/api/v2/updatelawopponentlawyerds", lawopponentlawyerdsctlr.updatelawopponentlawyerds);
-app.get("/api/v2/deletelawopponentlawyerds", lawopponentlawyerdsctlr.deletelawopponentlawyerds);
-
-// ======================
-// SETTINGS - OPPONENT CLERK MANAGEMENT
-// ======================
-app.post("/api/v2/createlawopponentclerkds", lawopponentclerkdsctlr.createlawopponentclerkds);
-app.get("/api/v2/getalllawopponentclerkds", lawopponentclerkdsctlr.getalllawopponentclerkds);
-app.get("/api/v2/getlawopponentclerkdsbyid", lawopponentclerkdsctlr.getlawopponentclerkdsbyid);
-app.post("/api/v2/updatelawopponentclerkds", lawopponentclerkdsctlr.updatelawopponentclerkds);
-app.get("/api/v2/deletelawopponentclerkds", lawopponentclerkdsctlr.deletelawopponentclerkds);
-
-// ======================
-// SETTINGS - DATE FOR MANAGEMENT
-// ======================
-app.post("/api/v2/createdatefords", lawdatefordsctlr.createdatefords);
-app.get("/api/v2/getalldatefords", lawdatefordsctlr.getalldatefords);
-app.post("/api/v2/updatedatefords", lawdatefordsctlr.updatedatefords);
-app.get("/api/v2/deletedatefords", lawdatefordsctlr.deletedatefords);
-
-// ======================
-// APPOINTMENT MANAGEMENT
-// ======================
-app.post("/api/v2/createlawappointmentds", lawappointmentdsctlr.createlawappointmentds);
-app.get("/api/v2/getalllawappointmentds", lawappointmentdsctlr.getalllawappointmentds);
-app.get("/api/v2/getlawappointmentdsbyid", lawappointmentdsctlr.getlawappointmentdsbyid);
-app.post("/api/v2/updatelawappointmentds", lawappointmentdsctlr.updatelawappointmentds);
-app.get("/api/v2/deletelawappointmentds", lawappointmentdsctlr.deletelawappointmentds);
-
-// ======================
-// PAYMENT MANAGEMENT
-// ======================
-app.post("/api/v2/createpayment", lawpaymentdsctlr.createpayment);
-app.get("/api/v2/getallpayments", lawpaymentdsctlr.getallpayments);
-app.post("/api/v2/addtransaction", lawpaymentdsctlr.addtransaction);
-app.get("/api/v2/gettransactionsbypaymentid", lawpaymentdsctlr.gettransactionsbypaymentid);
-app.get("/api/v2/getpaymentreports", lawpaymentdsctlr.getpaymentreports);
-
-// ======================
-// EDIT LOG HISTORY
-// ======================
-app.post("/api/v2/createlaweditlogds", laweditlogdsctlr.createlaweditlogds);
-app.get("/api/v2/getlaweditlogdsbycaseid", laweditlogdsctlr.getlaweditlogdsbycaseid);
-app.get("/api/v2/getalllaweditlogds", laweditlogdsctlr.getalllaweditlogds);
-
-
-// const lawdsctlr = require("./controllers/lawdsctlr.js");
-// const lawcourtdsctlr = require("./controllers/lawcourtdsctlr.js");
-// const lawcasetypedsctlr = require("./controllers/lawcasetypedsctlr.js");
-// const lawclerkdsctlr = require("./controllers/lawclerkdsctlr.js");
-// const lawjrlawyerdsctlr = require("./controllers/lawjrlawyerdsctlr.js");
-// const laweditlogdsctlr = require("./controllers/laweditlogdsctlr.js");
-
-// // User Authentication Endpoints
-// app.post("/api/v2/registeruser", lawdsctlr.registeruser);
-// app.post("/api/v2/loginuser", lawdsctlr.loginuser);
-// app.get("/api/v2/getuserprofile", lawdsctlr.getuserprofile);
-// app.post("/api/v2/updateuserprofile", lawdsctlr.updateuserprofile);
-// app.post("/api/v2/changepassword", lawdsctlr.changepassword);
-
-// // Case Management Endpoints
-// app.post("/api/v2/createcase", lawdsctlr.createcase);
-// app.get("/api/v2/getallcases", lawdsctlr.getallcases);
-// app.get("/api/v2/getcasebyid", lawdsctlr.getcasebyid);
-// app.post("/api/v2/updatecase", lawdsctlr.updatecase);
-// app.get("/api/v2/deletecase", lawdsctlr.deletecase);
-// app.get("/api/v2/getdashboardstats", lawdsctlr.getdashboardstats);
-// app.get("/api/v2/searchcases", lawdsctlr.searchcases);
-// app.get("/api/v2/getupcomingcases", lawdsctlr.getupcomingcases);
-
-// // ======================
-// // SETTINGS - COURT MANAGEMENT
-// // ======================
-// app.post("/api/v2/createlawcourtds", lawcourtdsctlr.createlawcourtds);
-// app.get("/api/v2/getalllawcourtds", lawcourtdsctlr.getalllawcourtds);
-// app.get("/api/v2/getlawcourtdsbyid", lawcourtdsctlr.getlawcourtdsbyid);
-// app.post("/api/v2/updatelawcourtds", lawcourtdsctlr.updatelawcourtds);
-// app.get("/api/v2/deletelawcourtds", lawcourtdsctlr.deletelawcourtds);
-
-// // ======================
-// // SETTINGS - CASE TYPE MANAGEMENT
-// // ======================
-// app.post("/api/v2/createlawcasetypeds", lawcasetypedsctlr.createlawcasetypeds);
-// app.get("/api/v2/getalllawcasetypeds", lawcasetypedsctlr.getalllawcasetypeds);
-// app.get("/api/v2/getlawcasetypedsbyid", lawcasetypedsctlr.getlawcasetypedsbyid);
-// app.post("/api/v2/updatelawcasetypeds", lawcasetypedsctlr.updatelawcasetypeds);
-// app.get("/api/v2/deletelawcasetypeds", lawcasetypedsctlr.deletelawcasetypeds);
-
-// // ======================
-// // SETTINGS - LAW CLERK MANAGEMENT
-// // ======================
-// app.post("/api/v2/createlawclerkds", lawclerkdsctlr.createlawclerkds);
-// app.get("/api/v2/getalllawclerkds", lawclerkdsctlr.getalllawclerkds);
-// app.get("/api/v2/getlawclerkdsbyid", lawclerkdsctlr.getlawclerkdsbyid);
-// app.post("/api/v2/updatelawclerkds", lawclerkdsctlr.updatelawclerkds);
-// app.get("/api/v2/deletelawclerkds", lawclerkdsctlr.deletelawclerkds);
-
-// // ======================
-// // SETTINGS - JR LAWYER MANAGEMENT
-// // ======================
-// app.post("/api/v2/createlawjrlawyerds", lawjrlawyerdsctlr.createlawjrlawyerds);
-// app.get("/api/v2/getalllawjrlawyerds", lawjrlawyerdsctlr.getalllawjrlawyerds);
-// app.get("/api/v2/getlawjrlawyerdsbyid", lawjrlawyerdsctlr.getlawjrlawyerdsbyid);
-// app.post("/api/v2/updatelawjrlawyerds", lawjrlawyerdsctlr.updatelawjrlawyerds);
-// app.get("/api/v2/deletelawjrlawyerds", lawjrlawyerdsctlr.deletelawjrlawyerds);
-
-// // ======================
-// // EDIT LOG HISTORY
-// // ======================
-// app.post("/api/v2/createlaweditlogds", laweditlogdsctlr.createlaweditlogds);
-// app.get("/api/v2/getlaweditlogdsbycaseid", laweditlogdsctlr.getlaweditlogdsbycaseid);
-// app.get("/api/v2/getalllaweditlogds", laweditlogdsctlr.getalllaweditlogds);
-
-
-// // User Authentication Endpoints
-// app.post("/api/v2/registeruser", lawdsctlr.registeruser);
-// app.post("/api/v2/loginuser", lawdsctlr.loginuser);
-// app.get("/api/v2/getuserprofile", lawdsctlr.getuserprofile);
-// app.post("/api/v2/updateuserprofile", lawdsctlr.updateuserprofile);
-// app.post("/api/v2/changepassword", lawdsctlr.changepassword);
-
-// // Case Management Endpoints
-// app.post("/api/v2/createcase", lawdsctlr.createcase);
-// app.get("/api/v2/getallcases", lawdsctlr.getallcases);
-// app.get("/api/v2/getcasebyid", lawdsctlr.getcasebyid);
-// app.post("/api/v2/updatecase", lawdsctlr.updatecase);
-// app.get("/api/v2/deletecase", lawdsctlr.deletecase);
-
-// // Dashboard Endpoint
-// app.get("/api/v2/getdashboardstats", lawdsctlr.getdashboardstats);
 
 
 // // User Authentication Endpoints
@@ -4778,9 +4055,6 @@ app.get("/api/v2/getalllaweditlogds", laweditlogdsctlr.getalllaweditlogds);
 
 // // Dashboard Endpoint
 // app.get("/api/v2/getdashboardstats", lawdsctlr.getdashboardstats);
-
-const institutionsctlrds = require("./controllers/institutionsctlrds.js")
-app.get("/api/v2/checkinstitutionsds", institutionsctlrds.checkInstitutionsds);
 
 const generatecodedsctlr = require("./controllers/generatecodedsctlr");
 app.post("/api/v2/generateinstitutecode", generatecodedsctlr.generateinstitutecode);
@@ -5003,239 +4277,13 @@ app.get("/api/v2/generateReport", subgroupreportctlr.generateReport);
 app.get("/api/v2/getSummaryReport", subgroupreportctlr.getSummaryReport);
 app.get("/api/v2/exportReport", subgroupreportctlr.exportReport);
 
-// new fees report endpoint
-const feeController = require('./controllers/feeReportController');
-
-app.get('/api/fees-report/years', feeController.getYears);
-app.get('/api/fees-report/programs', feeController.getPrograms);
-app.get('/api/fees-report/semester-summary', feeController.getSemesterSummary);
-app.get('/api/fees-report/semester-details', feeController.getSemesterDetails);
-app.get('/api/fees-report/program-summary', feeController.getProgramSummary);
-app.get('/api/fees-report/program-details', feeController.getProgramDetails);
-
-
-const oireportController = require('./controllers/oireportController')
-
-app.get('/api/years', oireportController.getAcademicYears)
-app.get('/api/programs', oireportController.getPrograms)
-app.get('/api/studentLedgerSummary', oireportController.studentLedgerSummary)
-app.get('/api/studentLedgerDetails', oireportController.studentLedgerDetails)
-app.get('/api/programFeeSummary', oireportController.programFeeSummary)
-app.get('/api/programFeeDetails', oireportController.programFeeDetails)
-
-
-const oidashboardController = require("./controllers/oidashboardController");
-
-app.get("/api/dashboard/revenue", oidashboardController.revenueDashboard);
-
-const oifreportController = require("./controllers/oifreportController");
-
-// REPORT ROUTES
-
-app.post("/api/report/feesummary", oifreportController.getFeeSummary);
-app.post("/api/report/feedetails", oifreportController.getFeeDetails);
-
-// DROPDOWNS
-
-app.get("/api/report/years", oifreportController.getAcademicYears);
-app.get("/api/report/programs", oifreportController.getPrograms);
-
-
-const oicrmcontroller = require('./controllers/oicrmcontroller')
-
-app.get('/api/reports', oicrmcontroller.getReports)
-
-app.get('/api/export/excel', oicrmcontroller.exportExcel)
-
-app.get('/api/export/pdf', oicrmcontroller.exportPDF)
-
-const crmdsreportController = require("./controllers/crmdsReportController");
-
-app.post(
-  "/api/v2/crmds/lead-report",
-  crmdsreportController.crmdsLeadReport
-);
-app.post(
-  "/api/v2/crmds/upcoming-followup-report",
-  crmdsreportController.crmdsUpcomingFollowupReport
-);
-app.post(
-  "/api/v2/crmds/get-counsellors",
-  crmdsreportController.crmdsGetCounsellors
-);
-
-app.post(
-  "/api/v2/crmds/overdue-leads-report",
-  crmdsreportController.crmdsOverdueLeadsReport
-);
-
-app.post(
-  "/api/v2/crmds/counsellorwiseleads",
-  crmdsreportController.crmdsCounsellorWiseTotalLeadsReport
-);
-
-app.post(
-  "/api/v2/crmds/sourcewise-report",
-  crmdsreportController.crmdsSourceWiseLeadsReport
-);
-
-app.post(
-  "/api/v2/crmds/pipelinewise-report",
-  crmdsreportController.crmdsPipelineStageWiseReport
-);
-
-/* Date Wise New Leads */
-app.post(
-  "/api/v2/crmds/datewise-new-leads",
-  crmdsreportController.crmdsDateWiseNewLeadsReport
-);
-
-/* New Reports V2 */
-app.post(
-  "/api/v2/crmds/lead-status-stage-report",
-  crmdsreportController.crmdsLeadStatusStageReportV2
-);
-app.post(
-  "/api/v2/crmds/counsellor-performance-report",
-  crmdsreportController.crmdsCounsellorPerformanceReportV2
-);
-app.post(
-  "/api/v2/crmds/daily-calling-report",
-  crmdsreportController.crmdsDailyCallingReportV2
-);
-app.post(
-  "/api/v2/crmds/untouched-leads-report",
-  crmdsreportController.crmdsUntouchedLeadReportV2
-);
-app.post(
-  "/api/v2/crmds/follow-up-due-report",
-  crmdsreportController.crmdsFollowUpDueReportV2
-);
-app.post(
-  "/api/v2/crmds/sourcewise-enhanced-report",
-  crmdsreportController.crmdsSourceWiseEnhancedReportV2
-);
-app.post(
-  "/api/v2/crmds/conversion-report",
-  crmdsreportController.crmdsConversionReportV2
-);
-
-
-const oicrmreportsController = require('./controllers/oicrmfReportsController')
-
-/* REPORT API */
-
-app.get(
-  '/api/oicrmf/reports',
-  oicrmreportsController.oicrmfGetReports
-)
-
-/* EXPORT EXCEL */
-
-app.get(
-  '/api/oicrmf/export/excel',
-  oicrmreportsController.oicrmfExportExcel
-)
-
-
-const dailyfeescontroller = require('./controllers/dailyFeesController');
-
-app.get("/oicrmf/dropdowns", dailyfeescontroller.getDropdownData);
-app.get("/oicrmf/dailyfees/summary", dailyfeescontroller.getSummaryReport);
-app.get("/oicrmf/dailyfees/details", dailyfeescontroller.getDetailedReport);
-
-const orcrmReportController2 = require("./controllers/oicrmcreportcontroller2");
-app.get("/pipeline-summary", orcrmReportController2.getPipelineSummary);
-
-app.get("/institution-details", orcrmReportController2.getInstitutionDetails);
-
-// ======================================================
-// Amisha's Code Alumni & Hostel and Admission Form
-// =======================================================
-
-const chatCtrl = require("./controllers/chatCtrl");
-const { registerMentor, getAllMentors, getMentorById, updateMentor, deleteMentor, saveDomainConfig, getDomains } = require("./controllers/mentorctrlag");
-
-
-app.post("/api/v2/chat/send-message", chatCtrl.sendMessage);
-app.get("/api/v2/chat/history", chatCtrl.getChatHistory);
-app.get("/api/v2/chat/list", chatCtrl.getChatList);
-app.post("/api/v2/chat/mark-read", chatCtrl.markAsRead);
-app.get("/api/v2/chat/mentor-history", chatCtrl.getMentorChatHistory);
-app.post("/api/v2/mentors", registerMentor);
-app.get("/api/v2/mentors", getAllMentors);
-app.post("/api/v2/mentors/domains", saveDomainConfig);
-app.get("/api/v2/mentors/domains", getDomains);
-app.post("/api/v2/mentors/update/:id", updateMentor);
-
-app.get("/api/v2/mentors/delete/:id", deleteMentor);
-
-app.get("/api/v2/mentors/:id", getMentorById);
-//hostel
-
-const {
-  createHostel,
-  bulkUploadHostel,
-  getAllHostels,
-  getAllHostelsNoPagination,
-  getHostelById,
-  updateHostel,
-  deleteHostel,
-  deleteAllHostels,
-  downloadReport
-} = require("./controllers/hostelctrlag");
-app.post("/api/v2/hostel", createHostel);
-app.post("/api/v2/hostel/bulk-upload", bulkUploadHostel);
-app.post("/api/v2/hostel/update/:id", updateHostel);
-
-// REPORT
-app.get("/api/v2/hostel/report", downloadReport);
-
-// READ
-app.get("/api/v2/hostel", getAllHostels);
-app.get("/api/v2/hostel/:id", getHostelById);
-app.get("/api/v2/hostel/delete/:id", deleteHostel);
-app.get("/api/v2/hostel/deleteall", deleteAllHostels);
-app.get("/api/v2/hostel/all", getAllHostelsNoPagination);
-//Admission forms
-const applicationCtrl = require('./controllers/applicationController');
-// Admission Form (template-based)
-app.post('/api/v2/createApplicationForm', applicationCtrl.createApplication);
-app.get('/api/v2/getApplicationForm', applicationCtrl.getFormMetadata);
-// Subject routes
-const subjectCtrl = require('./controllers/subjectController');
-app.post('/api/v2/subjects', subjectCtrl.createSubject);
-app.get('/api/v2/subjects', subjectCtrl.getAllSubjects);
-app.get('/api/v2/subjects/:id', subjectCtrl.getSubjectById);
-app.put('/api/v2/subjects/:id', subjectCtrl.updateSubject);
-app.delete('/api/v2/subjects/:id', subjectCtrl.deleteSubject);
-
-// Form metadata for admission form (programs + subjects by colid)
-app.get('/api/v2/formMetadata', subjectCtrl.getFormMetadata);
-
-
-const crmh1ctlrag = require('./controllers/crmh1ctlrag1.js');
-app.get('/api/v2/searchusersag', crmh1ctlrag.searchusersag);
-app.get('/api/v2/getallleaagag', crmh1ctlrag.getallleadsag);
-app.get('/api/v2/getallleadsag', crmh1ctlrag.getallleadsag);
-app.get('/api/v2/getleadbyidag/:id', crmh1ctlrag.getleadbyidag);
-app.get('/api/v2/gethotleaagag', crmh1ctlrag.gethotleaagag);
-app.get('/api/v2/gettodayfollowupsag', crmh1ctlrag.gettodayfollowupsag);
-app.get('/api/v2/getoverduefollowupsag', crmh1ctlrag.getoverduefollowupsag);
-app.get('/api/v2/getleadanalyticsag', crmh1ctlrag.getleadanalyticsag);
-app.get('/api/v2/checkduplicateag', crmh1ctlrag.checkduplicateag);
-app.get('/api/v2/getcrmhdashboard', crmh1ctlrag.getCrmhDashboard);
-app.get('/api/v2/getallsourcesag', crmh1ctlrag.getallsourcesag);
-app.get('/api/v2/getallprogramcounselorag', crmh1ctlrag.getallprogramcounselorag);
-
-
-
-
 const ds1userctlr = require("./controllers/ds1userctlr");
 const ds1profileeditconfigctlr = require("./controllers/ds1profileeditconfigctlr");
 const ds1profileeditlogctlr = require("./controllers/ds1profileeditlogctlr");
 const ds1datareportctlr = require("./controllers/ds1datareportctlr");
 
+
+app.get("/api/v2/ds1getcounsellors", ds1userctlr.ds1getcounsellors);
 
 // ==========================================
 // USER MANAGEMENT ROUTES (ADMIN) - ds1 prefix
@@ -5249,10 +4297,6 @@ app.get("/api/v2/ds1deleteuser", ds1userctlr.ds1deleteuser);
 app.get("/api/v2/ds1bulkdeleteuser", ds1userctlr.ds1bulkdeleteuser);
 app.get("/api/v2/ds1getuserstats", ds1userctlr.ds1getuserstats);
 app.get("/api/v2/ds1getfilteroptions", ds1userctlr.ds1getfilteroptions);
-app.get("/api/v2/ds1getpurchaseusers", ds1userctlr.ds1getpurchaseusers);
-
-// new counsellor get api
-app.get("/api/v2/ds1getcounsellors", ds1userctlr.ds1getcounsellors);
 
 // ==========================================
 // STUDENT PROFILE ROUTES - ds1 prefix
@@ -5286,73 +4330,6 @@ app.get("/api/v2/ds1getmissingfieldsreport", ds1datareportctlr.ds1getmissingfiel
 app.get("/api/v2/ds1getstudentswithoutphotos", ds1datareportctlr.ds1getstudentswithoutphotos);
 app.post("/api/v2/ds1bulkupdatephotosfromurl", ds1datareportctlr.ds1bulkupdatephotosfromurl);
 
-// payment gateway
-
-const paymentgatewaydsctlr = require("./controllers/paymentgatewaydsctlr.js");
-const platformchargesdsctlr = require("./controllers/platformchargesdsctlr.js");
-const coupondsctlr = require("./controllers/coupondsctlr.js");
-const paymentorderdsctlr = require("./controllers/paymentorderdsctlr.js");
-
-// Payment Gateway Routes
-app.post("/api/v2/paymentgatewayds/create", paymentgatewaydsctlr.createpaymentgatewaydsdatabyds);
-app.post("/api/v2/paymentgatewayds/get", paymentgatewaydsctlr.getpaymentgatewaydsdatabyds);
-app.post("/api/v2/paymentgatewayds/getall", paymentgatewaydsctlr.getallpaymentgatewaydsdatabyds);
-app.post("/api/v2/paymentgatewayds/update", paymentgatewaydsctlr.updatepaymentgatewaydsdatabyds);
-app.get("/api/v2/paymentgatewayds/delete", paymentgatewaydsctlr.deletepaymentgatewaydsdatabyds);
-app.post("/api/v2/paymentgatewayds/toggle", paymentgatewaydsctlr.togglepaymentgatewaydsdatabyds);
-
-// Platform Charges Routes
-app.post("/api/v2/platformchargesds/create", platformchargesdsctlr.createplatformchargesdsdatabyds);
-app.post("/api/v2/platformchargesds/get", platformchargesdsctlr.getplatformchargesdsdatabyds);
-app.post("/api/v2/platformchargesds/getactive", platformchargesdsctlr.getactiveplatformchargesdsdatabyds);
-app.post("/api/v2/platformchargesds/calculate", platformchargesdsctlr.calculateplatformchargesdsdatabyds);
-app.post("/api/v2/platformchargesds/getall", platformchargesdsctlr.getallplatformchargesdsdatabyds);
-app.post("/api/v2/platformchargesds/update", platformchargesdsctlr.updateplatformchargesdsdatabyds);
-app.get("/api/v2/platformchargesds/delete", platformchargesdsctlr.deleteplatformchargesdsdatabyds);
-
-// Coupon Routes
-app.post("/api/v2/coupondsdata/create", coupondsctlr.createcoupondsdatabyds);
-app.post("/api/v2/coupondsdata/get", coupondsctlr.getcoupondsdatabyds);
-app.post("/api/v2/coupondsdata/getall", coupondsctlr.getallcoupondsdatabyds);
-app.post("/api/v2/coupondsdata/getvalid", coupondsctlr.getvalidcoupondsdatabyds);
-app.post("/api/v2/coupondsdata/validate", coupondsctlr.validatecoupondsdatabyds);
-app.post("/api/v2/coupondsdata/update", coupondsctlr.updatecoupondsdatabyds);
-app.get("/api/v2/coupondsdata/delete", coupondsctlr.deletecoupondsdatabyds);
-app.post("/api/v2/coupondsdata/toggle", coupondsctlr.togglecoupondsdatabyds);
-app.post("/api/v2/coupondsdata/stats", coupondsctlr.getcouponstatsdsdatabyds);
-
-// Payment Order Routes
-
-app.post("/api/v2/paymentorderds/create", paymentorderdsctlr.createpaymentorderdsdatabyds);
-app.get("/api/v2/paymentorderds/get", paymentorderdsctlr.getpaymentorderdsdatabyds);
-app.post("/api/v2/paymentorderds/getall", paymentorderdsctlr.getallpaymentorderdsdatabyds);
-app.post("/api/v2/paymentorderds/update", paymentorderdsctlr.updatepaymentorderdsdatabyds);
-app.get("/api/v2/paymentorderds/delete", paymentorderdsctlr.deletepaymentorderdsdatabyds);
-app.get("/api/v2/paymentorderds/checkstatus", paymentorderdsctlr.checkpaymentstatusbyds);
-app.post("/api/v2/paymentorderds/webhook", paymentorderdsctlr.webhookhandler);
-
-// Import HDFC Controllers
-const hdfcpaymentorderdsctlr = require("./controllers/hdfcpaymentorderdsctlr.js");
-const hdfcgatewaydsctlr = require("./controllers/hdfcgatewaydsctlr.js");
-
-// ==================== HDFC Payment Order Routes ====================
-app.post("/api/v2/hdfcpaymentorderds/create", hdfcpaymentorderdsctlr.createhdfcpaymentorderdsdatabyds);
-app.get("/api/v2/hdfcpaymentorderds/get", hdfcpaymentorderdsctlr.gethdfcpaymentorderdsdatabyds);
-app.post("/api/v2/hdfcpaymentorderds/getall", hdfcpaymentorderdsctlr.getallhdfcpaymentorderdsdatabyds);
-app.post("/api/v2/hdfcpaymentorderds/update", hdfcpaymentorderdsctlr.updatehdfcpaymentorderdsdatabyds);
-app.get("/api/v2/hdfcpaymentorderds/delete", hdfcpaymentorderdsctlr.deletehdfcpaymentorderdsdatabyds);
-app.get("/api/v2/hdfcpaymentorderds/checkstatus", hdfcpaymentorderdsctlr.checkhdfcpaymentstatusbyds);
-app.post("/api/v2/hdfcpaymentorderds/refund", hdfcpaymentorderdsctlr.initiatehdfcrefundbyds);
-app.post("/api/v2/hdfcpaymentorderds/webhook", hdfcpaymentorderdsctlr.hdfcwebhookhandler);
-app.post("/api/v2/hdfcpaymentorderds/return", hdfcpaymentorderdsctlr.hdfcreturnurlhandler);
-
-// ==================== HDFC Gateway Configuration Routes ====================
-app.post("/api/v2/hdfcgatewayds/create", hdfcgatewaydsctlr.createhdfcgatewaydsdatabyds);
-app.post("/api/v2/hdfcgatewayds/get", hdfcgatewaydsctlr.gethdfcgatewaydsdatabyds);
-app.post("/api/v2/hdfcgatewayds/getall", hdfcgatewaydsctlr.getallhdfcgatewaydsdatabyds);
-app.post("/api/v2/hdfcgatewayds/update", hdfcgatewaydsctlr.updatehdfcgatewaydsdatabyds);
-app.get("/api/v2/hdfcgatewayds/delete", hdfcgatewaydsctlr.deletehdfcgatewaydsdatabyds);
-app.post("/api/v2/hdfcgatewayds/toggle", hdfcgatewaydsctlr.togglehdfcgatewaydsdatabyds);
 
 
 // // ==========================================
@@ -5399,74 +4376,6 @@ const aiseatcontroller = require('./controllers/aiseatcontroller');
 
 app.post('/api/v2/allocate', aiseatcontroller.allocate);
 app.get('/api/v2/getallocations', aiseatcontroller.getallocations);
-
-// ==================== CLASS 9-10 MARKSHEET MODULE ROUTES ====================
-
-// Import controllers
-const subjectcomponentconfig9ctlrds = require('./controllers/subjectcomponentconfig9ctlrds');
-const studentmarks9ctlrds = require('./controllers/studentmarks9ctlrds');
-const coscholastic9ctlrds = require('./controllers/coscholastic9ctlrds');
-
-// Co-Scholastic Routes
-app.get('/api/v2/coscholastic/activities', coscholastic9ctlrds.getActivities);
-app.post('/api/v2/coscholastic/activity', coscholastic9ctlrds.createActivity);
-app.post('/api/v2/coscholastic/activity/update', coscholastic9ctlrds.updateActivity);
-app.post('/api/v2/coscholastic/activity/delete', coscholastic9ctlrds.deleteActivity);
-app.get('/api/v2/coscholastic/entry-data', coscholastic9ctlrds.getStudentsForGradeEntry);
-app.post('/api/v2/coscholastic/grades', coscholastic9ctlrds.saveGrades);
-
-// ==================== CLASS 11-12 MARKSHEET MODULE ROUTES ====================
-const studentmarks11ctlrds = require('./controllers/studentmarks11ctlrds');
-
-app.get('/api/v2/getsubjectsfromconfig11ds', studentmarks11ctlrds.getsubjectsfromconfig11ds);
-app.post('/api/v2/subjectcomponentconfig11ds/save', studentmarks11ctlrds.saveSubjectConfig11ds); // Deprecated/Duplicate
-app.get('/api/v2/getstudentsandsubjectsformarks11ds', studentmarks11ctlrds.getstudentsandsubjectsformarks11ds);
-app.post('/api/v2/savemarks11ds', studentmarks11ctlrds.savemarks11ds);
-app.get('/api/v2/getmarksheetpdfdata11ds', studentmarks11ctlrds.getMarksheetPDFData11ds);// Corrected Casing
-app.post('/api/v2/subjectcomponentconfig11ds/save', studentmarks11ctlrds.saveSubjectComponentConfig11ds);
-app.get('/api/v2/getrankreportds', studentmarks11ctlrds.getrankreportds);
-
-
-
-// ===== SUBJECT COMPONENT CONFIGURATION ROUTES (Class 9-10) =====
-
-// Create or update subject component config
-app.post('/api/v2/createorupdatesubjectconfig9ds', subjectcomponentconfig9ctlrds.createorupdatesubjectconfig9ds);
-
-// List all subject configs with filters
-app.get('/api/v2/listsubjectconfig9ds', subjectcomponentconfig9ctlrds.listsubjectconfig9ds);
-
-// Get single subject config
-app.get('/api/v2/getsubjectconfig9ds', subjectcomponentconfig9ctlrds.getsubjectconfig9ds);
-
-// Delete subject config
-app.get('/api/v2/deletesubjectconfig9ds', subjectcomponentconfig9ctlrds.deletesubjectconfig9ds);
-
-// Get active components for a specific term (for UI rendering)
-app.get('/api/v2/getactivecomponents9ds', subjectcomponentconfig9ctlrds.getactivecomponents9ds);
-
-
-// ===== STUDENT MARKS ROUTES (Class 9-10) =====
-
-// Get students and subjects for bulk marks entry (with existing marks)
-app.get('/api/v2/getstudentsandsubjectsformarks9ds', studentmarks9ctlrds.getstudentsandsubjectsformarks9ds);
-
-// Bulk save marks by component (AI-friendly bulk operation)
-app.post('/api/v2/bulksavemarksbycomponent9ds', studentmarks9ctlrds.bulksavemarksbycomponent9ds);
-
-// Get student marks (all subjects for a student)
-app.get('/api/v2/getstudentmarks9ds', studentmarks9ctlrds.getstudentmarks9ds);
-
-// Finalize student marks (change status to 'finalized')
-app.post('/api/v2/finalizestudentmarks9ds', studentmarks9ctlrds.finalizestudentmarks9ds);
-// Get distinct semesters and admission years
-app.get('/api/v2/getdistinctsemestersandyears9ds', studentmarks9ctlrds.getdistinctsemestersandyears9ds);
-// Get sections from User table filtered by class/semester
-app.get('/api/v2/getdistinctsectionsbyclass9ds', studentmarks9ctlrds.getdistinctsectionsbyclass9ds);
-// Student Marks PDF Route (New)
-app.get('/api/v2/getmarksheetpdfdata9ds', studentmarks9ctlrds.getmarksheetpdfdata9ds);
-
-
 
 const vendordsctlr = require("./controllers/vendordsctlr");
 const productdsctlr = require("./controllers/productdsctlr");
@@ -5672,9 +4581,6 @@ const collegerepotdsctlr = require("./controllers/collegerepotdsctlr");
 
 
 app.get("/api/v2/studentledgerreportds", studentledgerdsctlr.studentLedgerReportds);
-app.get("/api/v2/studentledgerdaterangereportds", studentledgerdsctlr.studentLedgerDateRangeReport);
-app.get("/api/v2/programwisecashbookreportds", studentledgerdsctlr.programWiseCashbookReport);
-app.get("/api/v2/getdistinctledgervaluesds", studentledgerdsctlr.getDistinctLedgerValues);
 app.get("/api/v2/collegerepledgerreportds", collegerepotdsctlr.collegeStudentLedgerReportds);
 
 const ledgerstuddsctlr = require("./controllers/ledgerstuddsctlr");
@@ -5820,7 +4726,75 @@ app.get("/api/v2/coursecompletionstatusds", studalloc1reportds.getcoursecompleti
 app.get("/api/v2/facultycoursestudentdetailsds", studalloc1reportds.getfacultycoursestudentdetailsds);
 app.get("/api/v2/dashboardsummaryds", studalloc1reportds.getdashboardsummaryds);
 
-// crm routes
+const examinerconfigctlrds = require('./controllers/examinerconfigctlrds');
+const reevaluationctlrds = require('./controllers/reevaluationctlrds');
+
+// Examiner Config Routes
+app.post('/api/v2/examinerconfig/createds', examinerconfigctlrds.createexaminerconfigds);
+app.get('/api/v2/examinerconfig/listds', examinerconfigctlrds.listexaminerconfigds);
+app.post('/api/v2/examinerconfig/editds', examinerconfigctlrds.editexaminerconfigds);
+app.get('/api/v2/examinerconfig/deleteds', examinerconfigctlrds.deleteexaminerconfigds);
+
+// Reevaluation Routes
+app.get('/api/v2/reevaluation/failed-papersds', reevaluationctlrds.getFailedPapersds);
+app.post('/api/v2/reevaluation/applyds', reevaluationctlrds.applyReevaluationds);
+app.get('/api/v2/reevaluation/listds', reevaluationctlrds.listReevaluationsds);
+app.get('/api/v2/reevaluation/examiner-papersds', reevaluationctlrds.getReevaluationForExaminerds);
+app.post('/api/v2/reevaluation/submit-marksds', reevaluationctlrds.submitExaminerMarksds);
+
+const aidynamiccontroller1 = require('./controllers/aidynamiccontroller1');
+app.post('/api/v2/bulkupdatetblds', aidynamiccontroller1.bulkupdatetblds);
+app.post('/api/v2/bulkdeletetblds', aidynamiccontroller1.bulkdeletetblds);
+app.post('/api/v2/bulkuploadtblds', aidynamiccontroller1.bulkuploadtblds);
+
+
+const aidynamiccontroller = require('./controllers/aidynamiccontroller');
+
+app.post('/api/v2/getdynamicresult', aidynamiccontroller.getdynamicresult);
+
+const reevaluationctlrds2 = require('./controllers/reevaluationctlrds2.js');
+
+// Student Routes
+app.post('/api/v2/reevaluationnew/applyreevaluationds1', reevaluationctlrds2.applyreevaluationds1);
+app.get('/api/v2/reevaluationnew/getallpapersforstudentds1', reevaluationctlrds2.getallpapersforstudentds1);
+app.get('/api/v2/reevaluationnew/getmyapplicationsds1', reevaluationctlrds2.getmyapplicationsds1);
+app.get('/api/v2/reevaluationnew/getfilteroptionsforstudentds1', reevaluationctlrds2.getfilteroptionsforstudentds1);
+
+// Admin Routes
+app.get('/api/v2/reevaluationnew/getapplicationsforadminds1', reevaluationctlrds2.getapplicationsforadminds1);
+app.get('/api/v2/reevaluationnew/getapplicationswithfiltersds1', reevaluationctlrds2.getapplicationswithfiltersds1);
+app.get('/api/v2/reevaluationnew/getfilteroptionsforadminds1', reevaluationctlrds2.getfilteroptionsforadminds1);
+app.post('/api/v2/reevaluationnew/bulkallocateexaminerds1', reevaluationctlrds2.bulkallocateexaminerds1);
+app.get('/api/v2/reevaluationnew/getapplicationsforexaminer3ds1', reevaluationctlrds2.getapplicationsforexaminer3ds1);
+
+// Examiner Routes
+app.get('/api/v2/reevaluationnew/getexaminerassignedapplicationsds1', reevaluationctlrds2.getexaminerassignedapplicationsds1);
+app.post('/api/v2/reevaluationnew/submitexaminermarksds1', reevaluationctlrds2.submitexaminermarksds1);
+
+
+const aireportcontroller = require('./controllers/aireportcontroller');
+
+app.get('/api/v2/getwreport1', aireportcontroller.getwreport1);
+
+const classattendanceds2 = require("./controllers/classattendanceds2.js");
+
+app.get("/api/v2/getabsentstudents", classattendanceds2.getabsentstudentsds);
+app.get("/api/v2/getstudentattendance", classattendanceds2.getstudentattendanceds);
+app.get("/api/v2/getrequestedattendance", classattendanceds2.getrequestedattendanceds);
+app.post("/api/v2/updateattendancerequest", classattendanceds2.updateattendancerequestds);
+app.post("/api/v2/marksupplementaryattendance", classattendanceds2.marksupplementaryattendanceds);
+
+const answersheetevaluationctlrds = require('./controllers/answersheetevaluationctlrds');
+
+// Answer Sheet Evaluation Routes
+app.get("/api/v2/getunevaluatedanswersheetsds", answersheetevaluationctlrds.getunevaluatedanswersheetsds);
+app.get("/api/v2/getquestionbanksforevaluationds", answersheetevaluationctlrds.getquestionbanksforevaluationds);
+app.get("/api/v2/getquestionsfrombankds", answersheetevaluationctlrds.getquestionsfrombankds);
+app.post("/api/v2/submitquestionwisemarksds", answersheetevaluationctlrds.submitquestionwisemarksds);
+app.get("/api/v2/getquestionwisemarksforreevaluationds", answersheetevaluationctlrds.getquestionwisemarksforreevaluationds);
+app.post("/api/v2/updatequestionwisemarksforreevaluationds", answersheetevaluationctlrds.updatequestionwisemarksforreevaluationds);
+app.get("/api/v2/getstudentadditionalinfods", answersheetevaluationctlrds.getstudentadditionalinfods);
+
 // Import controllers
 const categoryctlrds = require('./controllers/categoryctlrds.js');
 const crmh1ctlrds = require('./controllers/crmh1ctlrds.js');
@@ -5832,7 +4806,8 @@ const landingpagectlrds = require('./controllers/landingpagectlrds.js');
 const webhookctlrds = require('./controllers/webhookctlrds.js');
 const apikeyctlrds1 = require('./controllers/apikeyctlrds1.js');
 const settingsctlrds = require('./controllers/settingsctlrds.js');
-const leadadminds = require('./controllers/leadadminds.js');
+
+
 
 // ==================== USER ROUTES ====================
 app.get('/api/v2/searchusersds', crmh1ctlrds.searchusersds);
@@ -5859,15 +4834,8 @@ app.get('/api/v2/gethotleadsds', crmh1ctlrds.gethotleadsds);
 app.get('/api/v2/gettodayfollowupsds', crmh1ctlrds.gettodayfollowupsds);
 app.get('/api/v2/getoverduefollowupsds', crmh1ctlrds.getoverduefollowupsds);
 app.get('/api/v2/getleadanalyticsds', crmh1ctlrds.getleadanalyticsds);
-app.get('/api/v2/checkduplicateds', crmh1ctlrds.checkduplicateds);
-// Add this with your other lead routes
-app.get('/api/v2/deleteleadds/:id', crmh1ctlrds.deleteleadds);
 
-// Admin Lead Routes
-app.get('/api/v2/getallleadsadmin', leadadminds.getallleadsdsadmin);
-app.get('/api/v2/leads/daterange', leadadminds.getLeadsByDateRange);
-app.post('/api/v2/leads/bulk-assign', leadadminds.bulkAssignCounselor);
-app.post('/api/v2/leads/bulk-stage', leadadminds.bulkChangeLeadStage);
+app.get('/api/v2/deleteleadds/:id', crmh1ctlrds.deleteleadds);
 
 
 // ==================== ACTIVITY ROUTES ====================
@@ -5886,10 +4854,6 @@ app.get('/api/v2/getprogrambyidds/:id', programmasterctlrds.getprogrambyidds);
 app.get('/api/v2/getprogramsbycategoryds/:category', programmasterctlrds.getprogramsbycategoryds);
 app.post('/api/v2/updateprogrammasterds', programmasterctlrds.updateprogrammasterds); // Uses req.query.id
 app.get('/api/v2/deleteprogrammasterds/:id', programmasterctlrds.deleteprogrammasterds);
-
-app.get('/api/v2/getinstitutionsds', programmasterctlrds.getinstitutionsds);
-app.get('/api/v2/getprogramtypesds', programmasterctlrds.getprogramtypesds);
-app.get('/api/v2/getprogramsbyfiltersds', programmasterctlrds.getprogramsbyfiltersds);
 
 // ==================== DRIP CAMPAIGN ROUTES ====================
 app.post('/api/v2/createdripcampaignds', dripcampaignctlrds.createdripcampaignds);
@@ -5918,18 +4882,6 @@ app.get('/api/v2/deletelandingpageds/:id', landingpagectlrds.deletelandingpageds
 app.post('/api/v2/addqrcodeds', landingpagectlrds.addqrcodeds);
 app.delete('/api/v2/deleteqrcodeds', landingpagectlrds.deleteqrcodeds);
 // REMOVED: app.get('/api/v2/getlandingpageanalyticsds/:id', landingpagectlrds.getlandingpageanalyticsds);
-// ==================== UNIFIED LANDING PAGE ROUTES ====================
-const unifiedlandingpagectlrds = require('./controllers/unifiedlandingpagectlrds.js');
-app.post('/api/v2/createunifiedlandingpageds', unifiedlandingpagectlrds.createunifiedlandingpageds);
-app.get('/api/v2/getallunifiedlandingpagesds', unifiedlandingpagectlrds.getallunifiedlandingpagesds);
-app.get('/api/v2/getunifiedlandingpagebyslugds/:slug', unifiedlandingpagectlrds.getunifiedlandingpagebyslugds);
-app.get('/api/v2/getunifiedlandingpagebyidds/:id', unifiedlandingpagectlrds.getunifiedlandingpagebyidds);
-app.post('/api/v2/updateunifiedlandingpageds', unifiedlandingpagectlrds.updateunifiedlandingpageds);
-app.get('/api/v2/deleteunifiedlandingpageds/:id', unifiedlandingpagectlrds.deleteunifiedlandingpageds);
-app.post('/api/v2/addunifiedqrcodeds', unifiedlandingpagectlrds.addunifiedqrcodeds);
-app.get('/api/v2/deleteunifiedqrcodeds', unifiedlandingpagectlrds.deleteunifiedqrcodeds);
-
-
 
 
 // ==================== WEBHOOK ROUTES (Protected by API Key) ====================
@@ -5959,100 +4911,6 @@ app.post('/api/v2/regenerateapikeyds1', apikeyctlrds1.regenerateapikeyds1); // U
 app.post('/api/v2/revokeapikeyds1', apikeyctlrds1.revokeapikeyds1); // Uses req.query.id
 app.get('/api/v2/getapikeyusagestatistics/:id', apikeyctlrds1.getapikeyusagestatistics);
 
-
-const examinerconfigctlrds = require('./controllers/examinerconfigctlrds');
-const reevaluationctlrds = require('./controllers/reevaluationctlrds');
-const reevaluationctlrds2 = require('./controllers/reevaluationctlrds2.js');
-
-// Examiner Config Routes
-app.post('/api/v2/examinerconfig/createds', examinerconfigctlrds.createexaminerconfigds);
-app.get('/api/v2/examinerconfig/listds', examinerconfigctlrds.listexaminerconfigds);
-app.post('/api/v2/examinerconfig/editds', examinerconfigctlrds.editexaminerconfigds);
-app.get('/api/v2/examinerconfig/deleteds', examinerconfigctlrds.deleteexaminerconfigds);
-
-// Reevaluation Routes
-app.get('/api/v2/reevaluation/failed-papersds', reevaluationctlrds.getFailedPapersds);
-app.post('/api/v2/reevaluation/applyds', reevaluationctlrds.applyReevaluationds);
-app.get('/api/v2/reevaluation/listds', reevaluationctlrds.listReevaluationsds);
-app.get('/api/v2/reevaluation/examiner-papersds', reevaluationctlrds.getReevaluationForExaminerds);
-app.post('/api/v2/reevaluation/submit-marksds', reevaluationctlrds.submitExaminerMarksds);
-
-// Student Routes
-app.post('/api/v2/reevaluationnew/applyreevaluationds1', reevaluationctlrds2.applyreevaluationds1);
-app.get('/api/v2/reevaluationnew/getallpapersforstudentds1', reevaluationctlrds2.getallpapersforstudentds1);
-app.get('/api/v2/reevaluationnew/getmyapplicationsds1', reevaluationctlrds2.getmyapplicationsds1);
-app.get('/api/v2/reevaluationnew/getfilteroptionsforstudentds1', reevaluationctlrds2.getfilteroptionsforstudentds1);
-
-// Admin Routes
-app.get('/api/v2/reevaluationnew/getapplicationsforadminds1', reevaluationctlrds2.getapplicationsforadminds1);
-app.get('/api/v2/reevaluationnew/getapplicationswithfiltersds1', reevaluationctlrds2.getapplicationswithfiltersds1);
-app.get('/api/v2/reevaluationnew/getfilteroptionsforadminds1', reevaluationctlrds2.getfilteroptionsforadminds1);
-app.post('/api/v2/reevaluationnew/bulkallocateexaminerds1', reevaluationctlrds2.bulkallocateexaminerds1);
-app.get('/api/v2/reevaluationnew/getapplicationsforexaminer3ds1', reevaluationctlrds2.getapplicationsforexaminer3ds1);
-
-// Examiner Routes
-app.get('/api/v2/reevaluationnew/getexaminerassignedapplicationsds1', reevaluationctlrds2.getexaminerassignedapplicationsds1);
-app.post('/api/v2/reevaluationnew/submitexaminermarksds1', reevaluationctlrds2.submitexaminermarksds1);
-
-const answersheetevaluationctlrds = require('./controllers/answersheetevaluationctlrds');
-
-// Answer Sheet Evaluation Routes
-app.get("/api/v2/getunevaluatedanswersheetsds", answersheetevaluationctlrds.getunevaluatedanswersheetsds);
-app.get("/api/v2/getquestionbanksforevaluationds", answersheetevaluationctlrds.getquestionbanksforevaluationds);
-app.get("/api/v2/getquestionsfrombankds", answersheetevaluationctlrds.getquestionsfrombankds);
-app.post("/api/v2/submitquestionwisemarksds", answersheetevaluationctlrds.submitquestionwisemarksds);
-app.get("/api/v2/getquestionwisemarksforreevaluationds", answersheetevaluationctlrds.getquestionwisemarksforreevaluationds);
-app.post("/api/v2/updatequestionwisemarksforreevaluationds", answersheetevaluationctlrds.updatequestionwisemarksforreevaluationds);
-app.get("/api/v2/getstudentadditionalinfods", answersheetevaluationctlrds.getstudentadditionalinfods);
-
-// vss donation route
-const vssdonationdsctlr = require("./controllers/vssdonationdsctlr.js");
-
-app.post('/api/v2/createdonationreceiptds', vssdonationdsctlr.createdonationreceiptds);
-app.get('/api/v2/getdonationreceiptds', vssdonationdsctlr.getdonationreceiptds);
-app.get('/api/v2/getdonationreceiptsds', vssdonationdsctlr.getdonationreceiptsds);
-
-
-// ==================== Student Data API =====================
-const userdsctlr = require('./controllers/userdsctlr.js');
-
-// Student filter routes
-app.get('/api/v2/getstudentfilteroptions', userdsctlr.getstudentfilteroptions);
-app.get('/api/v2/getfilteredstudentsds', userdsctlr.getfilteredstudentsds);
-
-// AI WORKFLOW BOT ROUTES
-const aiworkflowcontrollerds = require('./controllers/aiworkflowcontrollerds');
-
-app.post('/api/v2/createworkflowds', aiworkflowcontrollerds.createworkflowds);
-app.get('/api/v2/getworkflowsds', aiworkflowcontrollerds.getworkflowsds);
-app.get('/api/v2/getworkflowds', aiworkflowcontrollerds.getworkflowds);
-app.post('/api/v2/updateworkflowds', aiworkflowcontrollerds.updateworkflowds);
-app.get('/api/v2/deleteworkflowds', aiworkflowcontrollerds.deleteworkflowds);
-
-// AI WORKFLOW BOT ROUTES
-const aiworkflowcontrollerds1 = require('./controllers/aiworkflowcontrollerds1');
-
-app.post('/api/v2/createworkflowds1', aiworkflowcontrollerds1.createworkflowds1);
-app.get('/api/v2/getworkflowsds1', aiworkflowcontrollerds1.getworkflowsds1);
-app.get('/api/v2/getworkflowds1', aiworkflowcontrollerds1.getworkflowds1);
-app.post('/api/v2/updateworkflowds1', aiworkflowcontrollerds1.updateworkflowds1);
-app.get('/api/v2/deleteworkflowds1', aiworkflowcontrollerds1.deleteworkflowds1);
-app.get('/api/v2/deleteworkflowds1', aiworkflowcontrollerds1.deleteworkflowds1);
-app.get('/api/v2/searchworkflowsds1', aiworkflowcontrollerds1.searchworkflowsds1); // NEW: Search API
-
-// Add after other requires
-const marksheetdatactlrds = require('./controllers/marksheetdatactlrds');
-
-// Add routes
-app.post("/api/v2/createmarksheetdatads", marksheetdatactlrds.createmarksheetdatads);
-app.get("/api/v2/listmarksheetdatads", marksheetdatactlrds.listmarksheetdatads);
-app.post("/api/v2/editmarksheetdatads", marksheetdatactlrds.editmarksheetdatads);
-app.get("/api/v2/deletemarksheetdatads", marksheetdatactlrds.deletemarksheetdatads);
-app.get("/api/v2/getmarksheetforpdfds", marksheetdatactlrds.getmarksheetforpdfds);
-app.get("/api/v2/getbulkmarksheetforpdfds", marksheetdatactlrds.getbulkmarksheetforpdfds);
-
-
-
 // API routes
 
 const apidsController = require('./controllers/apidscontroller');
@@ -6078,15 +4936,851 @@ app.get('/api/v2/updatedataapi', dataapictlr.updatedataapi);
 app.get('/api/v2/deletedataapi', dataapictlr.deletedataapi);
 app.get('/api/v2/duplicatedataapi', dataapictlr.duplicatedataapi);
 
+const alumnidsctlr = require("./controllers/alumnidsctlr");
+const alumnieventsdsctlr = require("./controllers/alumnieventsdsctlr");
+const alumnijobsdsctlr = require("./controllers/alumnijobsdsctlr");
+const alumnimaterialsdsctlr = require("./controllers/alumnimaterialsdsctlr");
+const alumnidonationsdsctlr = require("./controllers/alumnidonationsdsctlr");
+const alumnidocumentsdsctlr = require("./controllers/alumnidocumentsdsctlr");
+const alumniapplicationctlr = require("./controllers/alumniapplicationctlr");
 
-const aidynamiccontroller = require('./controllers/aidynamiccontroller');
+// ========================================
+// 1. ALUMNI MANAGEMENT - /api/v2/alumnids
+// ========================================
+app.post("/api/v2/alumnids/create", alumnidsctlr.createalumnids);
+app.post("/api/v2/alumnids/login", alumnidsctlr.loginalumnids);
+app.post("/api/v2/alumnids/list", alumnidsctlr.getalumnids); // POST for consistency
+app.post("/api/v2/alumnids/profile", alumnidsctlr.getalumniprofilds);
+app.post("/api/v2/alumnids/updateprofile", alumnidsctlr.updatealumniprofilds);
+app.get("/api/v2/alumnids/search", alumnidsctlr.searchalumnids);
+app.get("/api/v2/alumnids/delete", alumnidsctlr.deletealumnids);
+app.post("/api/v2/alumnids/bulkcreate", alumnidsctlr.bulkcreatealumnids);
 
-app.post('/api/v2/getdynamicresult', aidynamiccontroller.getdynamicresult);
-app.post('/api/v2/bulkuploadtblds', aidynamiccontroller.bulkuploadtblds);
-app.post('/api/v2/bulkupdatetblds', aidynamiccontroller.bulkupdatetblds);
-app.post('/api/v2/bulkdeletetblds', aidynamiccontroller.bulkdeletetblds);
+// ========================================
+// 2. EVENT MANAGEMENT - /api/v2/alumnieventsds
+// ========================================
+app.post("/api/v2/alumnieventsds/create", alumnieventsdsctlr.createalumnieventsds);
+app.get("/api/v2/alumnieventsds/list", alumnieventsdsctlr.getallalumnieventsds); // GET with query params
+app.post("/api/v2/alumnieventsds/upcoming", alumnieventsdsctlr.getupcomingeventsds);
+app.post("/api/v2/alumnieventsds/past", alumnieventsdsctlr.getpasteventds);
+app.get("/api/v2/alumnieventsds/single", alumnieventsdsctlr.getsingleeventds);
+app.post("/api/v2/alumnieventsds/update", alumnieventsdsctlr.updatealumnieventsds);
+app.get("/api/v2/alumnieventsds/delete", alumnieventsdsctlr.deletealumnieventsds);
+app.post("/api/v2/alumnieventsds/register", alumnieventsdsctlr.registerforeventds);
+app.get("/api/v2/alumnieventsds/registrations", alumnieventsdsctlr.geteventregistrationsds);
+app.post("/api/v2/alumnieventsds/myregistrations", alumnieventsdsctlr.getmyeventregistrationsds);
+app.post("/api/v2/alumnieventsds/attendance", alumnieventsdsctlr.markattendanceds);
+
+// ========================================
+// 3. JOBS MANAGEMENT - /api/v2/alumnijobsds
+// ========================================
+app.post("/api/v2/alumnijobsds/create", alumnijobsdsctlr.createalumnijobsds);
+app.post("/api/v2/alumnijobsds/list", alumnijobsdsctlr.getallalumnijobsds);
+app.post("/api/v2/alumnijobsds/myjobs", alumnijobsdsctlr.getmyjobsds);
+app.get("/api/v2/alumnijobsds/filter", alumnijobsdsctlr.filteralumnijobsds);
+app.get("/api/v2/alumnijobsds/single", alumnijobsdsctlr.getsinglejobds);
+app.post("/api/v2/alumnijobsds/update", alumnijobsdsctlr.updatealumnijobsds);
+app.post("/api/v2/alumnijobsds/close", alumnijobsdsctlr.closealumnijobsds);
+app.get("/api/v2/alumnijobsds/delete", alumnijobsdsctlr.deletealumnijobsds);
+app.post("/api/v2/alumnijobsds/stats", alumnijobsdsctlr.getjobstatsds);
+
+// ========================================
+// 4. MATERIALS MANAGEMENT - /api/v2/alumnimaterialsds
+// ========================================
+app.post("/api/v2/alumnimaterialsds/upload", alumnimaterialsdsctlr.uploadalumnimaterialsds);
+app.post("/api/v2/alumnimaterialsds/list", alumnimaterialsdsctlr.getallalumnimaterialsds);
+app.post("/api/v2/alumnimaterialsds/mymaterials", alumnimaterialsdsctlr.getmymaterialsds);
+app.get("/api/v2/alumnimaterialsds/filter", alumnimaterialsdsctlr.filteralumnimaterialsds);
+app.post("/api/v2/alumnimaterialsds/download", alumnimaterialsdsctlr.downloadmaterialds);
+app.get("/api/v2/alumnimaterialsds/delete", alumnimaterialsdsctlr.deletealumnimaterialsds);
+
+// ========================================
+// 5. DONATIONS MANAGEMENT - /api/v2/alumnidonationsds
+// ========================================
+app.post("/api/v2/alumnidonationsds/create", alumnidonationsdsctlr.createalumnidonationsds);
+app.post("/api/v2/alumnidonationsds/list", alumnidonationsdsctlr.getallalumnidonationsds);
+app.post("/api/v2/alumnidonationsds/mydonations", alumnidonationsdsctlr.getmydonationsds);
+app.post("/api/v2/alumnidonationsds/pending", alumnidonationsdsctlr.getpendingdonationsds);
+app.post("/api/v2/alumnidonationsds/approve", alumnidonationsdsctlr.approvedonationds);
+app.post("/api/v2/alumnidonationsds/reject", alumnidonationsdsctlr.rejectdonationds);
+app.post("/api/v2/alumnidonationsds/updatepayment", alumnidonationsdsctlr.updatepaymentstatusds);
+app.post("/api/v2/alumnidonationsds/updatedelivery", alumnidonationsdsctlr.updatedeliverystatusds);
+app.post("/api/v2/alumnidonationsds/stats", alumnidonationsdsctlr.getdonationstatsds);
+app.get("/api/v2/alumnidonationsds/receipt", alumnidonationsdsctlr.generatereceiptds);
+
+// ========================================
+// 6. DOCUMENTS MANAGEMENT - /api/v2/alumnidocumentsds
+// ========================================
+app.post("/api/v2/alumnidocumentsds/upload", alumnidocumentsdsctlr.uploadalumnidocumentsds);
+app.post("/api/v2/alumnidocumentsds/mydocuments", alumnidocumentsdsctlr.getmydocumentsds);
+app.get("/api/v2/alumnidocumentsds/single", alumnidocumentsdsctlr.getsinglealumnidocds);
+app.get("/api/v2/alumnidocumentsds/delete", alumnidocumentsdsctlr.deletealumnidocumentsds);
+
+// ========================================
+// 7. ALUMNI APPLICATIONS - /api/v2/alumniapplicationds
+// ========================================
+// Public route - no auth required
+app.post("/api/v2/alumniapplicationds/submit", alumniapplicationctlr.submitAlumniApplication);
+// Admin routes
+app.post("/api/v2/alumniapplicationds/list", alumniapplicationctlr.getAllApplications);
+app.post("/api/v2/alumniapplicationds/approve", alumniapplicationctlr.approveApplication);
+app.post("/api/v2/alumniapplicationds/reject", alumniapplicationctlr.rejectApplication);
+
+const aiworkflowcontrollerds = require('./controllers/aiworkflowcontrollerds');
+
+app.post('/api/v2/createworkflowds', aiworkflowcontrollerds.createworkflowds);
+app.get('/api/v2/getworkflowsds', aiworkflowcontrollerds.getworkflowsds);
+app.get('/api/v2/getworkflowds', aiworkflowcontrollerds.getworkflowds);
+app.post('/api/v2/updateworkflowds', aiworkflowcontrollerds.updateworkflowds);
+app.get('/api/v2/deleteworkflowds', aiworkflowcontrollerds.deleteworkflowds);
+
+// AI WORKFLOW BOT ROUTES
+const aiworkflowcontrollerds1 = require('./controllers/aiworkflowcontrollerds1');
+
+app.get('/api/v2/searchworkflowsds1', aiworkflowcontrollerds1.searchworkflowsds1);
+
+app.post('/api/v2/createworkflowds1', aiworkflowcontrollerds1.createworkflowds1);
+app.get('/api/v2/getworkflowsds1', aiworkflowcontrollerds1.getworkflowsds1);
+app.get('/api/v2/getworkflowds1', aiworkflowcontrollerds1.getworkflowds1);
+app.post('/api/v2/updateworkflowds1', aiworkflowcontrollerds1.updateworkflowds1);
+app.get('/api/v2/deleteworkflowds1', aiworkflowcontrollerds1.deleteworkflowds1);
+app.get('/api/v2/deleteworkflowds1', aiworkflowcontrollerds1.deleteworkflowds1);
+
+const marksheetdatactlrds = require('./controllers/marksheetdatactlrds');
+
+// Add routes
+app.post("/api/v2/createmarksheetdatads", marksheetdatactlrds.createmarksheetdatads);
+app.get("/api/v2/listmarksheetdatads", marksheetdatactlrds.listmarksheetdatads);
+app.post("/api/v2/editmarksheetdatads", marksheetdatactlrds.editmarksheetdatads);
+app.get("/api/v2/deletemarksheetdatads", marksheetdatactlrds.deletemarksheetdatads);
+app.get("/api/v2/getmarksheetforpdfds", marksheetdatactlrds.getmarksheetforpdfds);
+app.get("/api/v2/getbulkmarksheetforpdfds", marksheetdatactlrds.getbulkmarksheetforpdfds);
+
+// Import Controllers
+const authctlr = require("./controllers/authcontrollermeritds.js");
+const programmeController = require("./controllers/programmecontrollermeritds.js");
+const subjectController = require("./controllers/subjectcontrollermeritds.js");
+const studentController = require("./controllers/studentcontrollermeritds.js");
+const sessionController = require("./controllers/sessioncontrollermeritds.js");
+const allocationController = require("./controllers/allocationcontrollermeritds.js");
+const reportController = require("./controllers/reportcontrollermeritds.js");
+
+
+// Programme Routes (5 endpoints)
+app.post("/api/v2/programme/createds", programmeController.createds);
+app.get("/api/v2/programme/getallds", programmeController.getAllds);
+app.post("/api/v2/programme/getoneds", programmeController.getOneds);
+app.post("/api/v2/programme/updateds", programmeController.updateds);
+app.get("/api/v2/programme/deleteds", programmeController.deleteOneds);
+
+// Subject Routes (7 endpoints)
+app.post("/api/v2/subject/createds", subjectController.createds);
+app.get("/api/v2/subject/getallds", subjectController.getAllds);
+app.post("/api/v2/subject/getoneds", subjectController.getOneds);
+app.post("/api/v2/subject/updateds", subjectController.updateds);
+app.get("/api/v2/subject/deleteds", subjectController.deleteOneds);
+app.post("/api/v2/subject/getbyprogrammeds", subjectController.getByProgrammeds);
+app.post("/api/v2/subject/resetseatsds", subjectController.resetSeatsds);
+
+// Student Routes (10 endpoints)
+app.post("/api/v2/student/createds", studentController.createds);
+app.post("/api/v2/student/bulkcreateds", studentController.bulkCreateds);
+app.get("/api/v2/student/getallds", studentController.getAllds);
+app.post("/api/v2/student/getoneds", studentController.getOneds);
+app.post("/api/v2/student/updateds", studentController.updateds);
+app.get("/api/v2/student/deleteds", studentController.deleteOneds);
+app.post("/api/v2/student/getbyprogrammeds", studentController.getByProgrammeds);
+app.post("/api/v2/student/getmeritlistds", studentController.getMeritListds);
+app.get("/api/v2/student/countds", studentController.getCountds);
+app.post("/api/v2/student/checkduplicateds", studentController.checkDuplicateds);
+
+// Session Routes (6 endpoints)
+app.post("/api/v2/session/createds", sessionController.createds);
+app.get("/api/v2/session/getallds", sessionController.getAllds);
+app.post("/api/v2/session/getoneds", sessionController.getOneds);
+app.post("/api/v2/session/updateds", sessionController.updateds);
+app.get("/api/v2/session/deleteds", sessionController.deleteOneds);
+app.post("/api/v2/session/validatestartds", sessionController.validateStartds);
+
+// Allocation Routes (11 endpoints)
+app.post("/api/v2/allocation/startsingleds", allocationController.startSingleds);
+app.post("/api/v2/allocation/runroundds", allocationController.runRoundds);
+app.post("/api/v2/allocation/getbysessionds", allocationController.getBySessionds);
+app.post("/api/v2/allocation/getbystudentds", allocationController.getByStudentds);
+app.post("/api/v2/allocation/getbysubjectds", allocationController.getBySubjectds);
+app.post("/api/v2/allocation/getstatsds", allocationController.getStatsds);
+app.get("/api/v2/allocation/resetds", allocationController.resetds);
+app.post("/api/v2/allocation/previewds", allocationController.previewds);
+app.post("/api/v2/allocation/validatepreferencesds", allocationController.validatePreferencesds);
+app.post("/api/v2/allocation/getnotallocatedds", allocationController.getNotAllocatedds);
+app.post("/api/v2/allocation/getauditlogds", allocationController.getAuditLogds);
+
+// Report Routes (5 endpoints)
+app.post("/api/v2/report/meritlistds", reportController.meritListds);
+app.post("/api/v2/report/allocationresultsds", reportController.allocationResultsds);
+app.post("/api/v2/report/subjectwiseds", reportController.subjectWiseds);
+app.post("/api/v2/report/demandanalysisds", reportController.demandAnalysisds);
+app.post("/api/v2/report/notchosensubjectsds", reportController.notChosenSubjectsds);
+
+const studentmaslistdsctlr = require("./controllers/studentmaslistdsctlr.js");
+
+// Get student master list by colid
+app.get("/api/v2/studentMasterListds", studentmaslistdsctlr.studentMasterListds);
+
+// Search students
+app.get("/api/v2/searchStudentsds", studentmaslistdsctlr.searchStudentsds);
+
+// Get students by filter
+app.get("/api/v2/getStudentsByFilterds", studentmaslistdsctlr.getStudentsByFilterds);
+
+// Get student by ID
+app.get("/api/v2/getStudentByIdds", studentmaslistdsctlr.getStudentByIdds);
+
+// Get student statistics
+app.get("/api/v2/getStudentStatsds", studentmaslistdsctlr.getStudentStatsds);
+
+// Create new student
+app.post("/api/v2/createStudentds", studentmaslistdsctlr.createStudentds);
+
+// Bulk semester update
+app.post("/api/v2/bulkSemesterUpdateds", studentmaslistdsctlr.bulkSemesterUpdateds);
+
+// Update student by id
+app.post("/api/v2/updateStudentds", studentmaslistdsctlr.updateStudentds);
+
+// Update student password
+app.post("/api/v2/updateStudentPasswordds", studentmaslistdsctlr.updateStudentPasswordds);
+
+// Delete student by id
+app.get("/api/v2/deleteStudentds", studentmaslistdsctlr.deleteStudentds);
+
+const storemasterdsctlr = require('./controllers/storemasterdsctlr');
+const storeuserdsctlr = require('./controllers/storeuserdsctlr');
+const storeitemdsctlr = require('./controllers/storeitemdsctlr');
+const itemmasterdsctlr = require('./controllers/itemmasterdsctlr');
+const itemtypedsctlr = require('./controllers/itemtypedsctlr');
+const requisationdsctlr = require('./controllers/requisationdsctlr');
+const storerequisationdsctlr = require('./controllers/storerequisationdsctlr');
+const storepoorderdsctlr = require('./controllers/storepoorderdsctlr');
+const storepoitemsdsctlr = require('./controllers/storepoitemsdsctlr');
+const vendoritemdsctlr = require('./controllers/vendoritemdsctlr');
+const deliverydsdsctlr = require('./controllers/deliverydsdsctlr');
+const stockregisterdsctlr = require('./controllers/stockregisterdsctlr');
+const vendordsctlr1 = require('./controllers/vendordsctlr1');
+
+
+// 1. Store Master
+app.post('/api/v2/addstoremasterds', storemasterdsctlr.addstoremasterds);
+app.post('/api/v2/updatestoremasterds', storemasterdsctlr.updatestoremasterds);
+app.get('/api/v2/deletestoremasterds', storemasterdsctlr.deletestoremasterds);
+app.get('/api/v2/getallstoremasterds', storemasterdsctlr.getallstoremasterds);
+app.get('/api/v2/getstoremasterdsbyid', storemasterdsctlr.getstoremasterdsbyid);
+
+// 2. Store User
+app.post('/api/v2/addstoreuserds', storeuserdsctlr.addstoreuserds);
+app.post('/api/v2/updatestoreuserds', storeuserdsctlr.updatestoreuserds);
+app.get('/api/v2/deletestoreuserds', storeuserdsctlr.deletestoreuserds);
+app.get('/api/v2/getallstoreuserds', storeuserdsctlr.getallstoreuserds);
+app.get('/api/v2/getstoreuserdsbyid', storeuserdsctlr.getstoreuserdsbyid);
+
+// 3. Store Item
+app.post('/api/v2/addstoreitemds', storeitemdsctlr.addstoreitemds);
+app.post('/api/v2/updatestoreitemds', storeitemdsctlr.updatestoreitemds);
+app.get('/api/v2/deletestoreitemds', storeitemdsctlr.deletestoreitemds);
+app.get('/api/v2/getallstoreitemds', storeitemdsctlr.getallstoreitemds);
+app.get('/api/v2/getstoreitemdsbyid', storeitemdsctlr.getstoreitemdsbyid);
+app.post('/api/v2/allotitem', storeitemdsctlr.allotItem);
+
+// 4. Item Master
+app.post('/api/v2/additemmasterds', itemmasterdsctlr.additemmasterds);
+app.post('/api/v2/updateitemmasterds', itemmasterdsctlr.updateitemmasterds);
+app.get('/api/v2/deleteitemmasterds', itemmasterdsctlr.deleteitemmasterds);
+app.get('/api/v2/getallitemmasterds', itemmasterdsctlr.getallitemmasterds);
+app.get('/api/v2/getitemmasterdsbyid', itemmasterdsctlr.getitemmasterdsbyid);
+
+// 5. Item Type
+app.post('/api/v2/additemtypeds', itemtypedsctlr.additemtypeds);
+app.post('/api/v2/updateitemtypeds', itemtypedsctlr.updateitemtypeds);
+app.get('/api/v2/deleteitemtypeds', itemtypedsctlr.deleteitemtypeds);
+app.get('/api/v2/getallitemtypeds', itemtypedsctlr.getallitemtypeds);
+app.get('/api/v2/getitemtypedsbyid', itemtypedsctlr.getitemtypedsbyid);
+
+// 6. Requisition (Faculty)
+app.post('/api/v2/addrequisationds', requisationdsctlr.addrequisationds);
+app.post('/api/v2/updaterequisationds', requisationdsctlr.updaterequisationds);
+app.get('/api/v2/deleterequisationds', requisationdsctlr.deleterequisationds);
+app.get('/api/v2/getallrequisationds', requisationdsctlr.getallrequisationds);
+app.get('/api/v2/getrequisationdsbyid', requisationdsctlr.getrequisationdsbyid);
+
+// 7. Store Requisition (Purchase Request)
+app.post('/api/v2/addstorerequisationds', storerequisationdsctlr.addstorerequisationds);
+app.post('/api/v2/updatestorerequisationds', storerequisationdsctlr.updatestorerequisationds);
+app.get('/api/v2/deletestorerequisationds', storerequisationdsctlr.deletestorerequisationds);
+app.get('/api/v2/getallstorerequisationds', storerequisationdsctlr.getallstorerequisationds);
+app.get('/api/v2/getstorerequisationdsbyid', storerequisationdsctlr.getstorerequisationdsbyid);
+
+// 8. Purchase Order
+app.post('/api/v2/addstorepoorderds', storepoorderdsctlr.addstorepoorderds);
+app.post('/api/v2/updatestorepoorderds', storepoorderdsctlr.updatestorepoorderds);
+app.get('/api/v2/deletestorepoorderds', storepoorderdsctlr.deletestorepoorderds);
+app.get('/api/v2/getallstorepoorderds', storepoorderdsctlr.getallstorepoorderds);
+app.get('/api/v2/getstorepoorderdsbyid', storepoorderdsctlr.getstorepoorderdsbyid);
+app.post('/api/v2/approvestorepo', storepoorderdsctlr.approveStorePO);
+
+// 9. PO Items
+app.post('/api/v2/addstorepoitemsds', storepoitemsdsctlr.addstorepoitemsds);
+app.post('/api/v2/updatestorepoitemsds', storepoitemsdsctlr.updatestorepoitemsds);
+app.get('/api/v2/deletestorepoitemsds', storepoitemsdsctlr.deletestorepoitemsds);
+app.get('/api/v2/getallstorepoitemsds', storepoitemsdsctlr.getallstorepoitemsds);
+app.get('/api/v2/getstorepoitemsdsbyid', storepoitemsdsctlr.getstorepoitemsdsbyid);
+
+// 10. Vendor Items
+app.post('/api/v2/addvendoritemds', vendoritemdsctlr.addvendoritemds);
+app.post('/api/v2/updatevendoritemds', vendoritemdsctlr.updatevendoritemds);
+app.get('/api/v2/deletevendoritemds', vendoritemdsctlr.deletevendoritemds);
+app.get('/api/v2/getallvendoritemds', vendoritemdsctlr.getallvendoritemds);
+app.get('/api/v2/getvendoritemdsbyid', vendoritemdsctlr.getvendoritemdsbyid);
+
+// 11. Delivery
+app.post('/api/v2/adddeliverydsds', deliverydsdsctlr.adddeliverydsds);
+app.post('/api/v2/updatedeliverydsds', deliverydsdsctlr.updatedeliverydsds);
+app.get('/api/v2/deletedeliverydsds', deliverydsdsctlr.deletedeliverydsds);
+app.get('/api/v2/getalldeliverydsds', deliverydsdsctlr.getalldeliverydsds);
+app.get('/api/v2/getdeliverydsdsbyid', deliverydsdsctlr.getdeliverydsdsbyid);
+app.post('/api/v2/markdelivered', deliverydsdsctlr.markDelivered);
+
+// 12. Stock Register
+app.post('/api/v2/addstockregisterds', stockregisterdsctlr.addstockregisterds);
+app.post('/api/v2/updatestockregisterds', stockregisterdsctlr.updatestockregisterds);
+app.get('/api/v2/deletestockregisterds', stockregisterdsctlr.deletestockregisterds);
+app.get('/api/v2/getallstockregisterds', stockregisterdsctlr.getallstockregisterds);
+app.get('/api/v2/getstockregisterdsbyid', stockregisterdsctlr.getstockregisterdsbyid);
+
+// 13. Vendor (Modified to use vendordsctlr1)
+app.post('/api/v2/addvendords', vendordsctlr1.addvendords);
+app.post('/api/v2/updatevendords', vendordsctlr1.updatevendords);
+app.get('/api/v2/deletevendords', vendordsctlr1.deletevendords);
+app.get('/api/v2/getallvendords', vendordsctlr1.getallvendords);
+app.get('/api/v2/getvendordsbyid', vendordsctlr1.getvendordsbyid);
+
+
+const approvalconfigdsctlr = require('./controllers/approvalconfigdsctlr');
+
+// Approval Config Routes
+app.post('/api/v2/addapprovalconfig', approvalconfigdsctlr.addConfig);
+app.get('/api/v2/getapprovalconfig', approvalconfigdsctlr.getConfig);
+
+// app.post('/api/v2/verifypolevel1', storepoorderdsctlr.verifyLevel1); // Deprecated
+// app.post('/api/v2/verifypolevel2', storepoorderdsctlr.verifyLevel2); // Deprecated
+app.post('/api/v2/verifyDynamicStep', storepoorderdsctlr.verifyDynamicStep);
+
+const leadadminds = require('./controllers/leadadminds.js');
+
+// Admin Lead Routes
+//app.get('/api/v2/getallleadsadmin', leadadminds.getallleadsdsadmin);
+
+app.get('/api/v2/getallleadsadmin', leadadminds.getallleadsdsadmin);
+app.get('/api/v2/leads/daterange', leadadminds.getLeadsByDateRange);
+app.post('/api/v2/leads/bulk-assign', leadadminds.bulkAssignCounselor);
+app.post('/api/v2/leads/bulk-stage', leadadminds.bulkChangeLeadStage);
+
+
+
+const institutionsctlrds = require("./controllers/institutionsctlrds.js")
+app.get("/api/v2/checkinstitutionsds", institutionsctlrds.checkInstitutionsds);
+
+
+const dashboardReportController = require('./controllers/dashboardReportController');
+app.get('/api/v2/dashboard/stats', dashboardReportController.getDashboardStats);
+
+
+
+const attendancereportctlr = require('./controllers/attendancereportctlr');
+app.post('/api/v2/getattendancereport', attendancereportctlr.getAttendanceReport);
+
+const comunicationdsctlr = require('./controllers/comunicationdsctlr');
+app.post('/api/v2/createcomunication', comunicationdsctlr.createCommunication);
+app.post('/api/v2/getcomunication', comunicationdsctlr.getCommunications);
+app.post('/api/v2/updatecomunication', comunicationdsctlr.updateCommunication);
+app.post('/api/v2/deletecomunication', comunicationdsctlr.deleteCommunication);
+
+const filemasterdsctlr = require('./controllers/filemasterdsctlr');
+app.post('/api/v2/filemasterdsctlr/create', filemasterdsctlr.createfilemasterds);
+app.post('/api/v2/filemasterdsctlr/get', filemasterdsctlr.getfilemasterds);
+app.post('/api/v2/filemasterdsctlr/update', filemasterdsctlr.updatefilemasterds);
+app.post('/api/v2/filemasterdsctlr/delete', filemasterdsctlr.deletefilemasterds);
+
+const filemovementdsctlr = require('./controllers/filemovementdsctlr');
+app.post('/api/v2/filemovementdsctlr/create', filemovementdsctlr.createfilemovementds);
+app.post('/api/v2/filemovementdsctlr/get', filemovementdsctlr.getfilemovementds);
+app.post('/api/v2/filemovementdsctlr/update', filemovementdsctlr.updatefilemovementds);
+app.post('/api/v2/filemovementdsctlr/delete', filemovementdsctlr.deletefilemovementds);
+app.post('/api/v2/filemovementdsctlr/delete', filemovementdsctlr.deletefilemovementds);
+app.post('/api/v2/filemovementdsctlr/searchfaculty', filemovementdsctlr.searchfaculty);
+app.post('/api/v2/filemovementdsctlr/getdepartments', filemovementdsctlr.getDistinctDepartments);
+
+const exammarks2dsctlr = require('./controllers/exammarks2dsctlr');
+app.get('/api/v2/getexammarks2ds', exammarks2dsctlr.getexammarks2ds);
+app.post('/api/v2/createexammarks2ds', exammarks2dsctlr.createexammarks2ds);
+app.post('/api/v2/updateexammarks2ds', exammarks2dsctlr.updateexammarks2ds);
+app.post('/api/v2/updateexammarks2ds', exammarks2dsctlr.updateexammarks2ds);
+app.post('/api/v2/deleteexammarks2ds', exammarks2dsctlr.deleteexammarks2ds);
+
+const attendancetimereportctlr = require('./controllers/attendancetimereportctlr');
+app.post('/api/v2/getattendancetimereport', attendancetimereportctlr.getattendancetimereport);
+
+const itemcategorydsRouter = require('./controllers/itemcategorydsctlr');
+app.post('/api/v2/additemcategoryds', itemcategorydsRouter.additemcategoryds);
+app.get('/api/v2/getallitemcategoryds', itemcategorydsRouter.getallitemcategoryds);
+app.post('/api/v2/updateitemcategoryds', itemcategorydsRouter.updateitemcategoryds);
+app.delete('/api/v2/deleteitemcategoryds', itemcategorydsRouter.deleteitemcategoryds);
+app.get('/api/v2/getitemcategorydsbyid', itemcategorydsRouter.getitemcategorydsbyid);
+
+const itemtypedsRouter = require('./controllers/itemtypedsctlr');
+app.post('/api/v2/additemtypeds', itemtypedsRouter.additemtypeds);
+app.get('/api/v2/getallitemtypeds', itemtypedsRouter.getallitemtypeds);
+app.post('/api/v2/updateitemtypeds', itemtypedsRouter.updateitemtypeds);
+app.delete('/api/v2/deleteitemtypeds', itemtypedsRouter.deleteitemtypeds);
+app.get('/api/v2/getitemtypedsbyid', itemtypedsRouter.getitemtypedsbyid);
+
+const itemunitdsRouter = require('./controllers/itemunitdsctlr');
+app.post('/api/v2/additemunitds', itemunitdsRouter.additemunitds);
+app.get('/api/v2/getallitemunitds', itemunitdsRouter.getallitemunitds);
+app.post('/api/v2/updateitemunitds', itemunitdsRouter.updateitemunitds);
+app.delete('/api/v2/deleteitemunitds', itemunitdsRouter.deleteitemunitds);
+app.get('/api/v2/getitemunitdsbyid', itemunitdsRouter.getitemunitdsbyid);
+
+const poconfigdsctlr = require('./controllers/poconfigdsctlr');
+app.post('/api/v2/addpoconfigds', poconfigdsctlr.addpoconfigds);
+app.get('/api/v2/getpoconfigds', poconfigdsctlr.getpoconfigds);
+app.post('/api/v2/updatepoconfigds', poconfigdsctlr.updatepoconfigds);
+
+
+const prassignedsctlr = require('./controllers/prassignedsctlr');
+app.post('/api/v2/addprassigneds', prassignedsctlr.addprassigneds);
+app.get('/api/v2/getOEUsers', prassignedsctlr.getOEUsers);
+app.get('/api/v2/getallprassigneds', prassignedsctlr.getallprassigneds);
+app.get('/api/v2/getAssignedRequisitions', prassignedsctlr.getAssignedRequisitions);
+app.post('/api/v2/updateprassigneds', prassignedsctlr.updateprassigneds);
+app.get('/api/v2/deleteprassigneds', prassignedsctlr.deleteprassigneds);
+
+const pimprestdsctlr = require('./controllers/pimprestdsctlr');
+app.post('/api/v2/addpimprestds', pimprestdsctlr.addpimprestds);
+app.get('/api/v2/getallpimprestds', pimprestdsctlr.getallpimprestds);
+app.post('/api/v2/updatepimprestds', pimprestdsctlr.updatepimprestds);
+app.get('/api/v2/deletepimprestds', pimprestdsctlr.deletepimprestds);
+
+const pipelinestageagcontroller = require('./controllers/pipelinestageagcontroller');
+app.post('/api/v2/createpipelinestageag', pipelinestageagcontroller.createpipelinestageag);
+app.get('/api/v2/getallpipelinestageag', pipelinestageagcontroller.getallpipelinestageag);
+app.post('/api/v2/updatepipelinestageag', pipelinestageagcontroller.updatepipelinestageag);
+app.get('/api/v2/deletepipelinestageag/:id', pipelinestageagcontroller.deletepipelinestageag);
+
+const outcomeagcontroller = require('./controllers/outcomeagcontroller');
+app.post('/api/v2/createoutcomeag', outcomeagcontroller.createoutcomeag);
+app.get('/api/v2/getalloutcomeag', outcomeagcontroller.getalloutcomeag);
+app.post('/api/v2/updateoutcomeag', outcomeagcontroller.updateoutcomeag);
+app.get('/api/v2/deleteoutcomeag/:id', outcomeagcontroller.deleteoutcomeag);
+
+// Admission Report API
+const admissionInstitutionWiseReport = require('./controllers/admissioninstitutionwisereport');
+app.get('/api/v2/admission-institution-wise-report', admissionInstitutionWiseReport.getAdmissionInstitutionWiseReport);
+
+const CashApprovaldsctlr = require('./controllers/CashApprovaldsctlr');
+app.get('/api/v2/cashapproval', CashApprovaldsctlr.getAllRequests);
+app.post('/api/v2/cashapproval', CashApprovaldsctlr.createRequest);
+app.get('/api/v2/cashapproval/:id', CashApprovaldsctlr.getRequestById);
+app.post('/api/v2/cashapproval/delete', CashApprovaldsctlr.deleteRequest);
+app.post('/api/v2/cashapproval/approve', CashApprovaldsctlr.approveRequest);
+
+const coscholastic9ctlrds = require('./controllers/coscholastic9ctlrds');
+
+// Co-Scholastic Routes
+app.get('/api/v2/coscholastic/activities', coscholastic9ctlrds.getActivities);
+app.post('/api/v2/coscholastic/activity', coscholastic9ctlrds.createActivity);
+app.post('/api/v2/coscholastic/activity/update', coscholastic9ctlrds.updateActivity);
+app.post('/api/v2/coscholastic/activity/delete', coscholastic9ctlrds.deleteActivity);
+app.get('/api/v2/coscholastic/entry-data', coscholastic9ctlrds.getStudentsForGradeEntry);
+app.post('/api/v2/coscholastic/grades', coscholastic9ctlrds.saveGrades);
+
+
+// // Student Marks PDF Route (New)
+// app.get('/api/v2/getmarksheetpdfdata9ds', studentmarks9ctlrds.getmarksheetpdfdata9ds);
+
+const feeController = require('./controllers/feeReportController');
+
+app.get('/api/fees-report/years', feeController.getYears);
+app.get('/api/fees-report/programs', feeController.getPrograms);
+app.get('/api/fees-report/semester-summary', feeController.getSemesterSummary);
+app.get('/api/fees-report/semester-details', feeController.getSemesterDetails);
+app.get('/api/fees-report/program-summary', feeController.getProgramSummary);
+app.get('/api/fees-report/program-details', feeController.getProgramDetails);
+
+
+const oireportController = require('./controllers/oireportController')
+
+app.get('/api/years', oireportController.getAcademicYears)
+app.get('/api/programs', oireportController.getPrograms)
+app.get('/api/studentLedgerSummary', oireportController.studentLedgerSummary)
+app.get('/api/studentLedgerDetails', oireportController.studentLedgerDetails)
+app.get('/api/programFeeSummary', oireportController.programFeeSummary)
+app.get('/api/programFeeDetails', oireportController.programFeeDetails)
+
+
+const oidashboardController = require("./controllers/oidashboardController");
+
+app.get("/api/dashboard/revenue", oidashboardController.revenueDashboard);
+
+const oifreportController = require("./controllers/oifreportController");
+
+// REPORT ROUTES
+
+app.post("/api/report/feesummary", oifreportController.getFeeSummary);
+app.post("/api/report/feedetails", oifreportController.getFeeDetails);
+
+// DROPDOWNS
+
+app.get("/api/report/years", oifreportController.getAcademicYears);
+app.get("/api/report/programs", oifreportController.getPrograms);
+
+
+const oicrmcontroller = require('./controllers/oicrmcontroller')
+
+app.get('/api/reports', oicrmcontroller.getReports)
+
+app.get('/api/export/excel', oicrmcontroller.exportExcel)
+
+app.get('/api/export/pdf', oicrmcontroller.exportPDF)
+
+
+const oicrmreportsController = require('./controllers/oicrmfReportsController')
+
+/* REPORT API */
+
+app.get(
+    '/api/oicrmf/reports',
+    oicrmreportsController.oicrmfGetReports
+)
+
+/* EXPORT EXCEL */
+
+app.get(
+    '/api/oicrmf/export/excel',
+    oicrmreportsController.oicrmfExportExcel
+)
+
+
+const dailyfeescontroller = require('./controllers/dailyFeesController');
+
+app.get("/oicrmf/dropdowns", dailyfeescontroller.getDropdownData);
+app.get("/oicrmf/dailyfees/summary", dailyfeescontroller.getSummaryReport);
+app.get("/oicrmf/dailyfees/details", dailyfeescontroller.getDetailedReport);
+
+const crmdsreportController = require("./controllers/crmdsReportController");
+
+app.post(
+    "/api/v2/crmds/lead-report",
+    crmdsreportController.crmdsLeadReport
+);
+app.post(
+    "/api/v2/crmds/upcoming-followup-report",
+    crmdsreportController.crmdsUpcomingFollowupReport
+);
+app.post(
+    "/api/v2/crmds/get-counsellors",
+    crmdsreportController.crmdsGetCounsellors
+);
+
+app.post(
+    "/api/v2/crmds/overdue-leads-report",
+    crmdsreportController.crmdsOverdueLeadsReport
+);
+
+app.post(
+    "/api/v2/crmds/counsellorwiseleads",
+    crmdsreportController.crmdsCounsellorWiseTotalLeadsReport
+);
+
+app.post(
+    "/api/v2/crmds/sourcewise-report",
+    crmdsreportController.crmdsSourceWiseLeadsReport
+);
+
+app.post(
+    "/api/v2/crmds/pipelinewise-report",
+    crmdsreportController.crmdsPipelineStageWiseReport
+);
+
+/* Date Wise New Leads */
+app.post(
+    "/api/v2/crmds/datewise-new-leads",
+    crmdsreportController.crmdsDateWiseNewLeadsReport
+);
+
+const keicontroller = require("./controllers/keiteachercontroller");
+
+// ROUTES
+
+app.get(
+    "/kei/questions",
+    keicontroller.getQuestions
+);
+
+app.post(
+    "/kei/addquestion",
+    keicontroller.addQuestion
+);
+
+app.post(
+    "/kei/save",
+    keicontroller.saveResponses
+);
+
+app.get(
+    "/kei/responses",
+    keicontroller.getResponses
+);
+
+app.get(
+    "/kei/principaldashboard",
+    keicontroller.principalDashboard
+);
+
+const orcrmReportController2 = require("./controllers/oicrmcreportcontroller2");
+app.get("/pipeline-summary", orcrmReportController2.getPipelineSummary);
+
+app.get("/institution-details", orcrmReportController2.getInstitutionDetails);
+
+
+
 
 const aimatcontroller = require('./controllers/aimatcontroller');
+
+app.get('/api/v2/getcrmleadstagepivot', aimatcontroller.getcrmleadstagepivot);
+app.get('/api/v2/getcrmleadstage1', aimatcontroller.getcrmleadstage1);
+app.get('/api/v2/getcrmleadstage', aimatcontroller.getcrmleadstage);
+app.get('/api/v2/webblogs', aimatcontroller.getBlogs);
+app.get('/api/v2/webevents', aimatcontroller.getWebEvents);
+app.get('/api/v2/webcourses1', aimatcontroller.getwebcourses1);
+app.get('/api/v2/webcourses', aimatcontroller.getwebcourses);
+
+app.get('/api/v2/getfeesbycatyrpl', aimatcontroller.getfeesbycatyrpl);
+app.get('/api/v2/updateledgerpayment', aimatcontroller.updateledgerpayment);
+app.get('/api/v2/updateledgerstud', aimatcontroller.updateledgerstud);
+
+app.get('/api/v2/enrollexam', aimatcontroller.enrollexam);
+
+app.get('/api/v2/getvendordscountbyfac', aimatcontroller.getvendordscountbyfac);
+app.get('/api/v2/getvendordssecondbyfac', aimatcontroller.getvendordssecondbyfac);
+app.get('/api/v2/getvendordscount', aimatcontroller.getvendordscount);
+app.get('/api/v2/getvendordssecond', aimatcontroller.getvendordssecond);
+app.get('/api/v2/getvendoritemdscountbyfac', aimatcontroller.getvendoritemdscountbyfac);
+app.get('/api/v2/getvendoritemdssecondbyfac', aimatcontroller.getvendoritemdssecondbyfac);
+app.get('/api/v2/getvendoritemdscount', aimatcontroller.getvendoritemdscount);
+app.get('/api/v2/getvendoritemdssecond', aimatcontroller.getvendoritemdssecond);
+app.get('/api/v2/getrequisationdscountbyfac', aimatcontroller.getrequisationdscountbyfac);
+app.get('/api/v2/getrequisationdssecondbyfac', aimatcontroller.getrequisationdssecondbyfac);
+app.get('/api/v2/getrequisationdscount', aimatcontroller.getrequisationdscount);
+app.get('/api/v2/getrequisationdssecond', aimatcontroller.getrequisationdssecond);
+app.get('/api/v2/getitemmasterdscountbyfac', aimatcontroller.getitemmasterdscountbyfac);
+app.get('/api/v2/getitemmasterdssecondbyfac', aimatcontroller.getitemmasterdssecondbyfac);
+app.get('/api/v2/getitemmasterdscount', aimatcontroller.getitemmasterdscount);
+app.get('/api/v2/getitemmasterdssecond', aimatcontroller.getitemmasterdssecond);
+app.get('/api/v2/getstoreitemdscountbyfac', aimatcontroller.getstoreitemdscountbyfac);
+app.get('/api/v2/getstoreitemdssecondbyfac', aimatcontroller.getstoreitemdssecondbyfac);
+app.get('/api/v2/getstoreitemdscount', aimatcontroller.getstoreitemdscount);
+app.get('/api/v2/getstoreitemdssecond', aimatcontroller.getstoreitemdssecond);
+app.get('/api/v2/getstorerequisationdscountbyfac', aimatcontroller.getstorerequisationdscountbyfac);
+app.get('/api/v2/getstorerequisationdssecondbyfac', aimatcontroller.getstorerequisationdssecondbyfac);
+app.get('/api/v2/getstorerequisationdscount', aimatcontroller.getstorerequisationdscount);
+app.get('/api/v2/getstorerequisationdssecond', aimatcontroller.getstorerequisationdssecond);
+app.get('/api/v2/getstorepoorderdscountbyfac', aimatcontroller.getstorepoorderdscountbyfac);
+app.get('/api/v2/getstorepoorderdssecondbyfac', aimatcontroller.getstorepoorderdssecondbyfac);
+app.get('/api/v2/getstorepoorderdscount', aimatcontroller.getstorepoorderdscount);
+app.get('/api/v2/getstorepoorderdssecond', aimatcontroller.getstorepoorderdssecond);
+app.get('/api/v2/getstorepoitemsdscountbyfac', aimatcontroller.getstorepoitemsdscountbyfac);
+app.get('/api/v2/getstorepoitemsdssecondbyfac', aimatcontroller.getstorepoitemsdssecondbyfac);
+app.get('/api/v2/getstorepoitemsdscount', aimatcontroller.getstorepoitemsdscount);
+app.get('/api/v2/getstorepoitemsdssecond', aimatcontroller.getstorepoitemsdssecond);
+app.get('/api/v2/getstockregisterdscountbyfac', aimatcontroller.getstockregisterdscountbyfac);
+app.get('/api/v2/getstockregisterdssecondbyfac', aimatcontroller.getstockregisterdssecondbyfac);
+app.get('/api/v2/getstockregisterdscount', aimatcontroller.getstockregisterdscount);
+app.get('/api/v2/getstockregisterdssecond', aimatcontroller.getstockregisterdssecond);
+
+
+app.get('/api/v2/getvendordsbyfac', aimatcontroller.getvendordsbyfac);
+app.get('/api/v2/updatevendordsbyfac', aimatcontroller.updatevendordsbyfac);
+app.get('/api/v2/updatevendordscomments', aimatcontroller.updatevendordscomments);
+app.get('/api/v2/vendordsdocs', aimatcontroller.vendordsdocs);
+app.get('/api/v2/deletevendordsbyfac', aimatcontroller.deletevendordsbyfac);
+app.get('/api/v2/createvendordsbyfac', aimatcontroller.createvendordsbyfac);
+app.get('/api/v2/getvendoritemdsbyfac', aimatcontroller.getvendoritemdsbyfac);
+app.get('/api/v2/updatevendoritemdsbyfac', aimatcontroller.updatevendoritemdsbyfac);
+app.get('/api/v2/updatevendoritemdscomments', aimatcontroller.updatevendoritemdscomments);
+app.get('/api/v2/vendoritemdsdocs', aimatcontroller.vendoritemdsdocs);
+app.get('/api/v2/deletevendoritemdsbyfac', aimatcontroller.deletevendoritemdsbyfac);
+app.get('/api/v2/createvendoritemdsbyfac', aimatcontroller.createvendoritemdsbyfac);
+app.get('/api/v2/getrequisationdsbyfac', aimatcontroller.getrequisationdsbyfac);
+app.get('/api/v2/updaterequisationdsbyfac', aimatcontroller.updaterequisationdsbyfac);
+app.get('/api/v2/updaterequisationdscomments', aimatcontroller.updaterequisationdscomments);
+app.get('/api/v2/requisationdsdocs', aimatcontroller.requisationdsdocs);
+app.get('/api/v2/deleterequisationdsbyfac', aimatcontroller.deleterequisationdsbyfac);
+app.get('/api/v2/createrequisationdsbyfac', aimatcontroller.createrequisationdsbyfac);
+app.get('/api/v2/getitemmasterdsbyfac', aimatcontroller.getitemmasterdsbyfac);
+app.get('/api/v2/updateitemmasterdsbyfac', aimatcontroller.updateitemmasterdsbyfac);
+app.get('/api/v2/updateitemmasterdscomments', aimatcontroller.updateitemmasterdscomments);
+app.get('/api/v2/itemmasterdsdocs', aimatcontroller.itemmasterdsdocs);
+app.get('/api/v2/deleteitemmasterdsbyfac', aimatcontroller.deleteitemmasterdsbyfac);
+app.get('/api/v2/createitemmasterdsbyfac', aimatcontroller.createitemmasterdsbyfac);
+app.get('/api/v2/getstoreitemdsbyfac', aimatcontroller.getstoreitemdsbyfac);
+app.get('/api/v2/updatestoreitemdsbyfac', aimatcontroller.updatestoreitemdsbyfac);
+app.get('/api/v2/updatestoreitemdscomments', aimatcontroller.updatestoreitemdscomments);
+app.get('/api/v2/storeitemdsdocs', aimatcontroller.storeitemdsdocs);
+app.get('/api/v2/deletestoreitemdsbyfac', aimatcontroller.deletestoreitemdsbyfac);
+app.get('/api/v2/createstoreitemdsbyfac', aimatcontroller.createstoreitemdsbyfac);
+app.get('/api/v2/getstorerequisationdsbyfac', aimatcontroller.getstorerequisationdsbyfac);
+app.get('/api/v2/updatestorerequisationdsbyfac', aimatcontroller.updatestorerequisationdsbyfac);
+app.get('/api/v2/updatestorerequisationdscomments', aimatcontroller.updatestorerequisationdscomments);
+app.get('/api/v2/storerequisationdsdocs', aimatcontroller.storerequisationdsdocs);
+app.get('/api/v2/deletestorerequisationdsbyfac', aimatcontroller.deletestorerequisationdsbyfac);
+app.get('/api/v2/createstorerequisationdsbyfac', aimatcontroller.createstorerequisationdsbyfac);
+app.get('/api/v2/getstorepoorderdsbyfac', aimatcontroller.getstorepoorderdsbyfac);
+app.get('/api/v2/updatestorepoorderdsbyfac', aimatcontroller.updatestorepoorderdsbyfac);
+app.get('/api/v2/updatestorepoorderdscomments', aimatcontroller.updatestorepoorderdscomments);
+app.get('/api/v2/storepoorderdsdocs', aimatcontroller.storepoorderdsdocs);
+app.get('/api/v2/deletestorepoorderdsbyfac', aimatcontroller.deletestorepoorderdsbyfac);
+app.get('/api/v2/createstorepoorderdsbyfac', aimatcontroller.createstorepoorderdsbyfac);
+app.get('/api/v2/getstorepoitemsdsbyfac', aimatcontroller.getstorepoitemsdsbyfac);
+app.get('/api/v2/updatestorepoitemsdsbyfac', aimatcontroller.updatestorepoitemsdsbyfac);
+app.get('/api/v2/updatestorepoitemsdscomments', aimatcontroller.updatestorepoitemsdscomments);
+app.get('/api/v2/storepoitemsdsdocs', aimatcontroller.storepoitemsdsdocs);
+app.get('/api/v2/deletestorepoitemsdsbyfac', aimatcontroller.deletestorepoitemsdsbyfac);
+app.get('/api/v2/createstorepoitemsdsbyfac', aimatcontroller.createstorepoitemsdsbyfac);
+app.get('/api/v2/getstockregisterdsbyfac', aimatcontroller.getstockregisterdsbyfac);
+app.get('/api/v2/updatestockregisterdsbyfac', aimatcontroller.updatestockregisterdsbyfac);
+app.get('/api/v2/updatestockregisterdscomments', aimatcontroller.updatestockregisterdscomments);
+app.get('/api/v2/stockregisterdsdocs', aimatcontroller.stockregisterdsdocs);
+app.get('/api/v2/deletestockregisterdsbyfac', aimatcontroller.deletestockregisterdsbyfac);
+app.get('/api/v2/createstockregisterdsbyfac', aimatcontroller.createstockregisterdsbyfac);
+
+
+app.get('/api/v2/getcstudents', aimatcontroller.getcstudents);
+app.get('/api/v2/getcsubjects', aimatcontroller.getcsubjects);
+app.post('/api/v2/postcmarks', aimatcontroller.postcmarks);
+
+app.get('/api/v2/getconvdatescountbyfac', aimatcontroller.getconvdatescountbyfac);
+app.get('/api/v2/getconvdatessecondbyfac', aimatcontroller.getconvdatessecondbyfac);
+app.get('/api/v2/getconvdatescount', aimatcontroller.getconvdatescount);
+app.get('/api/v2/getconvdatessecond', aimatcontroller.getconvdatessecond);
+app.get('/api/v2/getconvdocscountbyfac', aimatcontroller.getconvdocscountbyfac);
+app.get('/api/v2/getconvdocssecondbyfac', aimatcontroller.getconvdocssecondbyfac);
+app.get('/api/v2/getconvdocscount', aimatcontroller.getconvdocscount);
+app.get('/api/v2/getconvdocssecond', aimatcontroller.getconvdocssecond);
+app.get('/api/v2/getconvfeescountbyfac', aimatcontroller.getconvfeescountbyfac);
+app.get('/api/v2/getconvfeessecondbyfac', aimatcontroller.getconvfeessecondbyfac);
+app.get('/api/v2/getconvfeescount', aimatcontroller.getconvfeescount);
+app.get('/api/v2/getconvfeessecond', aimatcontroller.getconvfeessecond);
+app.get('/api/v2/getconvghcountbyfac', aimatcontroller.getconvghcountbyfac);
+app.get('/api/v2/getconvghsecondbyfac', aimatcontroller.getconvghsecondbyfac);
+app.get('/api/v2/getconvghcount', aimatcontroller.getconvghcount);
+app.get('/api/v2/getconvghsecond', aimatcontroller.getconvghsecond);
+app.get('/api/v2/getconvtransportcountbyfac', aimatcontroller.getconvtransportcountbyfac);
+app.get('/api/v2/getconvtransportsecondbyfac', aimatcontroller.getconvtransportsecondbyfac);
+app.get('/api/v2/getconvtransportcount', aimatcontroller.getconvtransportcount);
+app.get('/api/v2/getconvtransportsecond', aimatcontroller.getconvtransportsecond);
+app.get('/api/v2/getconvguestscountbyfac', aimatcontroller.getconvguestscountbyfac);
+app.get('/api/v2/getconvguestssecondbyfac', aimatcontroller.getconvguestssecondbyfac);
+app.get('/api/v2/getconvguestscount', aimatcontroller.getconvguestscount);
+app.get('/api/v2/getconvguestssecond', aimatcontroller.getconvguestssecond);
+app.get('/api/v2/getconvattendeescountbyfac', aimatcontroller.getconvattendeescountbyfac);
+app.get('/api/v2/getconvattendeessecondbyfac', aimatcontroller.getconvattendeessecondbyfac);
+app.get('/api/v2/getconvattendeescount', aimatcontroller.getconvattendeescount);
+app.get('/api/v2/getconvattendeessecond', aimatcontroller.getconvattendeessecond);
+
+
+app.get('/api/v2/getconvdatesbyfac', aimatcontroller.getconvdatesbyfac);
+app.get('/api/v2/updateconvdatesbyfac', aimatcontroller.updateconvdatesbyfac);
+app.get('/api/v2/updateconvdatescomments', aimatcontroller.updateconvdatescomments);
+app.get('/api/v2/convdatesdocs', aimatcontroller.convdatesdocs);
+app.get('/api/v2/deleteconvdatesbyfac', aimatcontroller.deleteconvdatesbyfac);
+app.get('/api/v2/createconvdatesbyfac', aimatcontroller.createconvdatesbyfac);
+app.get('/api/v2/getconvdocsbyfac', aimatcontroller.getconvdocsbyfac);
+app.get('/api/v2/updateconvdocsbyfac', aimatcontroller.updateconvdocsbyfac);
+app.get('/api/v2/updateconvdocscomments', aimatcontroller.updateconvdocscomments);
+app.get('/api/v2/convdocsdocs', aimatcontroller.convdocsdocs);
+app.get('/api/v2/deleteconvdocsbyfac', aimatcontroller.deleteconvdocsbyfac);
+app.get('/api/v2/createconvdocsbyfac', aimatcontroller.createconvdocsbyfac);
+app.get('/api/v2/getconvfeesbyfac', aimatcontroller.getconvfeesbyfac);
+app.get('/api/v2/updateconvfeesbyfac', aimatcontroller.updateconvfeesbyfac);
+app.get('/api/v2/updateconvfeescomments', aimatcontroller.updateconvfeescomments);
+app.get('/api/v2/convfeesdocs', aimatcontroller.convfeesdocs);
+app.get('/api/v2/deleteconvfeesbyfac', aimatcontroller.deleteconvfeesbyfac);
+app.get('/api/v2/createconvfeesbyfac', aimatcontroller.createconvfeesbyfac);
+app.get('/api/v2/getconvghbyfac', aimatcontroller.getconvghbyfac);
+app.get('/api/v2/updateconvghbyfac', aimatcontroller.updateconvghbyfac);
+app.get('/api/v2/updateconvghcomments', aimatcontroller.updateconvghcomments);
+app.get('/api/v2/convghdocs', aimatcontroller.convghdocs);
+app.get('/api/v2/deleteconvghbyfac', aimatcontroller.deleteconvghbyfac);
+app.get('/api/v2/createconvghbyfac', aimatcontroller.createconvghbyfac);
+app.get('/api/v2/getconvtransportbyfac', aimatcontroller.getconvtransportbyfac);
+app.get('/api/v2/updateconvtransportbyfac', aimatcontroller.updateconvtransportbyfac);
+app.get('/api/v2/updateconvtransportcomments', aimatcontroller.updateconvtransportcomments);
+app.get('/api/v2/convtransportdocs', aimatcontroller.convtransportdocs);
+app.get('/api/v2/deleteconvtransportbyfac', aimatcontroller.deleteconvtransportbyfac);
+app.get('/api/v2/createconvtransportbyfac', aimatcontroller.createconvtransportbyfac);
+app.get('/api/v2/getconvguestsbyfac', aimatcontroller.getconvguestsbyfac);
+app.get('/api/v2/updateconvguestsbyfac', aimatcontroller.updateconvguestsbyfac);
+app.get('/api/v2/updateconvguestscomments', aimatcontroller.updateconvguestscomments);
+app.get('/api/v2/convguestsdocs', aimatcontroller.convguestsdocs);
+app.get('/api/v2/deleteconvguestsbyfac', aimatcontroller.deleteconvguestsbyfac);
+app.get('/api/v2/createconvguestsbyfac', aimatcontroller.createconvguestsbyfac);
+app.get('/api/v2/getconvattendeesbyfac', aimatcontroller.getconvattendeesbyfac);
+app.get('/api/v2/updateconvattendeesbyfac', aimatcontroller.updateconvattendeesbyfac);
+app.get('/api/v2/updateconvattendeescomments', aimatcontroller.updateconvattendeescomments);
+app.get('/api/v2/convattendeesdocs', aimatcontroller.convattendeesdocs);
+app.get('/api/v2/deleteconvattendeesbyfac', aimatcontroller.deleteconvattendeesbyfac);
+app.get('/api/v2/createconvattendeesbyfac', aimatcontroller.createconvattendeesbyfac);
+
+
+app.get('/api/v2/gettblerrorlogcountbyfac', aimatcontroller.gettblerrorlogcountbyfac);
+app.get('/api/v2/gettblerrorlogsecondbyfac', aimatcontroller.gettblerrorlogsecondbyfac);
+app.get('/api/v2/gettblerrorlogcount', aimatcontroller.gettblerrorlogcount);
+app.get('/api/v2/gettblerrorlogsecond', aimatcontroller.gettblerrorlogsecond);
+
+
+app.get('/api/v2/gettblerrorlogbyfac', aimatcontroller.gettblerrorlogbyfac);
+app.get('/api/v2/updatetblerrorlogbyfac', aimatcontroller.updatetblerrorlogbyfac);
+app.get('/api/v2/updatetblerrorlogcomments', aimatcontroller.updatetblerrorlogcomments);
+app.get('/api/v2/tblerrorlogdocs', aimatcontroller.tblerrorlogdocs);
+app.get('/api/v2/deletetblerrorlogbyfac', aimatcontroller.deletetblerrorlogbyfac);
+app.get('/api/v2/createtblerrorlogbyfac', aimatcontroller.createtblerrorlogbyfac);
+
+
+app.get('/api/v2/gettblemitterbyfac', aimatcontroller.gettblemitterbyfac);
+app.get('/api/v2/updatetblemitterbyfac', aimatcontroller.updatetblemitterbyfac);
+app.get('/api/v2/updatetblemittercomments', aimatcontroller.updatetblemittercomments);
+app.get('/api/v2/tblemitterdocs', aimatcontroller.tblemitterdocs);
+app.get('/api/v2/deletetblemitterbyfac', aimatcontroller.deletetblemitterbyfac);
+app.get('/api/v2/createtblemitterbyfac', aimatcontroller.createtblemitterbyfac);
+
+app.get('/api/v2/gettblemittercountbyfac', aimatcontroller.gettblemittercountbyfac);
+app.get('/api/v2/gettblemittersecondbyfac', aimatcontroller.gettblemittersecondbyfac);
+app.get('/api/v2/gettblemittercount', aimatcontroller.gettblemittercount);
+app.get('/api/v2/gettblemittersecond', aimatcontroller.gettblemittersecond);
+
+
+
+
+app.get('/api/v2/getwfaculty', aimatcontroller.getwfaculty);
+app.get('/api/v2/getwsemester', aimatcontroller.getwsemester);
+app.get('/api/v2/getwprograms', aimatcontroller.getwprograms);
+app.get('/api/v2/gettblapibyfac', aimatcontroller.gettblapibyfac);
+app.get('/api/v2/updatetblapibyfac', aimatcontroller.updatetblapibyfac);
+app.get('/api/v2/updatetblapicomments', aimatcontroller.updatetblapicomments);
+app.get('/api/v2/tblapidocs', aimatcontroller.tblapidocs);
+app.get('/api/v2/deletetblapibyfac', aimatcontroller.deletetblapibyfac);
+app.get('/api/v2/createtblapibyfac', aimatcontroller.createtblapibyfac);
+
 
 app.get('/api/v2/gettbcolumns', aimatcontroller.gettbcolumns);
 
@@ -8194,6 +7888,7 @@ app.get('/api/v2/mstudentsdocs', aimatcontroller.mstudentsdocs);
 app.get('/api/v2/deletemstudentsbyfac', aimatcontroller.deletemstudentsbyfac);
 app.get('/api/v2/createmstudentsbyfac', aimatcontroller.createmstudentsbyfac);
 app.get('/api/v2/getexamtimetablebyfac', aimatcontroller.getexamtimetablebyfac);
+app.get('/api/v2/getexamtimetablebyfilter', aimatcontroller.getexamtimetablebyfilter);
 app.get('/api/v2/examtimetablebyprog', aimatcontroller.examtimetablebyprog);
 app.get('/api/v2/updateexamtimetablebyfac', aimatcontroller.updateexamtimetablebyfac);
 app.get('/api/v2/updateexamtimetablecomments', aimatcontroller.updateexamtimetablecomments);
@@ -15071,27 +14766,6 @@ const rmouedit = require('./router/editmourouter.js');
 const rmoudel = require('./router/deletemourouter.js');
 const rmouexport = require('./router/exportmourouter.js');
 
-const itemcategorydsRouter = require('./controllers/itemcategorydsctlr');
-app.post('/api/v2/additemcategoryds', itemcategorydsRouter.additemcategoryds);
-app.get('/api/v2/getallitemcategoryds', itemcategorydsRouter.getallitemcategoryds);
-app.post('/api/v2/updateitemcategoryds', itemcategorydsRouter.updateitemcategoryds);
-app.delete('/api/v2/deleteitemcategoryds', itemcategorydsRouter.deleteitemcategoryds);
-app.get('/api/v2/getitemcategorydsbyid', itemcategorydsRouter.getitemcategorydsbyid);
-
-const itemtypedsRouter = require('./controllers/itemtypedsctlr');
-app.post('/api/v2/additemtypeds', itemtypedsRouter.additemtypeds);
-app.get('/api/v2/getallitemtypeds', itemtypedsRouter.getallitemtypeds);
-app.post('/api/v2/updateitemtypeds', itemtypedsRouter.updateitemtypeds);
-app.delete('/api/v2/deleteitemtypeds', itemtypedsRouter.deleteitemtypeds);
-app.get('/api/v2/getitemtypedsbyid', itemtypedsRouter.getitemtypedsbyid);
-
-const itemunitdsRouter = require('./controllers/itemunitdsctlr');
-app.post('/api/v2/additemunitds', itemunitdsRouter.additemunitds);
-app.get('/api/v2/getallitemunitds', itemunitdsRouter.getallitemunitds);
-app.post('/api/v2/updateitemunitds', itemunitdsRouter.updateitemunitds);
-app.delete('/api/v2/deleteitemunitds', itemunitdsRouter.deleteitemunitds);
-app.get('/api/v2/getitemunitdsbyid', itemunitdsRouter.getitemunitdsbyid);
-
 const rexpenditureadd = require('./router/addexpenditurerouter.js');
 const rexpenditureview = require('./router/viewexpenditurerouter.js');
 const rexpenditureedit = require('./router/editexpenditurerouter.js');
@@ -15248,8 +14922,6 @@ app.use('/deletemou', rmoudel);
 app.use('/exportmou', rmouexport);
 
 app.use('/addexpenditure', rexpenditureadd);
-app.post('/api/v2/updatedonationreceiptds', vssdonationdsctlr.updatedonationreceiptds);
-app.get('/api/v2/deletedonationreceiptds/:id', vssdonationdsctlr.deletedonationreceiptds);
 app.use('/viewexpenditure', rexpenditureview);
 app.use('/editexpenditure', rexpenditureedit);
 app.use('/deleteexpenditure', rexpendituredel);
@@ -15294,13 +14966,6 @@ app.use('/exportseedm', rseedmexport);
 app.use('/viewnaac', rnaac);
 app.use('/viewnaacuni', rnaacuni);
 
-const feefinedsctlr = require('./controllers/feefinedsctlr');
-app.post('/api/v2/addfeefineds', feefinedsctlr.createfeefineds);
-app.get('/api/v2/getallfeefineds', feefinedsctlr.getfeefineds);
-app.get('/api/v2/getfeefinedsbyid', feefinedsctlr.getfeefinedsbyid);
-app.post('/api/v2/updatefeefineds', feefinedsctlr.updatefeefineds);
-app.get('/api/v2/deletefeefineds', feefinedsctlr.deletefeefineds);
-
 
 app.use('/createcollaboration', rcollabadd);
 app.use('/viewcollaboration', rcollabview);
@@ -15312,7 +14977,7 @@ app.use('/viewcbcsprogram', rcbcsview);
 app.use('/editcbcsprogram', rcbcsedit);
 app.use('/deletecbcsprogram', rcbcsdel);
 
-
+//pratiti june 04 2021 end
 
 
 
@@ -15323,7 +14988,7 @@ app.use('/deletecbcsprogram', rcbcsdel);
 
 
 // start express
-const port = process.env.PORT || 3000;
+// const port=process.env.PORT || 3001;
 // app.listen(port, () => {
 //     console.log(`App running in port ${port}`);
 // });
@@ -15332,168 +14997,159 @@ const port = process.env.PORT || 3000;
 var connectionId;
 var _userConnections = [];
 
-const server = app.listen(port, () => {
-  //console.log(`App running in port ${port}`);
-});
-
-const socketManager = require('./socket');
-const io = socketManager.init(server);
+// const server= app.listen(port, () => {
+//     //console.log(`App running in port ${port}`);
+// });
 
 
-io.on('connection', (socket) => {
-  //console.log('a user connected');
-  var un = "";
-  var room = "";
+// const socketManager = require("./socket");
+// socketManager.init(server);
 
-  socket.on('new user', function (data, callback) {
-    //console.log(data);
-    var res = data.split("-");
-    un = res[0];
-    room = res[1];
-    //console.log("un " + un + " room " + room)
-    //socket.join(room);
-    //socket.username = un;
-    callback(true);
-    socket.join(room);
-    socket.username = data;
-    ////usernames.push(socket.username);
-    updateUsernames();
-    // if(usernames.indexOf(data) != -1){
-    // 	callback(false);
-    // } else {
-    // 	callback(true);
-    //     socket.join(room);
-    // 	socket.username = data;
-    // 	usernames.push(socket.username);
-    // 	updateUsernames();
-    // }
-  });
-
-  // Update Usernames
-  function updateUsernames() {
-    //io.sockets.emit('usernames', usernames);
-    io.sockets.emit('usernames', 'hello');
-  }
-
-  // Send Message
-  socket.on('send message', function (data) {
-    //io.sockets.emit('new message', {msg: data, user:socket.username});
-    io.sockets.in(room).emit('new message', { msg: data, user: socket.username });
-  });
-
-  // Send Message
-  socket.on('drawing', function (data) {
-    //io.sockets.emit('new message', {msg: data, user:socket.username});
-    io.sockets.in(room).emit('drawing', data);
-  });
-
-  socket.on('lock', function (data) {
-    //io.sockets.emit('new message', {msg: data, user:socket.username});
-    io.sockets.in(room).emit('lock', data);
-  });
-
-  socket.on('lockc', function (data) {
-    //io.sockets.emit('new message', {msg: data, user:socket.username});
-    io.sockets.in(room).emit('lockc', data);
-  });
+// const io = require('socket.io')(server);
 
 
-  socket.on('users_info_to_signaling_server', (data) => {
-    //console.log('userconnect', data.current_user_name, data.meetingid);
-    var other_users = _userConnections.filter(p => p.meeting_id == data.meetingid);
-    _userConnections.push({
-      connectionId: socket.id,
-      user_id: data.current_user_name,
-      meeting_id: data.meetingid
-    });
-    //console.log(`all users: ${_userConnections.map(a => a.connectionId)}`);
-    //        console.log(_userConnections);
-    //console.log(`other users: ${other_users.map(a => a.connectionId)}`);
-    //console.log(`connection id: ${connectionId} socket id:${socket.id}`);
+// io.on('connection', (socket) => {
+//     console.log('a user connected');
+//     var un="";
+//     var room="";
 
-    other_users.forEach(v => {
-      socket.to(v.connectionId).emit('newConnectionInformation', {
-        other_user_id: data.current_user_name,
-        connId: socket.id
-      });
-    });
+//     socket.on('new user', function(data, callback){
+//         //console.log(data);
+//         var res = data.split("-");
+//         un=res[0];
+//         room=res[1];
+//         //console.log("un " + un + " room " + room)
+//         //socket.join(room);
+// 		//socket.username = un;
+//         callback(true);
+//             socket.join(room);
+// 			socket.username = data;
+// 			////usernames.push(socket.username);
+// 			updateUsernames();
+// 		// if(usernames.indexOf(data) != -1){
+// 		// 	callback(false);
+// 		// } else {
+// 		// 	callback(true);
+//         //     socket.join(room);
+// 		// 	socket.username = data;
+// 		// 	usernames.push(socket.username);
+// 		// 	updateUsernames();
+// 		// }
+// 	});
 
-    socket.emit('other_users_to_inform', other_users);
+// 	// Update Usernames
+// 	function updateUsernames(){
+// 		//io.sockets.emit('usernames', usernames);
+//         io.sockets.emit('usernames', 'hello');
+// 	}
+
+// 	// Send Message
+// 	socket.on('send message', function(data){
+// 		//io.sockets.emit('new message', {msg: data, user:socket.username});
+//         io.sockets.in(room).emit('new message', {msg: data, user:socket.username});
+// 	});
+
+//   // Send Message
+// 	socket.on('drawing', function(data){
+// 		//io.sockets.emit('new message', {msg: data, user:socket.username});
+//         io.sockets.in(room).emit('drawing', data);
+// 	});
+
+//   socket.on('lock', function(data){
+// 		//io.sockets.emit('new message', {msg: data, user:socket.username});
+//         io.sockets.in(room).emit('lock', data);
+// 	});
+
+//   socket.on('lockc', function(data){
+// 		//io.sockets.emit('new message', {msg: data, user:socket.username});
+//         io.sockets.in(room).emit('lockc', data);
+// 	});
+
+//   socket.on('addProduct', function(data){
+// 		//io.sockets.emit('new message', {msg: data, user:socket.username});
+//         //io.sockets.in(room).emit('lockc', data);
+//         console.log(data);
+//         console.log(data.price);
+//         var price=parseInt(data.price) -1;
+//         io.sockets.emit('getmessage', {message: price, item :'test'});
 
 
-
-    //        _userConnections[0].meeting_id
-  })
-
-  socket.on('exchangeSDP', (data) => {
-
-    socket.to(data.to_connid).emit('exchangeSDP', {
-      message: data.message,
-      from_connid: socket.id
-    });
-
-  }); //end of exchangeSDP
-  socket.on('reset', (data) => {
-    var userObj = _userConnections.find(p => p.connectionId == socket.id);
-    if (userObj) {
-      var meetingid = userObj.meeting_id;
-      var list = _userConnections.filter(p => p.meeting_id == meetingid);
-      _userConnections = _userConnections.filter(p => p.meeting_id != meetingid);
-
-      list.forEach(v => {
-        socket.to(v.connectionId).emit('reset');
-      });
-
-      socket.emit('reset');
-    }
-
-  }); //end of reset
+// 	});
 
 
-  // Disconnect
-  socket.on('disconnect', function (data) {
-    var userObj = _userConnections.find(p => p.connectionId == socket.id);
-    if (userObj) {
-      var meetingid = userObj.meeting_id;
+//   socket.on('users_info_to_signaling_server', (data) => {
+//     //console.log('userconnect', data.current_user_name, data.meetingid);
+//     var other_users = _userConnections.filter(p => p.meeting_id == data.meetingid);
+//     _userConnections.push({
+//         connectionId: socket.id,
+//         user_id: data.current_user_name,
+//         meeting_id: data.meetingid
+//     });
+//     //console.log(`all users: ${_userConnections.map(a => a.connectionId)}`);
+//     //        console.log(_userConnections);
+//     //console.log(`other users: ${other_users.map(a => a.connectionId)}`);
+//     //console.log(`connection id: ${connectionId} socket id:${socket.id}`);
 
-      _userConnections = _userConnections.filter(p => p.connectionId != socket.id);
-      var list = _userConnections.filter(p => p.meeting_id == meetingid);
-      //console.log(`disconnected socket id   ${socket.id}`);
-      //console.log(`connection id: ${connectionId} socket id:${socket.id}`);
-      list.forEach(v => {
-        socket.to(v.connectionId).emit('informAboutConnectionEnd', socket.id);
-      });
-    }
-    if (!socket.username) {
-      return;
-    }
+//     other_users.forEach(v => {
+//         socket.to(v.connectionId).emit('newConnectionInformation', {
+//             other_user_id: data.current_user_name,
+//             connId: socket.id
+//         });
+//     });
 
-    usernames.splice(usernames.indexOf(socket.username), 1);
-    updateUsernames();
-  });
-});
+//     socket.emit('other_users_to_inform', other_users);
 
 
 
+//     //        _userConnections[0].meeting_id
+// })
+
+// socket.on('exchangeSDP', (data) => {
+
+//     socket.to(data.to_connid).emit('exchangeSDP', {
+//         message: data.message,
+//         from_connid: socket.id
+//     });
+
+// }); //end of exchangeSDP
+// socket.on('reset', (data) => {
+//     var userObj = _userConnections.find(p => p.connectionId == socket.id);
+//     if (userObj) {
+//         var meetingid = userObj.meeting_id;
+//         var list = _userConnections.filter(p => p.meeting_id == meetingid);
+//         _userConnections = _userConnections.filter(p => p.meeting_id != meetingid);
+
+//         list.forEach(v => {
+//             socket.to(v.connectionId).emit('reset');
+//         });
+
+//         socket.emit('reset');
+//     }
+
+// }); //end of reset
 
 
-// Admission Report API
-const admissionInstitutionWiseReport = require('./controllers/admissioninstitutionwisereport');
-app.get('/api/v2/admission-institution-wise-report', admissionInstitutionWiseReport.getAdmissionInstitutionWiseReport);
+// 	// Disconnect
+// 	socket.on('disconnect', function(data){
+//     var userObj = _userConnections.find(p => p.connectionId == socket.id);
+//         if (userObj) {
+//             var meetingid = userObj.meeting_id;
 
-// Drigable Report API
-const drigablereportRouter = require('./router/drigablereportrouterds.js');
-app.use('/api/v2', drigablereportRouter);
+//             _userConnections = _userConnections.filter(p => p.connectionId != socket.id);
+//             var list = _userConnections.filter(p => p.meeting_id == meetingid);
+//             //console.log(`disconnected socket id   ${socket.id}`);
+//             //console.log(`connection id: ${connectionId} socket id:${socket.id}`);
+//             list.forEach(v => {
+//                 socket.to(v.connectionId).emit('informAboutConnectionEnd', socket.id);
+//             });
+//         }
+// 		if(!socket.username){
+// 			return;
+// 		}
+
+// 		usernames.splice(usernames.indexOf(socket.username), 1);
+// 		updateUsernames();
+// 	});
+// });
 
 
-// Start automated login loop
-
-// Compartment / Supplementary Exam Marks API
-const compartmentctlrds = require('./controllers/compartmentctlrds');
-app.get('/api/v2/getcompartmentstudents9ds', compartmentctlrds.getcompartmentstudents9ds);
-app.post('/api/v2/savecompartmentmarks9ds', compartmentctlrds.savecompartmentmarks9ds);
-app.get('/api/v2/getcompartmentstudents11ds', compartmentctlrds.getcompartmentstudents11ds);
-app.post('/api/v2/savecompartmentmarks11ds', compartmentctlrds.savecompartmentmarks11ds);
-
-const startLoginLoop = require('./loop');
-startLoginLoop();

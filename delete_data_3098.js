@@ -11,9 +11,12 @@ const SubjectComponentConfig9ds = require('./Models/subjectcomponentconfig9ds');
 const SubjectComponentConfig11ds = require('./Models/subjectcomponentconfig11ds');
 const CoScholasticGrade9ds = require('./Models/CoScholasticGrade9ds');
 const CoScholasticActivity9ds = require('./Models/CoScholasticActivity9ds');
+
+const categoryag1 = require("./Models/categoryag1");
 // ──────────────────────────────────────────────────────────────────────────
 
-const MONGODB_URI = "mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+//const MONGODB_URI = "mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const MONGODB_URI = "mongodb+srv://erppu_db_user:NIX9cbbnUDGxlOiB@cluster0.eumxu0m.mongodb.net/?appName=Cluster0";
 
 const TARGET_COLID = 3052; // ← Change this if needed
 
@@ -56,8 +59,8 @@ const deleteData = async () => {
         // console.log(`✅ Deleted ${r1.deletedCount} records from StudentMarks9ds (Class 6-10).`);
 
         // -- 2. Student Marks (Class 11-12 / 11ds) ------------------------
-        const r2 = await StudentMarks11ds.deleteMany({ colid: TARGET_COLID });
-        console.log(`✅ Deleted ${r2.deletedCount} records from StudentMarks11ds (Class 11-12).`);
+        // const r2 = await StudentMarks11ds.deleteMany({ colid: TARGET_COLID });
+        // console.log(`✅ Deleted ${r2.deletedCount} records from StudentMarks11ds (Class 11-12).`);
 
         // // ══════════════════════════════════════════════════════════════════
         // // SUBJECT / SCHOLASTIC SUBJECT CONFIG
@@ -68,8 +71,8 @@ const deleteData = async () => {
         // console.log(`✅ Deleted ${r3.deletedCount} records from SubjectComponentConfig9ds.`);
 
         // -- 4. Subject Component Config (Class 11-12) ---------------------
-        const r4 = await SubjectComponentConfig11ds.deleteMany({ colid: TARGET_COLID });
-        console.log(`✅ Deleted ${r4.deletedCount} records from SubjectComponentConfig11ds.`);
+        // const r4 = await SubjectComponentConfig11ds.deleteMany({ colid: TARGET_COLID });
+        // console.log(`✅ Deleted ${r4.deletedCount} records from SubjectComponentConfig11ds.`);
 
         // // ══════════════════════════════════════════════════════════════════
         // // CO-SCHOLASTIC  (Grades and Activity definitions)
@@ -84,8 +87,11 @@ const deleteData = async () => {
         // console.log(`✅ Deleted ${r6.deletedCount} records from CoScholasticActivity9ds.`);
 
 
-        // const r7 = await User.deleteMany({ colid: 3052, role: "Student" });
-        // console.log(`Deleted ${r7.deletedCount}`);
+        const r7 = await User.deleteMany({ colid: 4000, role: "Student" });
+        console.log(`Deleted ${r7.deletedCount}`);
+
+        // const r8 = await categoryag1.deleteMany({ colid: 6050 })
+        // console.log(`Deleted ${r8.deletedCount}`);
         console.log("\n✅ All selected deletions complete.");
 
     } catch (err) {
