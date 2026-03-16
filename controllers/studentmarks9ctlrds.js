@@ -32,6 +32,17 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
       matchStage.section = section;
     }
 
+    // Add Search criteria
+    const { search } = req.query;
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      matchStage.$or = [
+        { name: searchRegex },
+        { regno: searchRegex },
+        { rollno: searchRegex }
+      ];
+    }
+
     // Get students using aggregation
     const students = await User.aggregate([
       {
@@ -40,7 +51,8 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
       {
         $project: {
           regno: 1,
-          name: 1
+          name: 1,
+          rollno: 1
         }
       },
       {

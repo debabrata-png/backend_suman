@@ -73,6 +73,17 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
         };
         if (section) studentQuery.section = section;
 
+        // Add Search criteria
+        const { search } = req.query;
+        if (search) {
+            const searchRegex = new RegExp(search, 'i');
+            studentQuery.$or = [
+                { name: searchRegex },
+                { regno: searchRegex },
+                { rollno: searchRegex }
+            ];
+        }
+
         const students = await User.find(studentQuery)
             .select('regno name rollno')
             .sort({ rollno: 1, name: 1 });
