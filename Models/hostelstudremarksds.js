@@ -8,7 +8,7 @@ const hostelstudremarksdsschema = new mongoose.Schema({
     regno: { type: String },
     remarks: { type: String },
     isredflag: { type: Boolean, default: false },
-});
+}, { timestamps: true });
 
 const hostelstudremarksds = mongoose.model('hostelstudremarksds', hostelstudremarksdsschema);
 
