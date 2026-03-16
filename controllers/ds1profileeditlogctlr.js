@@ -3,7 +3,7 @@ const User = require("../Models/user");
 
 // Helper function to get field category
 const getFieldCategory = (fieldName) => {
-  const personalFields = ['phone', 'gender', 'photo', 'category', 'address', 'quota', 'dob'];
+  const personalFields = ['phone', 'gender', 'photo', 'category', 'address', 'quota', 'dob', 'ews'];
   const familyFields = ['fathername', 'mothername'];
   const academicFields = ['eligibilityname', 'degree', 'minorsub', 'vocationalsub', 'mdcsub', 'othersub'];
   const meritFields = ['merit', 'obtain', 'bonus', 'weightage', 'ncctype', 'isdisabled', 'scholarship'];
@@ -39,7 +39,8 @@ const getFieldLabel = (fieldName) => {
     weightage: "Weightage",
     ncctype: "NCC Type",
     isdisabled: "Is Disabled",
-    scholarship: "Scholarship"
+    scholarship: "Scholarship",
+    ews: "EWS Status"
   };
   
   return labels[fieldName] || fieldName;

@@ -441,7 +441,7 @@ exports.ds1updatestudentprofile = async (req, res) => {
       // Academic Info
       'eligibilityname', 'degree', 'minorsub', 'vocationalsub', 'mdcsub', 'othersub',
       // Merit/Scholarship
-      'merit', 'obtain', 'bonus', 'weightage', 'ncctype', 'isdisabled', 'scholarship'
+      'merit', 'obtain', 'bonus', 'weightage', 'ncctype', 'isdisabled', 'scholarship', 'ews'
     ];
 
     // TRACK CHANGES FOR LOGGING

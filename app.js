@@ -4119,6 +4119,13 @@ app.get("/api/v2/getallmessapplicationds", messapplicationctlrds.getallmessappli
 app.post("/api/v2/updatemessapplicationds", messapplicationctlrds.updatemessapplicationds);
 app.get("/api/v2/deletemessapplicationds/:id", messapplicationctlrds.deletemessapplicationds);
 
+// new page
+const hostelstudremarksdsctlr = require('./Controllers/hostelstudremarksdsctlr');
+app.post('/api/v2/hostelstudremarks/create', hostelstudremarksdsctlr.createRemark);
+app.get('/api/v2/hostelstudremarks/get', hostelstudremarksdsctlr.getStudentRemarks);
+app.post('/api/v2/hostelstudremarks/update/:id', hostelstudremarksdsctlr.updateRemark);
+app.post('/api/v2/hostelstudremarks/delete', hostelstudremarksdsctlr.deleteRemark);
+
 const librarymodelctlr = require('./controllers/librarymodelctlr');
 
 app.post("/api/v2/createlibrary", librarymodelctlr.createlibrary);

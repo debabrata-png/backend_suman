@@ -164,6 +164,9 @@ const userschema = new mongoose.Schema({
     },
     income: {
         type: String
+    },
+    ews: {
+        type: String
     }
 })
 
