@@ -4120,7 +4120,7 @@ app.post("/api/v2/updatemessapplicationds", messapplicationctlrds.updatemessappl
 app.get("/api/v2/deletemessapplicationds/:id", messapplicationctlrds.deletemessapplicationds);
 
 // new page
-const hostelstudremarksdsctlr = require('./Controllers/hostelstudremarksdsctlr');
+const hostelstudremarksdsctlr = require('./controllers/hostelstudremarksdsctlr');
 app.post('/api/v2/hostelstudremarks/create', hostelstudremarksdsctlr.createRemark);
 app.get('/api/v2/hostelstudremarks/get', hostelstudremarksdsctlr.getStudentRemarks);
 app.post('/api/v2/hostelstudremarks/update/:id', hostelstudremarksdsctlr.updateRemark);
