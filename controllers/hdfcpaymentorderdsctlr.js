@@ -132,10 +132,10 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
     const finalamount = Math.round(parsedamount - discount + platformcharges);
 
     // Generate unique IDs
-    const timestamp = Date.now();
-    const randomstr = Math.random().toString(36).substr(2, 9);
-    const orderid = `ORD_HDFC_${colid}_${timestamp}_${randomstr}`;
-    const merchanttransactionid = `TXN_HDFC_${colid}_${timestamp}_${randomstr}`;
+    const timestamp = Date.now().toString(36);
+    const randomstr = Math.random().toString(36).substr(2, 3);
+    const orderid = `ORD${colid}${timestamp}${randomstr}`;
+    const merchanttransactionid = `TXN${colid}${timestamp}${randomstr}`;
 
     // Create payment order in database
     const neworder = new hdfcpaymentorderds({
