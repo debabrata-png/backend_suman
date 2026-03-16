@@ -29,7 +29,8 @@ const marksheetdatadsschema = new mongoose.Schema({
     term2Enrichment: { type: Number, default: 0 }, // Max 5
     term2AnnualExam: { type: Number, default: 0 }, // Max 80
     term2Total: { type: Number, default: 0 }, // Auto calculated
-    term2Grade: { type: String, default: '' }
+    term2Grade: { type: String, default: '' },
+    isgrace: { type: Boolean, default: false }
   }],
   
   // Co-scholastic areas

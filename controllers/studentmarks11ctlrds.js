@@ -229,6 +229,7 @@ exports.savemarks11ds = async (req, res) => {
 
                             total: total,
                             totalgrade: totalgrade,
+                            isgrace: mark.isgrace || false,
                             status: 'finalized',
                             updatedat: new Date()
                         }
@@ -363,6 +364,7 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
 
                     grandTotal: m.total,
                     grade: m.totalgrade,
+                    isgrace: m.isgrace || false,
                     compartmentobtained: (m.compartmentobtained !== undefined && m.compartmentobtained !== null)
                         ? m.compartmentobtained : null, // Supplementary exam marks
                     hasMarks: hasMarks // Helper flag for filtering

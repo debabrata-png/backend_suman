@@ -146,6 +146,7 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
             obtainedmarks: `$${componentname}obtained`,
             term1total: 1,
             term2total: 1,
+            isgrace: 1,
             status: 1
           }
         }
@@ -199,10 +200,11 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
 
     // Prepare bulk operations
     const bulkOps = marks.map(markEntry => {
-      const { regno, subjectcode, obtained, studentname, subjectname } = markEntry;
+      const { regno, subjectcode, obtained, studentname, subjectname, isgrace } = markEntry;
 
       const updateFields = {
         [obtainedFieldName]: obtained || 0,
+        isgrace: isgrace || false,
         updatedat: new Date()
       };
 
@@ -692,6 +694,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         term2AnnualExam: mark.term2annualexamobtained || 0,
         term2Total: parseFloat(term2TotalRaw.toFixed(1)), // Total with scaled PT
         term2Grade: term2GradeRecalc,
+        isgrace: mark.isgrace || false,
         compartmentobtained: (mark.compartmentobtained !== undefined && mark.compartmentobtained !== null)
           ? mark.compartmentobtained : null  // Supplementary exam marks
       };
@@ -848,13 +851,13 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         mother: userData.mothername || '',
         address: userData.address || '',
         classSection: `Class ${semester} - ${userData.section || 'A'}`,
-        rollNo: userData.rollno || '', // Empty if not present
+        rollNo: userData.rollno || '', // Verify this is rollno in User schema
         dob: userData.dob || '',
         admissionNo: regno,
         contact: userData.phone || '',
         cbseRegNo: userData.cbseno || '',
         photo: userData.photo || '',
-        section: userData.section || ''  // ← added: used by all report card pages
+        section: userData.section || ''
       },
       attendance: attendanceData,
       subjects: subjects,

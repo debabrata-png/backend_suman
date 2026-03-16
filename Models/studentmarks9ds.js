@@ -47,7 +47,8 @@ const studentmarks9dsschema = new mongoose.Schema({
   // Compartment / Supplementary Exam Marks (does not affect original term marks)
   compartmentobtained: { type: Number, default: null },
 
-  createdat: { type: Date, default: Date.now },
+  isgrace: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
   updatedat: { type: Date, default: Date.now }
 });
 
