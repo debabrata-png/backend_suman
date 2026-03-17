@@ -3,6 +3,172 @@ const User = require("../Models/user");
 const Institution = require("../Models/institutions");
 
 /**
+ * DCR Detailed Report — Student-wise with fee heads as pivot columns
+ * Each row = 1 student, columns = student info + one column per feeitem
+ */
+exports.getDCRDetailedReport = async (req, res) => {
+    try {
+        ////console.log("DCR Detailed Report APIs Hit! query:", req.query);
+        const {
+            colid,
+            academicyear,
+            feebook,
+            feeitem,
+            programcode,
+            feecounter,
+            paymode,
+            fromdate,
+            todate,
+            receiptStatus,
+            receiptType
+        } = req.query;
+
+        if (!colid) return res.status(400).json({ success: false, message: "colid required" });
+
+        // If a specific institution (feebook = colid of institution) is selected, use it
+        let targetColid = Number(colid);
+        if (feebook) targetColid = Number(feebook);
+
+        const match = { colid: targetColid };
+
+        if (academicyear) match.academicyear = academicyear;
+        if (feeitem) match.feeitem = feeitem;
+        if (programcode) match.programcode = programcode;
+        if (feecounter) match.feecounter = feecounter;
+        if (paymode) match.paymode = paymode;
+        if (receiptStatus === "Regular") match.status = { $ne: "cancelled" };
+
+        if (fromdate && todate) {
+            match.classdate = {
+                $gte: new Date(new Date(fromdate).setHours(0, 0, 0, 0)),
+                $lte: new Date(new Date(todate).setHours(23, 59, 59, 999))
+            };
+        }
+
+        ////console.log("DCR Detailed Match Built:", match);
+
+        // Step 1: Aggregate ledger — group by regno, collect fee entries
+        ////console.log("DCR Detailed - Starting Aggregation...");
+        const ledgerAgg = await Ledgerstud.aggregate([
+            { $match: match },
+            {
+                $group: {
+                    _id: "$regno",
+                    studentName: { $first: "$student" },
+                    programcode: { $first: "$programcode" },
+                    semester: { $first: "$semester" },
+                    academicyear: { $first: "$academicyear" },
+                    feecategory: { $first: "$feecategory" },
+                    feecounter: { $first: "$feecounter" },
+                    institution: { $first: "$institution" },
+                    paymode: { $first: "$paymode" },
+                    feeEntries: {
+                        $push: {
+                            feeitem: "$feeitem",
+                            amount: "$amount",
+                            paid: "$paid",
+                            concession: "$concession",
+                            balance: "$balance",
+                            status: "$status",
+                            classdate: "$classdate"
+                        }
+                    }
+                }
+            },
+            { $sort: { "_id": 1 } }
+        ]);
+
+        //////console.log("DCR Detailed - Aggregation complete! Rows:", ledgerAgg.length);
+
+        // Step 2: Extract all unique regnos and fetch User data in one query constraint
+        const regnos = ledgerAgg.map(s => s._id).filter(Boolean);
+        //////console.log("DCR Detailed - Fetching users for regnos count:", regnos.length);
+        const usersInfo = await User.find({ regno: { $in: regnos } }).lean();
+        ////console.log("DCR Detailed - Users fetched:", usersInfo.length);
+
+        // Build a dictionary for O(1) lookups in memory
+        const userMap = {};
+        usersInfo.forEach(u => {
+            userMap[u.regno] = u;
+        });
+
+        // Step 3: Collect all unique fee item names across all students
+        const allFeeItems = new Set();
+        ledgerAgg.forEach(student => {
+            (student.feeEntries || []).forEach(entry => {
+                if (entry.feeitem) allFeeItems.add(entry.feeitem);
+            });
+        });
+        const feeItemList = [...allFeeItems].sort();
+
+        // Step 4: Build pivot rows
+        const rows = ledgerAgg.map((student, index) => {
+            const user = userMap[student._id] || {};
+
+            // Build fee-head → paid amount map (sum in case of multiple entries per feeitem)
+            const feeMap = {};
+            let grandTotal = 0;
+            (student.feeEntries || []).forEach(entry => {
+                if (entry.feeitem) {
+                    // Try parsing paid first, fallback to amount, take absolute value for credits
+                    let amountPaid = Number(entry.paid);
+                    if (isNaN(amountPaid) || amountPaid === 0) {
+                        amountPaid = Number(entry.amount) || 0;
+                    }
+                    amountPaid = Math.abs(amountPaid);
+
+                    feeMap[entry.feeitem] = (feeMap[entry.feeitem] || 0) + amountPaid;
+                    grandTotal += amountPaid;
+                }
+            });
+
+            const row = {
+                "Sr No": index + 1,
+                "Reg No": student._id || "",
+                "Student Name": student.studentName || user.name || "",
+                "Father Name": user.fathername || "",
+                "Mother Name": user.mothername || "",
+                "DOB": user.dob || "",
+                "Gender": user.gender || "",
+                "Category": user.category || "",
+                "Programme": student.programcode || user.programcode || "",
+                "Semester": student.semester || user.semester || "",
+                "Department": user.department || "",
+                "Phone": user.phone || "",
+                "Address": user.address || "",
+                "Academic Year": student.academicyear || "",
+                "Fee Category": student.feecategory || "",
+                "Counter": student.feecounter || "",
+                "Pay Mode": student.paymode || "",
+            };
+
+            // Pivot: one column per fee item
+            feeItemList.forEach(fi => {
+                row[fi] = feeMap[fi] !== undefined ? feeMap[fi] : 0;
+            });
+
+            row["Grand Total"] = grandTotal;
+
+            return row;
+        });
+
+        ////console.log("DCR Detailed - Pivot complete, sending response.");
+
+        res.status(200).json({
+            success: true,
+            reportFormat: "Detailed",
+            count: rows.length,
+            feeItems: feeItemList,
+            data: rows
+        });
+
+    } catch (error) {
+        ////console.error("DCR Detailed Report Error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
  * Get dropdown data for DCR filters
  */
 exports.getDCRDropdowns = async (req, res) => {
@@ -79,7 +245,7 @@ exports.getDCRReport = async (req, res) => {
         // Receipt Status (Handling "With Cancelled" vs regular)
         // Note: Assuming specific status values for cancellation based on common patterns
         if (receiptStatus === "Regular") {
-            match.status = { $ne: "cancelled" }; 
+            match.status = { $ne: "cancelled" };
         }
 
         let pipeline = [{ $match: match }];

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Institution = require('./Models/institutions');
 
-const MONGODB_URI = "mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const MONGODB_URI = "mongodb+srv://erppu_db_user:NIX9cbbnUDGxlOiB@cluster0.eumxu0m.mongodb.net/?appName=Cluster0";
 
 // Replace with the actual Admin ColID you want to use for testing
 const TARGET_ADMIN_COLID = 4000;

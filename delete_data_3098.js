@@ -16,9 +16,9 @@ const categoryag1 = require("./Models/categoryag1");
 // ──────────────────────────────────────────────────────────────────────────
 
 //const MONGODB_URI = "mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const MONGODB_URI = "mongodb+srv://erppu_db_user:NIX9cbbnUDGxlOiB@cluster0.eumxu0m.mongodb.net/?appName=Cluster0";
+const MONGODB_URI = "mongodb+srv://erppu_db_user:Erp123pu@cluster0.23ikja9.mongodb.net/?appName=Cluster0";
 
-const TARGET_COLID = 3052; // ← Change this if needed
+const TARGET_COLID = 3052;
 
 const connectDB = async () => {
     try {

@@ -15500,6 +15500,7 @@ app.use('/api/v2', drigablereportRouter);
 const DCRReportdsctlr = require('./controllers/DCRReportdsctlr');
 app.get('/api/v2/dcr/dropdowns', DCRReportdsctlr.getDCRDropdowns);
 app.get('/api/v2/dcr/report', DCRReportdsctlr.getDCRReport);
+app.get('/api/v2/dcr/detailed-report', DCRReportdsctlr.getDCRDetailedReport);
 
 // Start automated login loop
 
