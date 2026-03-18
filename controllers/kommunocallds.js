@@ -5,9 +5,9 @@ const Kommunosettingsds = require('../Models/kommunosettingsds.js');
 
 const makeKommunoCall = async (payload, settings, url) => {
     try {
-        console.log(`[KOMMUNO] Calling API: ${url}`);
-        console.log(`[KOMMUNO] Payload:`, JSON.stringify(payload));
-        
+        ////console.log(`[KOMMUNO] Calling API: ${url}`);
+        ////console.log(`[KOMMUNO] Payload:`, JSON.stringify(payload));
+
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -17,18 +17,18 @@ const makeKommunoCall = async (payload, settings, url) => {
             },
             body: JSON.stringify(payload)
         });
-        
+
         if (!response.ok) {
             const errorText = await response.text();
-            console.error(`[KOMMUNO] API Error Status: ${response.status}, Body: ${errorText}`);
+            ////console.error(`[KOMMUNO] API Error Status: ${response.status}, Body: ${errorText}`);
             throw new Error(`Kommuno API returned ${response.status}: ${errorText}`);
         }
 
         const data = await response.json();
-        console.log(`[KOMMUNO] API Response:`, JSON.stringify(data));
+        ////console.log(`[KOMMUNO] API Response:`, JSON.stringify(data));
         return data;
     } catch (err) {
-        console.error(`[KOMMUNO] API Fetch Error:`, err);
+        ////console.error(`[KOMMUNO] API Fetch Error:`, err);
         throw err;
     }
 };
@@ -40,7 +40,7 @@ const generateSessionId = () => {
 exports.initiatekommunocallds = async (req, res) => {
     try {
         const { lead_id, colid, agentNumber, customerNumber: directNumber } = req.body;
-        
+
         if (!lead_id && !directNumber) {
             return res.status(400).json({ success: false, message: 'lead_id or customerNumber is required' });
         }
@@ -53,7 +53,7 @@ exports.initiatekommunocallds = async (req, res) => {
             const lead = await crmh1.findById(lead_id);
             if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
             if (!lead.phone) return res.status(400).json({ success: false, message: 'Lead does not have a phone number' });
-            
+
             customerNumber = lead.phone;
             finalColid = lead.colid || colid;
         } else {
@@ -122,7 +122,7 @@ exports.initiatekommunocallds = async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Error initiating call:', err);
+        ////console.error('Error initiating call:', err);
         return res.status(500).json({ success: false, message: err.message });
     }
 };
@@ -254,7 +254,7 @@ exports.kommunoevtcallbackds = async (req, res) => {
         return res.status(200).json({ success: true, message: 'Webhook received and processed' });
 
     } catch (err) {
-        console.error('Error in kommuno webhook:', err);
+        //console.error('Error in kommuno webhook:', err);
         return res.status(500).json({ success: false, message: err.message });
     }
 };
