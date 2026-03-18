@@ -5,7 +5,11 @@ const Kommunosettingsds = require('../Models/kommunosettingsds.js');
 
 const makeKommunoCall = async (payload, settings) => {
     try {
-        const response = await fetch(`${settings.baseUrl}/kcrm/clickToCallWithLiveStatus`, {
+        const url = `${settings.baseUrl}/kcrm/clickToCallWithLiveStatus`;
+        console.log(`[KOMMUNO] Calling API: ${url}`);
+        console.log(`[KOMMUNO] Payload:`, JSON.stringify(payload));
+        
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'accesskey': settings.accessKey,
@@ -14,8 +18,18 @@ const makeKommunoCall = async (payload, settings) => {
             },
             body: JSON.stringify(payload)
         });
-        return await response.json();
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`[KOMMUNO] API Error Status: ${response.status}, Body: ${errorText}`);
+            throw new Error(`Kommuno API returned ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log(`[KOMMUNO] API Response:`, JSON.stringify(data));
+        return data;
     } catch (err) {
+        console.error(`[KOMMUNO] API Fetch Error:`, err);
         throw err;
     }
 };
