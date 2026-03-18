@@ -39,25 +39,37 @@ const generateSessionId = () => {
 
 exports.initiatekommunocallds = async (req, res) => {
     try {
-        const { lead_id, colid, agentNumber } = req.body;
-        if (!lead_id) return res.status(400).json({ success: false, message: 'lead_id is required' });
+        const { lead_id, colid, agentNumber, customerNumber: directNumber } = req.body;
+        
+        if (!lead_id && !directNumber) {
+            return res.status(400).json({ success: false, message: 'lead_id or customerNumber is required' });
+        }
 
-        // Fetch Lead
-        const lead = await crmh1.findById(lead_id);
-        if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+        let customerNumber = "";
+        let finalColid = colid;
+
+        if (lead_id) {
+            // Fetch Lead
+            const lead = await crmh1.findById(lead_id);
+            if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+            if (!lead.phone) return res.status(400).json({ success: false, message: 'Lead does not have a phone number' });
+            
+            customerNumber = lead.phone;
+            finalColid = lead.colid || colid;
+        } else {
+            customerNumber = directNumber;
+        }
+
+        if (!finalColid) return res.status(400).json({ success: false, message: 'colid is required' });
 
         // Fetch Kommuno Settings for this colid
-        const settings = await Kommunosettingsds.findOne({ colid: Number(lead.colid || colid) });
+        const settings = await Kommunosettingsds.findOne({ colid: Number(finalColid) });
         if (!settings) {
             return res.status(400).json({
                 success: false,
-                message: `Kommuno settings not found for colid: ${lead.colid || colid}. Please configure them first.`
+                message: `Kommuno settings not found for colid: ${finalColid}. Please configure them first.`
             });
         }
-
-        if (!lead.phone) return res.status(400).json({ success: false, message: 'Lead does not have a phone number' });
-
-        let customerNumber = lead.phone;
         if (customerNumber.length === 10) customerNumber = '+91' + customerNumber;
 
         let finalAgentNumber = agentNumber;
