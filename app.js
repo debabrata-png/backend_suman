@@ -504,6 +504,12 @@ app.post('/api/v2/deleteexammarks2ds', exammarks2dsctlr.deleteexammarks2ds);
 const attendancetimereportctlr = require('./controllers/attendancetimereportctlr');
 app.post('/api/v2/getattendancetimereport', attendancetimereportctlr.getattendancetimereport);
 
+const kommunocalldsctlr = require('./controllers/kommunocallds');
+app.post('/api/v2/savekommunosettingsds', kommunocalldsctlr.savekommunosettingsds);
+app.get('/api/v2/getkommunosettingsds', kommunocalldsctlr.getkommunosettingsds);
+app.post('/api/v2/initiatekommunocallds', kommunocalldsctlr.initiatekommunocallds);
+app.post('/api/v2/kommunoevtcallbackds', kommunocalldsctlr.kommunoevtcallbackds);
+
 const rviewiamarkssummary = require('./router/viewiamarkssummaryrouter.js');
 const rfilteriamarkssummary = require('./router/filteriamarkssummaryrouter.js');
 
