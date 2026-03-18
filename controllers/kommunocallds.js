@@ -3,9 +3,8 @@ const Kommunocallsessionds = require('../Models/kommunocallsessionds.js');
 const leadactivityds = require('../Models/leadactivityds.js');
 const Kommunosettingsds = require('../Models/kommunosettingsds.js');
 
-const makeKommunoCall = async (payload, settings) => {
+const makeKommunoCall = async (payload, settings, url) => {
     try {
-        const url = `${settings.baseUrl}/kcrm/clickToCallWithLiveStatus`;
         console.log(`[KOMMUNO] Calling API: ${url}`);
         console.log(`[KOMMUNO] Payload:`, JSON.stringify(payload));
         
@@ -70,16 +69,17 @@ exports.initiatekommunocallds = async (req, res) => {
         const sessionId = generateSessionId();
 
         const payload = {
-            smeId: settings.smeId,
+            smeId: Number(settings.smeId),
             sessionId: sessionId,
             customerNumber: customerNumber,
             agentNumber: finalAgentNumber,
             recordingFlag: 1,
-            pilotNumber: settings.pilotNumber
+            pilotNumber: settings.pilotNumber.replace(/"/g, '').trim()
         };
 
         // Execute Call
-        const kommunoResponse = await makeKommunoCall(payload, settings);
+        const url = `${settings.baseUrl}/kcrm/clickToCallWithLiveStatus`;
+        const kommunoResponse = await makeKommunoCall(payload, settings, url);
 
         // Store Session Mapping
         await Kommunocallsessionds.create({
@@ -131,7 +131,7 @@ exports.savekommunosettingsds = async (req, res) => {
                 accessToken,
                 accessKey,
                 pilotNumber,
-                baseUrl: baseUrl || 'https://api.kommuno.com'
+                baseUrl: baseUrl || 'https://autodialer.kommuno.com/v1'
             },
             { new: true, upsert: true }
         );

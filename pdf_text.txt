@@ -1,0 +1,861 @@
+KOMMUNO Developers Guide 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Copyright Kommuno Technologies Pvt Ltd. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Published on 17-Dec-2020 Update on 20-Nov-2022 Version 4.9 Copyright Kommuno Technologies Pvt Ltd.  
+ 
+ 
+ 
+ 
+ 
+Introduction: Kommuno offers you the RESTful APIs in order to provide a convenien t way to integrate with 
+the
+ 
+KOMMUNO
+ 
+Cloud
+ 
+based
+ 
+Call
+ 
+Center
+ 
+solution.
+ 
+These
+ 
+APIs
+ 
+will
+ 
+mak e
+ 
+it
+ 
+easy
+ 
+to
+ 
+integrate
+ Voice in web or mobile applic ations. We offer you endless possibilities. Our APIs allow you to 
+programma tically
+ 
+control
+ 
+a
+ 
+call
+ 
+by
+ 
+playing
+ 
+greetings
+ 
+of
+ 
+your
+ 
+choice,
+ 
+diverting
+ 
+user s
+ 
+to
+ 
+a
+ 
+unique
+ 
+call
+ 
+flow,
+ 
+pushing
+ 
+call
+ 
+informa tion,
+ 
+getting
+ 
+call
+ 
+recordings,
+ 
+etc.
+ 
+The
+ 
+APIs
+ 
+are
+ 
+designed
+ according to REST principles. We highly recommend communic ating over HTTPS. This documen t outlines the integration of MSME (Micr o, Small or Medium Enterprises) which 
+includes
+ 
+onboar ding
+ 
+and
+ 
+scope
+ 
+of
+ 
+developmen t
+ 
+for
+ 
+MSME
+ 
+CRM
+ 
+integration.
+ 
+ 
+Authentication  
+Each API reques t will have to contain reques t header s that include your access token & 
+access
+ 
+key
+ 
+to
+ 
+authen ticate
+ 
+the
+ 
+reques t.
+ 
+Don't
+ 
+have
+ 
+an
+ 
+access
+ 
+token?
+ 
+You
+ 
+will
+ 
+find
+ 
+your
+ 
+access
+ 
+token
+ 
+in
+ 
+the
+ 
+settings
+ 
+page
+ 
+of
+ 
+your
+ 
+Kommuno
+ 
+Dashboar d.
+ 
+HTTP reques ts to the REST API are protected with HTTP Basic authen tication. You will use your access token and access key for HTTP Basic authen tication.  
+SME may regener ate fresh tokens anytime for futur e processing , gener ation of new token 
+means
+ 
+that
+ 
+previous
+ 
+token
+ 
+will
+ 
+expire
+ 
+at
+ 
+the
+ 
+same
+ 
+time
+ 
+and
+ 
+will
+ 
+not
+ 
+allow
+ 
+any
+ 
+reques t
+ 
+with
+ 
+previous
+ 
+token.
+ 
+ 
+Rate Limits  
+We provide appr opria te rate limits as follow: 
+ 
+API PURPOSE VOICE All Voice APIs are rate limited to 200 calls per Agent per Day. Once this limit has been crossed, your requests will be rejected with an HTTP 429 'Too Many Requests' code.  
+The call limit can be altered based on the MSME requir emen t and Kommuno team will 
+consider
+ 
+the
+ 
+higher
+ 
+limit
+ 
+as
+ 
+well
+ 
+as
+ 
+per
+ 
+the
+ 
+need
+ 
+of
+ 
+the
+ 
+clien t.
+ 
+HTTP Status Codes:   
+CODE PURPOSE 200 OK  202 Request Accepted 400 Bad Request 401 Unauthorized  402 Payment Required 403 You don’t have access to the resource 404 Not Found 409 Conflict 429 Large Number of Requests 439 Invalid Media 500 Something Went Wrong  
+URL:  
+●
+ 
+Clien ts
+ 
+will
+ 
+receiv e
+ 
+their
+ 
+base
+ 
+KOMMUNO
+ 
+API
+ 
+URL
+ 
+along
+ 
+with
+ 
+the
+ 
+signing
+ 
+documen t.
+ 
+●
+ 
+Clien ts
+ 
+will
+ 
+shar e
+ 
+their
+ 
+Response
+ 
+URLs
+ 
+with
+ 
+the
+ 
+Kommuno
+ 
+team
+ 
+and
+ 
+the
+ 
+same
+ 
+will
+ 
+be
+ 
+used
+ 
+by
+ 
+the
+ 
+Kommuno
+ 
+platform
+ 
+to
+ 
+write
+ 
+the
+ 
+response.
+ 
+    KOMMUNO API & Callbacks:   
+1.
+ POST {Domain}/kcrm/ clickT oCallWithLiv eStatus 
+{mak e
+ 
+outg oing
+ 
+call
+ 
+to
+ 
+agent
+ 
+&
+ 
+customer
+ 
+} 
+2.
+ 
+POST
+ 
+clien t-URL
+ 
+{callback
+ 
+response
+ 
+of
+ 
+click
+ 
+to
+ 
+call}
+ 
+3.
+ 
+POST
+ 
+clien t-URL
+ 
+{receiv e
+ 
+incoming
+ 
+calls
+ 
+and
+ 
+live
+ 
+events}
+ 
+4.
+ 
+POST
+ 
+clien t-URL
+ 
+{receiv e
+ 
+recordings}
+    Click to Call With Live Status  
+ 
+POST Request for Click to Call: 
+POST
+ 
+/kcrm/clickT oCallWithLiv eStatus
+   
+{
+ 
+mak e
+ 
+outg oing
+ 
+call
+ 
+to
+ 
+agent
+ 
+&
+ 
+customer
+ 
+–
+ 
+click
+ 
+to
+ 
+call
+ 
+mak e
+ 
+outg oing
+ 
+call
+ 
+to
+ 
+agent
+ 
+&
+ 
+customer
+ 
+–
+ 
+click
+ 
+to
+ 
+call} 
+This API is used to publish the call reques t to the KOMMUNO system having all the 
+men tioned
+ 
+parame ters.
+ 
+Clien t
+ 
+mus t
+ 
+pass
+ 
+the
+ 
+optional
+ 
+as
+ 
+well
+ 
+as
+ 
+manda tory
+ 
+parame ters
+ 
+in
+ 
+the
+ 
+reques t
+ 
+and
+ 
+optional
+ 
+parame ters
+ 
+can
+ 
+be
+ 
+passed
+ 
+as
+ 
+emp ty
+ 
+string
+ 
+“”.
+ 
+Clien t will receiv e the submission reques t in the return body and post call comple tion the 
+KOMMUNO
+ 
+system
+ 
+will
+ 
+publish
+ 
+the
+ 
+response
+ 
+“
+callback
+”
+ 
+reques t
+ 
+to
+ 
+clien t’s
+ 
+URL
+ 
+which
+ 
+they
+ 
+have
+ 
+published
+ 
+in
+ 
+their
+ 
+setting
+ 
+page. 
+ 
+ The clien t mus t listen to POST reques ts all the time, and KOMMUNO will publish the 
+response
+ 
+“callback”
+ 
+on
+ 
+each
+ 
+call
+ 
+comple tion.
+ 
+ 
+Example POST Request: 
+{
+ 
+    
+"smeId":10000XXXX,
+ 
+    
+"sessionId":
+ 
+"5671728827337XXX"
+ 
+,
+ 
+    
+"customerNumber":
+ 
+"+9185000XXXXX",
+ 
+    
+"agentNumber":
+ 
+"+9182622XXXXX",
+ 
+    
+"recordingFlag":0,
+ 
+    
+"pilotNumber":"+9185000XXXXX"
+ 
+} Parameter Name Mandatory/Optional Value smeId Mandatory String; You’re User Name as SmeId of 8 digits.  Ex: 1000XXXX Headers {
+ 
+accesstoken,
+ 
+accesskey} Mandatory String; SME can get the access token and access key from the settings page of the SME panel and can also generate news which will be published to the portal. sessionId Mandatory String; The unique call identifier of 16 digits. It should be unique for each call. Ex: 5671728827337XXX customerNumber Mandatory String; Customer number to whom the call will initiate. Ex: 87252XXXXX pilotNumber Mandatory String; Virtual allocated number(with STD code) from whom call will initiate.  Ex: +9185000XXXXX agentNumber Mandatory String; Registered Agent Number with country code, if the agent number is landline number. Ex: +9182622XXXXX Ex: +9181622XXXXX recordingFlag Mandatory Boolean; Record the conversation of your call. The RecordingUrl will be sent to the URL if this is set to '1' and the call conversation happens.  Ex: 1  - Call conversation will be recorded. 0 (Default) - Call conversation will not be recorded. Ex: 1/0  
+NodeJS Example: 
+var request = require('request'); var options = {   'method': 'POST',   'url': '{DOMAIN}/kcrm/clickToCallWithLiveStatus,   'headers': {     'accesskey': 'accesskey',     'accesstoken': 'accesstoken',     'Content-Type': 'application/json'   },   body: JSON.stringify({     "smeId": 10000XXXX,     "sessionId": "5671728827337XXX",     "customerNumber": "+9185000XXXXX",     "agentNumber": "+9182622XXXXX",     "recordingFlag": 0,     "pilotNumber": "+85000XXXXX"   })  }; request(options, function (error, response) {   if (error) throw new Error(error);   console.log(response.body); });      PHP Example: 
+ <?php  $curl = curl_init();  curl_setopt_array($curl, array(   CURLOPT_URL => '{DOMAIN}/kcrm/clickToCallWithLiveStatus,   CURLOPT_RETURNTRANSFER => true,   CURLOPT_ENCODING => '',   CURLOPT_MAXREDIRS => 10,   CURLOPT_TIMEOUT => 0,   CURLOPT_FOLLOWLOCATION => true,   CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,   CURLOPT_CUSTOMREQUEST => 'POST',   CURLOPT_POSTFIELDS =>'{     "smeId":10000XXXX,     "sessionId": "5671728827337XXX" ,     "customerNumber": "+9185000XXXXX",     "agentNumber": "+9182622XXXXX",     "recordingFlag":0,     "pilotNumber":"+85000XXXXX" }',   CURLOPT_HTTPHEADER => array(     'accesskey: accesskey',     'accesstoken: accesstoken',     'Content-Type: application/json'   ), ));  $response = curl_exec($curl);  curl_close($curl); echo $response;    Request Response of Submission: 
+●
+ On success submission, the HTTP response status code will be 200 
+●
+ 
+Once
+ 
+the
+ 
+call
+ 
+will
+ 
+be
+ 
+verified/ comple ted
+ 
+the
+ 
+ASYNC
+ 
+call
+ 
+back
+ 
+will
+ 
+be
+ 
+sent.
+  
+Response Code 200 Message call initiated done   
+Request Response: 
+{
+ 
+    
+"status"
+:
+ 
+200
+,
+ 
+    
+"message"
+:
+ 
+"call
+ 
+initiated
+ 
+done"
+,
+ 
+    
+"data"
+:
+ 
+[]
+ 
+}
+ 
+   
+ 
+ 
+    Live Events  POST listener Live Events: 
+Clien ts will keep listening to POST API for the live events and call back s from KOMMUNO , it is 
+very
+ 
+help ful
+ 
+to
+ 
+get
+ 
+the
+ 
+details
+ 
+of
+ 
+live
+ 
+beha vior
+ 
+of
+ 
+each
+ 
+call
+ 
+going
+ 
+through
+ 
+the
+ 
+system.
+ 
+Agents
+ 
+will
+ 
+get
+ 
+the
+ 
+real
+ 
+time
+ 
+calling
+ 
+experience
+ 
+on
+ 
+their
+ 
+screen
+ 
+even
+ 
+though
+ 
+the
+ 
+calls
+ 
+are
+ 
+getting
+ 
+through
+ 
+between
+ 
+Agent
+ 
+and
+ 
+Customer
+ 
+handse t.
+ 
+ 
+ 
+ Incoming Events
+ 
+evt_comple ted_with_r ecording 
+Call
+ 
+Ended
+ 
+with
+ 
+Recording
+ This event is triggered after the call between the agent and the customer has ended. It includes: 1. Call summar y details 2. Recording file informa tion (file path or URL, if recording was enabled)    
+ 
+ 
+Outgoing Events 
+ 
+evt_comple ted_with_r ecording 
+Call
+ 
+Ended
+ 
+with
+ 
+Recording
+ This event is triggered after the call between the agent and the customer has ended. It includes: 1. Call summar y details 2. Recording file informa tion (file path or URL, if recording was enabled)  
+ 
+ 
+ 
+Parameter Name Mandatory/Optional Value liveEvent Mandatory String; type of call event as per the event table. Ex:  evt_invite evt_ringing evt_dtmf evt_disconnected smeId Mandatory String; You’re User Name as SmeId of 8 digits.  Ex: 1000XXXX accountSid Mandatory String; Your assigned account Sid Ex: IND-CHD-KOMM NPL-KTHM-KOMM BD-DKA-KOMM sessionId Mandatory String; The unique call identifier of 16 digits. It should be unique for each call. Ex: 5671728827337XXX to Mandatory String; number(virtual/longcode) whom called. Ex: +91 17233XXXXX from Mandatory String; The number from the call has been initiated.  Ex: +91 97272XXXXX dateTime Optional Date Obj; current date & time of the day. Ex: " 2021-01-11T11:29:57.659Z" callType Mandatory Integer; The route or direction of the call which will represent the INCOMING or OUTGOING call. 1: INCOMMING 2: OUTGOING 3: VOICEMAIL Ex: 1 Ex: 2 Ex: 3 callMode Mandatory Integer; The mode of call. 1: CRM_WEB:  If call initiated from CRM Web. 2: CRM_APP: if call initiated from CRM App. Ex: 1 agentNumber Optional String; Agent Number with country code who been part of this call, if more than one then the response will be comma separated. +9182622XXXXX-UserBusy +9182623XXXXX-SwitchedOff +9182624XXXXX-Answered  recordingFile Optional Call recorded file, which can be further use to play the recording. recordingFileId Optional Call Recording ID of the recorded file, which can be further use to get the recording. responseMsg Optional String; detailed response of complete which will be available for Patched and NotPatched calls. It will help client to find out the exact response code of network against agent’s and customer’s number. Ex: (+91XXXXXXXXX#Normal Clearing(16),+91XXXXXXXXX#Normal Clearing(16))  
+ 
+INCOMING EVENTS 
+ 
+ 
+EVT_C OMPLETED_WITH_RE CORDING Example POST Request Submission: 
+" POST call/event/callback":  
+ 
+{ 
+    call_details: { 
+      live_event: 'evt_completed_with_recording', 
+      sme_id: 10001XXX, 
+      call_direction: 'INCOMING', 
+      session_id: 'pbx_1749804589.XXX84_20XXXX13_XXXXX', 
+      duration: 29, 
+      longcode: 918031XXXXXX, 
+      customer_number: '+917973XXXXXX', 
+      overall_call_status: 'patched', 
+      call_recording_status: 1, 
+      disconnected_by: 'agent', 
+      customer_name: null, 
+      remarks: null, 
+      connected_duration: 11, 
+      ringing_duration: 0, 
+      ivr_duration: 10, 
+      dtmf: '1', 
+      flow_name: 'IVR Test', 
+      queue_name: 'test_queue', 
+      start_date_time: '2025-05-13 14:19:49', 
+      end_date_time: '2025-05-13 14:20:18' 
+    },     customer_details: { 
+      sme_id: 10001XXX, 
+      customer_number: '+917973XXXXXX', 
+      customer_name: 'Test', 
+      call_status: 'patched', 
+      duration: 29, 
+      connected_duration: 11, 
+      ringing_duration: 0 
+    }, 
+    agent_details: [ [Object] ], 
+    recording_details: { 
+      recording_path: 
+'https://prod-kommuno.s3.ap-south-1.amazonaws.com/10001554/10001554/AIR_917973
+XXXXXX_20XXXXX3_142007_10001XXX_pbx_1749804589.XXXXX_20XXXX13_XXXXXX.wav',
+ 
+      duration: 29, 
+      session_id: 'pbx_1749804589.XXXXX_20XXXXX3_XXXXX' 
+    } 
+  } 
+ 
+  OUTGOING EVENTS   
+EVT_C OMPLETED_WITH_RE CORDING Example POST Request Submission: 
+" POST call/event/callback":  
+ 
+{ 
+    call_details: { 
+      live_event: 'evt_completed_with_recording', 
+      sme_id: 10001XXX, 
+      call_direction: 'OUTGOING', 
+      session_id: '1749803XXXXXXXXXXX', 
+      duration: 18,       longcode: 918031XXXXXX, 
+      customer_number: '+917973XXXXXX', 
+      overall_call_status: 'patched', 
+      call_recording_status: 1, 
+      disconnected_by: 'customer', 
+      customer_name: null, 
+      remarks: null, 
+      connected_duration: 8, 
+      ringing_duration: 3, 
+      ivr_duration: 0, 
+      dtmf: '0', 
+      flow_name: null, 
+      queue_name: null,  
+      start_date_time: '2025-05-13 14:09:42', 
+      end_date_time: '2025-05-13 14:10:00' 
+    },  
+    customer_details: { 
+      sme_id: 10001XXX, 
+      customer_number: '+917973XXXXXX', 
+      customer_name: 'Test', 
+      call_status: 'notpatched', 
+      duration: 18, 
+      connected_duration: 8, 
+      ringing_duration: 3 
+    }, 
+    agent_details: [ [Object] ], 
+    recording_details: { 
+      recording_path: 
+'https://prod-kommuno.s3.ap-south-1.amazonaws.com/10001XXX/10001XXX/ADR_917973
+XXXXXX_20XXXXXX3_140952_10001XXX_17498XXXXXXXX.wav',
+ 
+      duration: 18, 
+      session_id: '1749803XXXXXXXXX' 
+    } 
+  } 
+   
