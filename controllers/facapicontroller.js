@@ -150,6 +150,7 @@ exports.loginapi= async (req,res) => {
             category:user.category,
             department:user.department,
             statuslog:user.status,
+            phone: user.phone,
             token:token
         });
         
