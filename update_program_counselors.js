@@ -13,7 +13,7 @@ mongoose.connect(db).then(() => console.log('DB connection successful!'));
 
 const updateData = async () => {
   try {
-    const filePath = path.join(__dirname, 'programcounselords.csv');
+    const filePath = path.join(__dirname, 'programcounselords1.csv');
     if (!fs.existsSync(filePath)) {
       console.error('File not found:', filePath);
       process.exit(1);
@@ -31,7 +31,8 @@ const updateData = async () => {
     for (const row of data) {
       const programCode = row['Program Code'];
       const programType = row['Program Type'];
-      const colid = 6050;
+      const programName = row['Program Name']
+      const colid = 9050;
 
       if (!programCode || !programType) {
         continue;
@@ -39,12 +40,13 @@ const updateData = async () => {
 
       const updatedRecord = await ProgramCounselords.findOneAndUpdate(
         {
-          course_code: String(programCode).trim(),
-          program_type: String(programType).trim(),
+          course_code: String(programCode),
+          program_type: String(programType),
+          course_name: String(programName),
           colid: colid
         },
         {
-          category: row['Category'],
+          category: String(row['Category']).trim(),
           education_qualification: row['Qualification'],
           counsellor_name: row['Counselor Name'],
           counsellor_email: row['Counselor Email'],

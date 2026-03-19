@@ -260,7 +260,24 @@ const crmh1schema = new mongoose.Schema({
         field_value: {
             type: mongoose.Schema.Types.Mixed  // Accepts any data type
         }
-    }]
+    }],
+    // Counter Counsellor & Visit Info
+    provissionalfeepaid: {
+        type: String,
+        default: 'No'
+    },
+    countercounserloername: {
+        type: String
+    },
+    countercounserloeremail: {
+        type: String
+    },
+    dateofvisit: {
+        type: Date
+    },
+    location: {
+        type: String
+    }
 }, {
     timestamps: true
 });

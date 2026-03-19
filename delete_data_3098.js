@@ -13,12 +13,27 @@ const CoScholasticGrade9ds = require('./Models/CoScholasticGrade9ds');
 const CoScholasticActivity9ds = require('./Models/CoScholasticActivity9ds');
 
 const categoryag1 = require("./Models/categoryag1");
+
+const storepr = require("./Models/storerequisationds2");
+const storepo = require("./Models/storepoorderds2");
+const storepoitems = require("./Models/storepoitemsds2");
+const pimrest = require("./Models/pimprestds2");
+const pimprest2 = require("./Models/pimprestds");
+const cashapprovalds = require("./Models/CashApprovalds2");
+const storegrn = require("./Models/grnds2");
+const localgrn = require("./Models/localgrnds2");
+const stoteinventory = require("./Models/stockregisterds2");
+const storeinventory2 = require("./Models/stockregisterds2");
+const storerequisationds2 = require("./Models/storerequisationds2");
+const storerequisationds = require("./Models/storerequisationds");
+
+
 // ──────────────────────────────────────────────────────────────────────────
 
 const MONGODB_URI = "mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 //const MONGODB_URI = "mongodb+srv://erppu_db_user:Erp123pu@cluster0.23ikja9.mongodb.net/?appName=Cluster0";
 
-const TARGET_COLID = 4000;
+const TARGET_COLID = 3090;
 
 const connectDB = async () => {
     try {
@@ -87,8 +102,45 @@ const deleteData = async () => {
         // console.log(`✅ Deleted ${r6.deletedCount} records from CoScholasticActivity9ds.`);
 
 
-        const r7 = await User.deleteMany({ colid: 4000, role: "Student" });
+        // const r7 = await User.deleteMany({ colid: 4000, role: "Student" });
+        // console.log(`Deleted ${r7.deletedCount}`);
+
+        const r7 = await storepr.deleteMany({ colid: TARGET_COLID });
         console.log(`Deleted ${r7.deletedCount}`);
+
+        const r8 = await storepo.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${r8.deletedCount}`);
+
+        const r9 = await storepoitems.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${r9.deletedCount} records from storepoitems.`);
+
+        const r10 = await pimrest.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${r10.deletedCount} records from pimrest.`);
+
+        const r11 = await pimprest2.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${r11.deletedCount} records from pimrest2.`);
+
+        const r12 = await cashapprovalds.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${r12.deletedCount} records from cashapprovalds.`);
+
+        const r13 = await storegrn.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${r13.deletedCount} records from storegrn.`);
+
+        const r14 = await localgrn.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${r14.deletedCount} records from localgrn.`);
+
+        const r15 = await stoteinventory.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${r15.deletedCount} records from stoteinventory.`);
+
+        const r16 = await storeinventory2.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${r16.deletedCount} records from storeinventory2.`);
+
+        const r17 = await storerequisationds2.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${r17.deletedCount} records from storerequisationds2.`);
+
+        const r18 = await storerequisationds.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${r18.deletedCount} records from storerequisationds.`);
+
 
         // const r8 = await categoryag1.deleteMany({ colid: 6050 })
         // console.log(`Deleted ${r8.deletedCount}`);

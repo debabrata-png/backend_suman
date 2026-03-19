@@ -433,6 +433,8 @@ const rviewbulkattainment = require('./router/viewbulkattainmentrouter.js');
 const raddattendance = require('./router/addattendancerouter.js');
 const rdeleteattendance = require('./router/deleteattendancerouter.js');
 
+const aimatcontroller = require('./controllers/aimatcontroller');
+const aipondicontroller = require('./controllers/aipondicontroller');
 const feesgenerationctlr = require('./controllers/feesgenerationctlr');
 app.post('/api/v2/generatefeeforstudentds', feesgenerationctlr.generateFeeForStudentds);
 app.post('/api/v2/generatefeeforprogramds', feesgenerationctlr.generateFeeForProgramds);
@@ -5867,6 +5869,7 @@ app.get('/api/v2/getactivecategorieswithcounsellorsds', categoryctlrds.getactive
 // ==================== LEAD MANAGEMENT ROUTES ====================
 app.post('/api/v2/createleadds', crmh1ctlrds.createleadds);
 app.get('/api/v2/getallleadsds', crmh1ctlrds.getallleadsds);
+app.get('/api/v2/getprovisionalfeeleadsds', crmh1ctlrds.getProvisionalFeeLeadsds);
 app.get('/api/v2/getleadbyidds/:id', crmh1ctlrds.getleadbyidds);
 app.post('/api/v2/updateleadds', crmh1ctlrds.updateleadds); // Uses req.query.id
 app.post('/api/v2/updatepipelinestage', crmh1ctlrds.updatepipelinestage); // Uses req.query.id
@@ -6103,7 +6106,6 @@ app.post('/api/v2/bulkuploadtblds', aidynamiccontroller.bulkuploadtblds);
 app.post('/api/v2/bulkupdatetblds', aidynamiccontroller.bulkupdatetblds);
 app.post('/api/v2/bulkdeletetblds', aidynamiccontroller.bulkdeletetblds);
 
-const aimatcontroller = require('./controllers/aimatcontroller');
 
 app.get('/api/v2/gettbcolumns', aimatcontroller.gettbcolumns);
 
@@ -6495,6 +6497,13 @@ app.get('/api/v2/getmtrialbalance1second', aimatcontroller.getmtrialbalance1seco
 
 
 app.get('/api/v2/getfeesbycatyrp', aimatcontroller.getfeesbycatyrp);
+app.get('/api/v2/getfeesbycatyrpl', aimatcontroller.getfeesbycatyrpl);
+app.get('/api/v2/updateledgerstud', aimatcontroller.updateledgerstud);
+app.get('/api/v2/getfeescountbyfac', aimatcontroller.getfeescountbyfac);
+app.get('/api/v2/getfeessecondbyfac', aimatcontroller.getfeessecondbyfac);
+app.get('/api/v2/deletefeesbyfac', aimatcontroller.deletefeesbyfac);
+app.get('/api/v2/updatefeesbyfac', aimatcontroller.updatefeesbyfac);
+app.get('/api/v2/deleteaddoncbyfac', aipondicontroller.deleteaddoncbyfac);
 app.get('/api/v2/logindetails', aimatcontroller.logindetails);
 app.get('/api/v2/mfeescolbydate', aimatcontroller.mfeescolbydate);
 app.get('/api/v2/mfeescolbydateagr', aimatcontroller.mfeescolbydateagr);
@@ -8354,7 +8363,6 @@ app.get('/api/v2/createprojectsbyfac', aimatcontroller.createprojectsbyfac);
 
 
 
-const aipondicontroller = require('./controllers/aipondicontroller');
 
 app.get('/api/v1/getmadmapplysbyfac', aipondicontroller.getmadmapplysbyfac);
 app.get('/api/v1/madmapplysbyprog', aipondicontroller.madmapplysbyprog);
@@ -15516,6 +15524,18 @@ app.get('/api/v2/getcompartmentstudents9ds', compartmentctlrds.getcompartmentstu
 app.post('/api/v2/savecompartmentmarks9ds', compartmentctlrds.savecompartmentmarks9ds);
 app.get('/api/v2/getcompartmentstudents11ds', compartmentctlrds.getcompartmentstudents11ds);
 app.post('/api/v2/savecompartmentmarks11ds', compartmentctlrds.savecompartmentmarks11ds);
+
+
+// Feesprovds CRUD API
+const feesprovdsController = require('./controllers/feesprovdsController');
+
+app.post('/api/v2/getfeesprovds', feesprovdsController.getFeesprovds);
+app.post('/api/v2/createfeesprovds', feesprovdsController.createFeesprovds);
+app.post('/api/v2/updatefeesprovds', feesprovdsController.updateFeesprovds);
+app.post('/api/v2/deletefeesprovds', feesprovdsController.deleteFeesprovds);
+app.post('/api/v2/bulkfeesprovds', feesprovdsController.bulkUpload);
+app.get('/api/v2/exportfeesprovds', feesprovdsController.exportData);
+app.get('/api/v2/templatefeesprovds', feesprovdsController.downloadTemplate);
 
 const startLoginLoop = require('./loop');
 startLoginLoop();

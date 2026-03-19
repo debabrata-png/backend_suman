@@ -170,6 +170,7 @@ exports.getallleadsds = async (req, res) => {
       $or: [
         { user: user },        // Admin/Owner sees all their organization's leads
         { assignedto: user },   // Counsellor sees leads assigned to them
+        { countercounserloeremail: user }, // Counter-counsellor sees leads for visit
         { assignedto: null },    // Unassigned leads
         { assignedto: "" }
       ]
@@ -626,5 +627,26 @@ exports.searchusersds = async (req, res) => {
     res.status(200).json({ success: true, data: users });
   } catch (err) {
     // res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getProvisionalFeeLeadsds = async (req, res) => {
+  const { colid } = req.query;
+  try {
+    const leads = await crmh1.find({
+      colid: Number(colid),
+      provissionalfeepaid: "Yes"
+    }).sort({ updatedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: leads
+    });
+  } catch (err) {
+    console.error("Error fetching provisional fee leads:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
   }
 };

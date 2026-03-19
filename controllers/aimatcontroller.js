@@ -103396,6 +103396,69 @@ exports.getfeesbycatyrpl= async (req,res) => {
   }  
 };
 
+exports.getfeescountbyfac= async (req,res) => {
+  try{
+  const user1=req.query.user;
+  const colid1=parseInt(req.query.colid);
+  const lcat1233= await ledgerstud.aggregate([
+  { 
+  $match: {colid: colid1, user: user1 }
+  },
+  { 
+  $group: {
+  _id:'$academicyear', 
+  total_attendance: {$sum : 1}
+  }
+  }
+  ]);
+  //console.log(lcat1233);
+  return res.status(200).json({
+  status:'Success',
+  data: {
+  classes : lcat1233
+  }
+  }); 
+  } catch(err) {
+  // res.status(400).json({
+  // status:'Failed',
+  // message: err
+  // });
+              
+  } 
+  };  
+
+
+  exports.getfeessecondbyfac= async (req,res) => {
+    try{
+    const user1=req.query.user;
+    const colid1=parseInt(req.query.colid);
+    const lcat1233= await ledgerstud.aggregate([
+    { 
+    $match: {colid: colid1, user: user1 }
+    },
+    { 
+    $group: {
+    _id:'$status', 
+    total_attendance: {$sum : 1}
+    }
+    }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+    status:'Success',
+    data: {
+    classes : lcat1233
+    }
+    }); 
+    } catch(err) {
+  //   res.status(400).json({
+  //   status:'Failed',
+  //   message: err
+  //   });
+                
+    } 
+    };  
+
 exports.updateledgerpayment= async (req,res) => {
 
     try{
