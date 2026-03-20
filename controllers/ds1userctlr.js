@@ -246,9 +246,9 @@ exports.ds1getalluser = async (req, res) => {
     } else if (excludeRole) {
       query.role = { $ne: excludeRole };
     }
-    if (department) query.department = department;
-    if (semester) query.semester = semester;
-    if (section) query.section = section;
+    if (department) query.department = { $regex: new RegExp(`^${department.trim()}$`, 'i') };
+    if (semester) query.semester = { $regex: new RegExp(`^${semester.trim()}$`, 'i') };
+    if (section) query.section = { $regex: new RegExp(`^${section.trim()}$`, 'i') };
     if (programcode) query.programcode = programcode;
     if (status) query.status = parseInt(status);
 
@@ -576,13 +576,13 @@ exports.ds1getfilteroptions = async (req, res) => {
             { $project: { value: "$_id", label: "$_id", count: 1, _id: 0 } }
           ],
           semesters: [
-            { $group: { _id: "$semester", count: { $sum: 1 } } },
+            { $group: { _id: { $trim: { input: "$semester" } }, count: { $sum: 1 } } },
             { $match: { _id: { $ne: null, $ne: "" } } },
             { $sort: { _id: 1 } },
             { $project: { value: "$_id", label: "$_id", count: 1, _id: 0 } }
           ],
           sections: [
-            { $group: { _id: "$section", count: { $sum: 1 } } },
+            { $group: { _id: { $trim: { input: "$section" } }, count: { $sum: 1 } } },
             { $match: { _id: { $ne: null, $ne: "" } } },
             { $sort: { _id: 1 } },
             { $project: { value: "$_id", label: "$_id", count: 1, _id: 0 } }
@@ -594,7 +594,7 @@ exports.ds1getfilteroptions = async (req, res) => {
             { $project: { value: "$_id", label: "$_id", count: 1, _id: 0 } }
           ],
           admissionyears: [
-            { $group: { _id: "$admissionyear", count: { $sum: 1 } } },
+            { $group: { _id: { $trim: { input: "$admissionyear" } }, count: { $sum: 1 } } },
             { $match: { _id: { $ne: null, $ne: "" } } },
             { $sort: { _id: -1 } },
             { $project: { value: "$_id", label: "$_id", count: 1, _id: 0 } }

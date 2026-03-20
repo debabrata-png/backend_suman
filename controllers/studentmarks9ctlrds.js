@@ -25,11 +25,15 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
 
     const matchStage = {
       colid: Number(colid),
-      semester: semester
+      role: 'Student'
     };
 
+    if (semester) {
+      matchStage.semester = { $regex: new RegExp(`^${semester.trim()}$`, 'i') };
+    }
+
     if (section) {
-      matchStage.section = section;
+      matchStage.section = { $regex: new RegExp(`^${section.trim()}$`, 'i') };
     }
 
     // Add Search criteria
@@ -437,9 +441,9 @@ exports.getdistinctsemestersandyears9ds = async (req, res) => {
       {
         $group: {
           _id: null,
-          semesters: { $addToSet: '$semester' },
-          admissionyears: { $addToSet: '$admissionyear' },
-          sections: { $addToSet: '$section' }
+          semesters: { $addToSet: { $trim: { input: '$semester' } } },
+          admissionyears: { $addToSet: { $trim: { input: '$admissionyear' } } },
+          sections: { $addToSet: { $trim: { input: '$section' } } }
         }
       },
       {
@@ -491,7 +495,7 @@ exports.getdistinctsectionsbyclass9ds = async (req, res) => {
 
     const result = await User.aggregate([
       { $match: matchQuery },
-      { $group: { _id: null, sections: { $addToSet: '$section' } } },
+      { $group: { _id: null, sections: { $addToSet: { $trim: { input: '$section' } } } } },
       { $project: { _id: 0, sections: 1 } }
     ]);
 
