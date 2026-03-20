@@ -5167,6 +5167,9 @@ app.get("/institution-details", orcrmReportController2.getInstitutionDetails);
 const pucAdmissionController = require("./controllers/pucAdmissionController");
 
 app.post("/api/v2/puc/admission", pucAdmissionController.createAdmission);
+app.get("/api/v2/puc/admission/:id", pucAdmissionController.getPucAdmissionById);
+app.post("/api/v2/puc/admission/status/:id", pucAdmissionController.updatePucAdmissionStatus);
+app.get("/api/v2/getpucadmissions", pucAdmissionController.getAdmissions);
 
 // ======================================================
 // Amisha's Code Alumni & Hostel and Admission Form

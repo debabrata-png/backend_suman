@@ -106,6 +106,10 @@ parentSignature:String,
 place:String,
 date:Date,
 
+status:{
+type:String,
+default:"Pending"
+},
 createdAt:{
 type:Date,
 default:Date.now
