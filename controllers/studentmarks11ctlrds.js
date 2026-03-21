@@ -118,9 +118,16 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
 
             subjects = await SubjectComponentConfig11ds.find(subjectQuery).sort({ createdAt: 1 });
 
+            // Fallback: if no configs found with section, try without section filter (backward compat)
+            if (subjects.length === 0 && section) {
+                delete subjectQuery.section;
+                subjects = await SubjectComponentConfig11ds.find(subjectQuery).sort({ createdAt: 1 });
+            }
+
+
             // Fetch Existing Marks to populate the grid
             marks = await StudentMarks11ds.find({
-                colid: Number(colid), semester, academicyear, section
+                colid: Number(colid), semester, academicyear, regno: { $in: students.map(s => s.regno) }
             }, {
                 regno: 1, subjectcode: 1,
                 unitpremidobtain: 1, unitpostmidobtain: 1,
@@ -210,8 +217,7 @@ exports.savemarks11ds = async (req, res) => {
                         regno: mark.regno,
                         subjectcode: mark.subjectcode,
                         semester: mark.semester,
-                        academicyear: mark.academicyear,
-                        section: mark.section // Add section to filter
+                        academicyear: mark.academicyear
                     },
                     update: {
                         $set: {
@@ -219,7 +225,6 @@ exports.savemarks11ds = async (req, res) => {
                             user: mark.user,
                             studentname: mark.studentname,
                             subjectname: mark.subjectname,
-                            section: mark.section, // Save section
 
                             unitpremidobtain: preMid,
                             unitpostmidobtain: postMid,
