@@ -55,6 +55,8 @@ const studentmarks11dsschema = new mongoose.Schema({
     annualthabsent: { type: Boolean, default: false },
     annualpracticalabsent: { type: Boolean, default: false },
     teacherremarks: { type: String, default: '' },
+    promotedclass: { type: String, default: '' },
+    newsessiondate: { type: String, default: '' },
     createdat: { type: Date, default: Date.now },
     updatedat: { type: Date, default: Date.now }
 });

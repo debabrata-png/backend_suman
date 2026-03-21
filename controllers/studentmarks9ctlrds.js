@@ -118,7 +118,12 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
             term2total: 1,
             status: 1,
             isabsent: 1,
-            teacherremarks: 1
+            teacherremarks: 1,
+            colid: 1,
+            semester: 1,
+            academicyear: 1,
+            promotedclass: 1,
+            newsessiondate: 1
           }
         }
       ]);
@@ -178,7 +183,12 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
             isgrace: 1,
             isabsent: absentFieldToProject !== false ? { $cond: [{ $eq: [absentFieldToProject, true] }, true, false] } : { $literal: false },
             status: 1,
-            teacherremarks: 1
+            teacherremarks: 1,
+            colid: 1,
+            semester: 1,
+            academicyear: 1,
+            promotedclass: 1,
+            newsessiondate: 1
           }
         }
       ]);
@@ -231,7 +241,7 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
 
     // Prepare bulk operations
     const bulkOps = marks.map(markEntry => {
-      const { regno, subjectcode, obtained, studentname, subjectname, isgrace, isabsent, teacherremarks } = markEntry;
+      const { regno, subjectcode, obtained, studentname, subjectname, isgrace, isabsent, teacherremarks, promotedclass, newsessiondate } = markEntry;
 
       const mapping = {
         'term1periodictest': { field: 'term1periodictestobtained', absentField: 'term1periodictestabsent' },
@@ -252,6 +262,8 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
       const updateFields = {
         isgrace: isgrace || false,
         teacherremarks: (teacherremarks === undefined || teacherremarks === null) ? '' : teacherremarks,
+        promotedclass: promotedclass || '',
+        newsessiondate: newsessiondate || '',
         updatedat: new Date()
       };
 
@@ -950,8 +962,8 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       rank: rank,
       compartmentSubjects,   // List of subjects where student scored < 33 (fail)
       remarks: fallbackRecord.teacherremarks || '', // Real teacher remarks from DB
-      promotedToClass: '', // User to fill manually?
-      newSessionDate: ''
+      promotedToClass: fallbackRecord.promotedclass || '',
+      newSessionDate: fallbackRecord.newsessiondate || ''
     };
 
     res.json({

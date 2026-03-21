@@ -116,7 +116,7 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
                 semester,
                 academicyear,
                 subjectcode: 'ATTENDANCE'
-            }).select('regno subjectcode term1totalpresentdays term1totalworkingdays term2totalpresentdays term2totalworkingdays isabsent teacherremarks');
+            }).select('regno subjectcode term1totalpresentdays term1totalworkingdays term2totalpresentdays term2totalworkingdays isabsent teacherremarks colid semester academicyear promotedclass newsessiondate');
 
         } else {
             // Fetch Configured Subjects — filter by section to get stream-specific subjects
@@ -141,7 +141,7 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
             marks = await StudentMarks11ds.find({
                 colid: Number(colid), semester, academicyear, regno: { $in: students.map(s => s.regno) }
             }, {
-                regno: 1, subjectcode: 1,
+                regno: 1, subjectcode: 1, colid: 1, semester: 1, academicyear: 1,
                 unitpremidobtain: 1, unitpostmidobtain: 1,
                 halfyearlythobtain: 1, halfyearlypracticalobtain: 1,
                 annualthobtain: 1, annualpracticalobtain: 1,
@@ -150,7 +150,7 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
                 unitpremidabsent: 1, unitpostmidabsent: 1,
                 halfyearlythabsent: 1, halfyearlypracticalabsent: 1,
                 annualthabsent: 1, annualpracticalabsent: 1,
-                teacherremarks: 1
+                teacherremarks: 1, promotedclass: 1, newsessiondate: 1
             });
         }
 
@@ -186,6 +186,8 @@ exports.savemarks11ds = async (req, res) => {
                 if (mark.term2totalpresentdays !== undefined) updateFields.term2totalpresentdays = mark.term2totalpresentdays;
                 if (mark.term2totalworkingdays !== undefined) updateFields.term2totalworkingdays = mark.term2totalworkingdays;
                 updateFields.teacherremarks = mark.teacherremarks || '';
+                updateFields.promotedclass = mark.promotedclass || '';
+                updateFields.newsessiondate = mark.newsessiondate || '';
 
                 return {
                     updateOne: {
@@ -260,7 +262,9 @@ exports.savemarks11ds = async (req, res) => {
                             isgrace: mark.isgrace || false,
                             isabsent: mark.isabsent || false, // Overall absent flag (legacy)
                             teacherremarks: mark.teacherremarks || '',
-
+                            promotedclass: mark.promotedclass || '',
+                            newsessiondate: mark.newsessiondate || '',
+                            
                             // New absent flags for individual components
                             unitpremidabsent: mark.unitpremidabsent || false,
                             unitpostmidabsent: mark.unitpostmidabsent || false,
@@ -307,8 +311,10 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             academicyear
         }).sort({ createdAt: 1 });
 
-        // Extract Attendance
+        // Extract Attendance and a Fallback record for remarks/promotion
         const attRecord = marks.find(m => m.subjectcode === 'ATTENDANCE');
+        const fallbackRecord = marks.find(m => m.subjectcode !== 'ATTENDANCE') || {};
+        
         // Filter out attendance from subjects list for display/calculation
         const subjectMarks = marks.filter(m => m.subjectcode !== 'ATTENDANCE');
 
@@ -546,7 +552,9 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             rank: rank,
             failCount,
             compartmentSubjects,
-            remarks: (attRecord && attRecord.teacherremarks) ? attRecord.teacherremarks : ''
+            remarks: (attRecord && attRecord.teacherremarks) ? attRecord.teacherremarks : (fallbackRecord.teacherremarks || ''),
+            promotedToClass: (attRecord && attRecord.promotedclass) ? attRecord.promotedclass : (fallbackRecord.promotedclass || ''),
+            newSessionDate: (attRecord && attRecord.newsessiondate) ? attRecord.newsessiondate : (fallbackRecord.newsessiondate || '')
         };
 
 
