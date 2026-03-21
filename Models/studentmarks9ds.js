@@ -48,6 +48,10 @@ const studentmarks9dsschema = new mongoose.Schema({
   compartmentobtained: { type: Number, default: null },
 
   isgrace: { type: Boolean, default: false },
+  term1periodictestabsent: { type: Boolean, default: false },
+  term1midexamabsent: { type: Boolean, default: false },
+  term2periodictestabsent: { type: Boolean, default: false },
+  term2annualexamabsent: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedat: { type: Date, default: Date.now }
 });

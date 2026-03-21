@@ -101,7 +101,8 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
             term2totalworkingdays: 1,
             term1total: 1,
             term2total: 1,
-            status: 1
+            status: 1,
+            isabsent: 1 // Added isabsent
           }
         }
       ]);
@@ -134,6 +135,14 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
         }
       ]);
 
+      const absentMapping = {
+        'term1periodictest': 'term1periodictestabsent',
+        'term1midexam': 'term1midexamabsent',
+        'term2periodictest': 'term2periodictestabsent',
+        'term2annualexam': 'term2annualexamabsent'
+      };
+      const absentFieldToProject = absentMapping[componentname] ? `$${absentMapping[componentname]}` : false;
+
       // Get existing marks using aggregation with lookup
       existingMarks = await StudentMarks9ds.aggregate([
         {
@@ -151,6 +160,7 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
             term1total: 1,
             term2total: 1,
             isgrace: 1,
+            isabsent: absentFieldToProject !== false ? { $cond: [{ $eq: [absentFieldToProject, true] }, true, false] } : { $literal: false },
             status: 1
           }
         }
@@ -204,13 +214,33 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
 
     // Prepare bulk operations
     const bulkOps = marks.map(markEntry => {
-      const { regno, subjectcode, obtained, studentname, subjectname, isgrace } = markEntry;
+      const { regno, subjectcode, obtained, studentname, subjectname, isgrace, isabsent } = markEntry;
+
+      const mapping = {
+        'term1periodictest': { field: 'term1periodictestobtained', absentField: 'term1periodictestabsent' },
+        'term1notebook': { field: 'term1notebookobtained' },
+        'term1enrichment': { field: 'term1enrichmentobtained' },
+        'term1midexam': { field: 'term1midexamobtained', absentField: 'term1midexamabsent' },
+        'term2periodictest': { field: 'term2periodictestobtained', absentField: 'term2periodictestabsent' },
+        'term2notebook': { field: 'term2notebookobtained' },
+        'term2enrichment': { field: 'term2enrichmentobtained' },
+        'term2annualexam': { field: 'term2annualexamobtained', absentField: 'term2annualexamabsent' },
+        'term1totalpresentdays': { field: 'term1totalpresentdays' },
+        'term2totalpresentdays': { field: 'term2totalpresentdays' }
+      };
+
+      const targetField = mapping[componentname].field;
+      const absentField = mapping[componentname].absentField;
 
       const updateFields = {
-        [obtainedFieldName]: obtained || 0,
+        [targetField]: obtained || 0,
         isgrace: isgrace || false,
         updatedat: new Date()
       };
+
+      if (absentField) {
+        updateFields[absentField] = isabsent || false;
+      }
 
       if (extraUpdates) {
         Object.assign(updateFields, extraUpdates);
@@ -699,6 +729,11 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         term2Total: parseFloat(term2TotalRaw.toFixed(1)), // Total with scaled PT
         term2Grade: term2GradeRecalc,
         isgrace: mark.isgrace || false,
+        isabsent: mark.isabsent || false, // Added isabsent
+        term1periodictestabsent: mark.term1periodictestabsent || false,
+        term1midexamabsent: mark.term1midexamabsent || false,
+        term2periodictestabsent: mark.term2periodictestabsent || false,
+        term2annualexamabsent: mark.term2annualexamabsent || false,
         compartmentobtained: (mark.compartmentobtained !== undefined && mark.compartmentobtained !== null)
           ? mark.compartmentobtained : null  // Supplementary exam marks
       };
@@ -781,9 +816,27 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     // Fetch all marks for the batch (Filtered by SECTION regnos)
     const allStudentMarks = await StudentMarks9ds.find({
       colid: Number(colid),
-      academicyear: academicyear,
-      semester: semester,
-      regno: { $in: sectionRegNos }
+      semester,
+      academicyear,
+      subjectcode: { $ne: 'ATTENDANCE' }
+    }, {
+      regno: 1,
+      subjectcode: 1,
+      term1periodictestobtained: 1,
+      term1notebookobtained: 1,
+      term1enrichmentobtained: 1,
+      term1midexamobtained: 1,
+      term2periodictestobtained: 1,
+      term2notebookobtained: 1,
+      term2enrichmentobtained: 1,
+      term2annualexamobtained: 1,
+      term1totalpresentdays: 1,
+      term2totalpresentdays: 1,
+      isgrace: 1,
+      term1periodictestabsent: 1,
+      term1midexamabsent: 1,
+      term2periodictestabsent: 1,
+      term2annualexamabsent: 1
     }).lean();
 
     // Group by regno

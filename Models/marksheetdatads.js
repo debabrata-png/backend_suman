@@ -30,14 +30,26 @@ const marksheetdatadsschema = new mongoose.Schema({
     term2AnnualExam: { type: Number, default: 0 }, // Max 80
     term2Total: { type: Number, default: 0 }, // Auto calculated
     term2Grade: { type: String, default: '' },
+    term2periodictestabsent: { type: Boolean, default: false },
+    term2annualexamabsent: { type: Boolean, default: false },
+    
+    // Additional absent fields
+    unitpremidabsent: { type: Boolean, default: false },
+    unitpostmidabsent: { type: Boolean, default: false },
+    halfyearlythabsent: { type: Boolean, default: false },
+    halfyearlypracticalabsent: { type: Boolean, default: false },
+    annualthabsent: { type: Boolean, default: false },
+    annualpracticalabsent: { type: Boolean, default: false },
+    
     isgrace: { type: Boolean, default: false }
   }],
   
   // Co-scholastic areas
   coScholastic: [{
     area: { type: String, required: true },
-    term1Grade: { type: String, default: 'A' },
-    term2Grade: { type: String, default: 'A' }
+    isgrace: { type: Boolean, default: false },
+    isabsent: { type: Boolean, default: false },
+    status: { type: String, default: 'active' },
   }],
   
   // Overall assessment

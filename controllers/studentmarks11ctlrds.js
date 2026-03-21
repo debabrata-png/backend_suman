@@ -104,7 +104,7 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
                 semester,
                 academicyear,
                 subjectcode: 'ATTENDANCE'
-            });
+            }).select('regno subjectcode term1totalpresentdays term1totalworkingdays term2totalpresentdays term2totalworkingdays isabsent');
 
         } else {
             // Fetch Configured Subjects — filter by section to get stream-specific subjects
@@ -120,10 +120,17 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
 
             // Fetch Existing Marks to populate the grid
             marks = await StudentMarks11ds.find({
-                colid: Number(colid),
-                semester,
-                academicyear,
-                subjectcode: { $ne: 'ATTENDANCE' }
+                colid: Number(colid), semester, academicyear, section
+            }, {
+                regno: 1, subjectcode: 1,
+                unitpremidobtain: 1, unitpostmidobtain: 1,
+                halfyearlythobtain: 1, halfyearlypracticalobtain: 1,
+                annualthobtain: 1, annualpracticalobtain: 1,
+                term1totalpresentdays: 1, term2totalpresentdays: 1,
+                isgrace: 1,
+                unitpremidabsent: 1, unitpostmidabsent: 1,
+                halfyearlythabsent: 1, halfyearlypracticalabsent: 1,
+                annualthabsent: 1, annualpracticalabsent: 1
             });
         }
 
@@ -203,7 +210,8 @@ exports.savemarks11ds = async (req, res) => {
                         regno: mark.regno,
                         subjectcode: mark.subjectcode,
                         semester: mark.semester,
-                        academicyear: mark.academicyear
+                        academicyear: mark.academicyear,
+                        section: mark.section // Add section to filter
                     },
                     update: {
                         $set: {
@@ -211,6 +219,7 @@ exports.savemarks11ds = async (req, res) => {
                             user: mark.user,
                             studentname: mark.studentname,
                             subjectname: mark.subjectname,
+                            section: mark.section, // Save section
 
                             unitpremidobtain: preMid,
                             unitpostmidobtain: postMid,
@@ -230,9 +239,20 @@ exports.savemarks11ds = async (req, res) => {
                             total: total,
                             totalgrade: totalgrade,
                             isgrace: mark.isgrace || false,
+                            isabsent: mark.isabsent || false, // Overall absent flag (legacy)
+
+                            // New absent flags for individual components
+                            unitpremidabsent: mark.unitpremidabsent || false,
+                            unitpostmidabsent: mark.unitpostmidabsent || false,
+                            halfyearlythabsent: mark.halfyearlythabsent || false,
+                            halfyearlypracticalabsent: mark.halfyearlypracticalabsent || false,
+                            annualthabsent: mark.annualthabsent || false,
+                            annualpracticalabsent: mark.annualpracticalabsent || false,
+
                             status: 'finalized',
                             updatedat: new Date()
-                        }
+                        },
+                        $setOnInsert: { createdat: new Date() }
                     },
                     upsert: true
                 }
@@ -334,8 +354,8 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
                 let realSubjectName = codeToNameMap[m.subjectcode] || m.subjectname;
 
                 // INTELLIGENT FIX: Check if the mapping inverted the Name/Code (User data issue)
-                // If the Result (realSubjectName) looks like a Code (has numbers) 
-                // AND the Input (m.subjectcode) looks like a Name (no numbers, len > 3), 
+                // If the Result (realSubjectName) looks like a Code (has numbers)
+                // AND the Input (m.subjectcode) looks like a Name (no numbers, len > 3),
                 // REVERT to the Input.
                 const isResultCodeLike = /\d/.test(realSubjectName);
                 const isInputNameLike = !/\d/.test(m.subjectcode) && m.subjectcode.length > 2;
@@ -365,6 +385,13 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
                     grandTotal: m.total,
                     grade: m.totalgrade,
                     isgrace: m.isgrace || false,
+                    isabsent: m.isabsent || false,
+                    unitpremidabsent: m.unitpremidabsent || false,
+                    unitpostmidabsent: m.unitpostmidabsent || false,
+                    halfyearlythabsent: m.halfyearlythabsent || false,
+                    halfyearlypracticalabsent: m.halfyearlypracticalabsent || false,
+                    annualthabsent: m.annualthabsent || false,
+                    annualpracticalabsent: m.annualpracticalabsent || false,
                     compartmentobtained: (m.compartmentobtained !== undefined && m.compartmentobtained !== null)
                         ? m.compartmentobtained : null, // Supplementary exam marks
                     hasMarks: hasMarks // Helper flag for filtering

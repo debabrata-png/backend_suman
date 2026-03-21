@@ -27,6 +27,8 @@ const storeinventory2 = require("./Models/stockregisterds2");
 const storerequisationds2 = require("./Models/storerequisationds2");
 const storerequisationds = require("./Models/storerequisationds");
 
+const crmh1 = require("./Models/crmh1")
+
 
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -105,41 +107,44 @@ const deleteData = async () => {
         // const r7 = await User.deleteMany({ colid: 4000, role: "Student" });
         // console.log(`Deleted ${r7.deletedCount}`);
 
-        const r7 = await storepr.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r7.deletedCount}`);
+        // const r7 = await storepr.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r7.deletedCount}`);
 
-        const r8 = await storepo.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r8.deletedCount}`);
+        // const r8 = await storepo.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r8.deletedCount}`);
 
-        const r9 = await storepoitems.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r9.deletedCount} records from storepoitems.`);
+        // const r9 = await storepoitems.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r9.deletedCount} records from storepoitems.`);
 
-        const r10 = await pimrest.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r10.deletedCount} records from pimrest.`);
+        // const r10 = await pimrest.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r10.deletedCount} records from pimrest.`);
 
-        const r11 = await pimprest2.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r11.deletedCount} records from pimrest2.`);
+        // const r11 = await pimprest2.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r11.deletedCount} records from pimrest2.`);
 
-        const r12 = await cashapprovalds.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r12.deletedCount} records from cashapprovalds.`);
+        // const r12 = await cashapprovalds.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r12.deletedCount} records from cashapprovalds.`);
 
-        const r13 = await storegrn.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r13.deletedCount} records from storegrn.`);
+        // const r13 = await storegrn.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r13.deletedCount} records from storegrn.`);
 
-        const r14 = await localgrn.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r14.deletedCount} records from localgrn.`);
+        // const r14 = await localgrn.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r14.deletedCount} records from localgrn.`);
 
-        const r15 = await stoteinventory.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r15.deletedCount} records from stoteinventory.`);
+        // const r15 = await stoteinventory.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r15.deletedCount} records from stoteinventory.`);
 
-        const r16 = await storeinventory2.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r16.deletedCount} records from storeinventory2.`);
+        // const r16 = await storeinventory2.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r16.deletedCount} records from storeinventory2.`);
 
-        const r17 = await storerequisationds2.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r17.deletedCount} records from storerequisationds2.`);
+        // const r17 = await storerequisationds2.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r17.deletedCount} records from storerequisationds2.`);
 
-        const r18 = await storerequisationds.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${r18.deletedCount} records from storerequisationds.`);
+        // const r18 = await storerequisationds.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${r18.deletedCount} records from storerequisationds.`);
+
+        const r19 = await crmh1.deleteMany({ colid: 6050 });
+        console.log(`Deleted Leads in ${r19.deletedCount} records from crmh1`)
 
 
         // const r8 = await categoryag1.deleteMany({ colid: 6050 })
