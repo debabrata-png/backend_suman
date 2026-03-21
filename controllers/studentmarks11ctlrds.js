@@ -6,8 +6,7 @@ const CoScholasticGrade9ds = require('../Models/CoScholasticGrade9ds');
 
 // Helper to calculate grade (generic)
 function calculateGrade(obtained, max) {
-    if (!obtained && obtained !== 0) return '';
-    if (!max || max === 0) return '';
+    if (!obtained || !max || max === 0) return 'E';
     const percentage = (obtained / max) * 100;
     if (percentage >= 91) return 'A1';
     if (percentage >= 81) return 'A2';
@@ -17,6 +16,19 @@ function calculateGrade(obtained, max) {
     if (percentage >= 41) return 'C2';
     if (percentage >= 33) return 'D';
     return 'E';
+}
+
+function toRoman(num) {
+    if (!num || isNaN(num) || num === '-') return num;
+    const lookup = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 };
+    let roman = '';
+    for (let i in lookup) {
+        while (num >= lookup[i]) {
+            roman += i;
+            num -= lookup[i];
+        }
+    }
+    return roman;
 }
 
 // 1. Get Subjects from Config
@@ -104,7 +116,7 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
                 semester,
                 academicyear,
                 subjectcode: 'ATTENDANCE'
-            }).select('regno subjectcode term1totalpresentdays term1totalworkingdays term2totalpresentdays term2totalworkingdays isabsent');
+            }).select('regno subjectcode term1totalpresentdays term1totalworkingdays term2totalpresentdays term2totalworkingdays isabsent teacherremarks');
 
         } else {
             // Fetch Configured Subjects — filter by section to get stream-specific subjects
@@ -137,7 +149,8 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
                 isgrace: 1,
                 unitpremidabsent: 1, unitpostmidabsent: 1,
                 halfyearlythabsent: 1, halfyearlypracticalabsent: 1,
-                annualthabsent: 1, annualpracticalabsent: 1
+                annualthabsent: 1, annualpracticalabsent: 1,
+                teacherremarks: 1
             });
         }
 
@@ -172,6 +185,7 @@ exports.savemarks11ds = async (req, res) => {
                 if (mark.term1totalworkingdays !== undefined) updateFields.term1totalworkingdays = mark.term1totalworkingdays;
                 if (mark.term2totalpresentdays !== undefined) updateFields.term2totalpresentdays = mark.term2totalpresentdays;
                 if (mark.term2totalworkingdays !== undefined) updateFields.term2totalworkingdays = mark.term2totalworkingdays;
+                updateFields.teacherremarks = mark.teacherremarks || '';
 
                 return {
                     updateOne: {
@@ -245,6 +259,7 @@ exports.savemarks11ds = async (req, res) => {
                             totalgrade: totalgrade,
                             isgrace: mark.isgrace || false,
                             isabsent: mark.isabsent || false, // Overall absent flag (legacy)
+                            teacherremarks: mark.teacherremarks || '',
 
                             // New absent flags for individual components
                             unitpremidabsent: mark.unitpremidabsent || false,
@@ -323,8 +338,12 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
 
 
         const codeToNameMap = {};
+        const codeToAdditionalMap = {};
+        const codeToCompulsoryMap = {};
         finalSubjectConfigs.forEach(sc => {
             codeToNameMap[sc.subjectcode] = sc.subjectname;
+            codeToAdditionalMap[sc.subjectcode] = sc.isadditional || false;
+            codeToCompulsoryMap[sc.subjectcode] = sc.iscompulsory || false;
         });
 
         // Only include subjects that are configured for this student's section/stream.
@@ -399,7 +418,9 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
                     annualpracticalabsent: m.annualpracticalabsent || false,
                     compartmentobtained: (m.compartmentobtained !== undefined && m.compartmentobtained !== null)
                         ? m.compartmentobtained : null, // Supplementary exam marks
-                    hasMarks: hasMarks // Helper flag for filtering
+                    hasMarks: hasMarks, // Helper flag for filtering
+                    isAdditional: codeToAdditionalMap[m.subjectcode] || false,
+                    isCompulsory: codeToCompulsoryMap[m.subjectcode] || false
                 };
             })
             .filter(s => s.hasMarks);
@@ -493,7 +514,7 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
 
         // Find Rank
         const rankIndex = sortedRanks.findIndex(s => s.regno === regno);
-        const rank = rankIndex !== -1 ? rankIndex + 1 : '-';
+        const rank = rankIndex !== -1 ? toRoman(rankIndex + 1) : '-';
 
         const pdfData = {
             profile: {
@@ -524,7 +545,8 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             result: resultStatus,
             rank: rank,
             failCount,
-            compartmentSubjects
+            compartmentSubjects,
+            remarks: (attRecord && attRecord.teacherremarks) ? attRecord.teacherremarks : ''
         };
 
 
@@ -536,7 +558,7 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
 // Save Subject Component Config 11ds
 exports.saveSubjectComponentConfig11ds = async (req, res) => {
     try {
-        const { id, colid, user, subjectcode, subjectname, semester, academicyear, unitpremid, unitpostmid, halfyearlyth, halfyearlypractical, annualth, annualpractical, isadditional } = req.body;
+        const { id, colid, user, subjectcode, subjectname, semester, academicyear, unitpremid, unitpostmid, halfyearlyth, halfyearlypractical, annualth, annualpractical, isadditional, iscompulsory } = req.body;
 
         const updateData = {
             colid: Number(colid),
@@ -553,6 +575,7 @@ exports.saveSubjectComponentConfig11ds = async (req, res) => {
             annualth,
             annualpractical,
             isadditional,
+            iscompulsory,
             updatedat: new Date()
         };
 
@@ -688,7 +711,7 @@ exports.getrankreportds = async (req, res) => {
 
         // 4. Assign Ranks
         reportData.forEach((row, index) => {
-            row.rank = index + 1;
+            row.rank = toRoman(index + 1);
         });
 
         res.json({ success: true, data: reportData });

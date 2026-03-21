@@ -18,6 +18,19 @@ function calculateGrade(obtained, max) {
   return 'E';
 }
 
+function toRoman(num) {
+  if (!num || isNaN(num) || num === '-') return num;
+  const lookup = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 };
+  let roman = '';
+  for (let i in lookup) {
+    while (num >= lookup[i]) {
+      roman += i;
+      num -= lookup[i];
+    }
+  }
+  return roman;
+}
+
 // Get students and subjects using aggregation pipeline
 exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
   try {
@@ -70,39 +83,42 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
       'term2totalworkingdays', 'term2totalpresentdays'
     ];
     const isAttendance = attendanceFields.includes(componentname);
+    const isRemarks = componentname === 'teacherremarks';
+    const isSpecial = isAttendance || isRemarks;
 
     let subjects = [];
     let existingMarks = [];
 
-    if (isAttendance) {
-      // Return a dummy subject for attendance
+    if (isSpecial) {
+      // Return a dummy subject for attendance or remarks
       subjects = [{
-        subjectcode: 'ATTENDANCE',
-        subjectname: 'Attendance',
-        maxmarks: 300 // Arbitrary max
+        subjectcode: isRemarks ? 'REMARKS' : 'ATTENDANCE',
+        subjectname: isRemarks ? 'Teacher Remarks' : 'Attendance',
+        maxmarks: 100 
       }];
 
-      // Get existing marks for ATTENDANCE subject
+      // Get existing marks for the special subject
       existingMarks = await StudentMarks9ds.aggregate([
         {
           $match: {
             colid: Number(colid),
             semester: semester,
             academicyear: academicyear,
-            subjectcode: 'ATTENDANCE'
+            subjectcode: isRemarks ? 'REMARKS' : 'ATTENDANCE'
           }
         },
         {
           $project: {
             regno: 1,
             subjectcode: 1,
-            obtainedmarks: `$${componentname}`, // Direct field name
+            obtainedmarks: (isAttendance ? `$${componentname}` : { $literal: '' }), 
             term1totalworkingdays: 1,
             term2totalworkingdays: 1,
             term1total: 1,
             term2total: 1,
             status: 1,
-            isabsent: 1 // Added isabsent
+            isabsent: 1,
+            teacherremarks: 1
           }
         }
       ]);
@@ -161,7 +177,8 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
             term2total: 1,
             isgrace: 1,
             isabsent: absentFieldToProject !== false ? { $cond: [{ $eq: [absentFieldToProject, true] }, true, false] } : { $literal: false },
-            status: 1
+            status: 1,
+            teacherremarks: 1
           }
         }
       ]);
@@ -214,7 +231,7 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
 
     // Prepare bulk operations
     const bulkOps = marks.map(markEntry => {
-      const { regno, subjectcode, obtained, studentname, subjectname, isgrace, isabsent } = markEntry;
+      const { regno, subjectcode, obtained, studentname, subjectname, isgrace, isabsent, teacherremarks } = markEntry;
 
       const mapping = {
         'term1periodictest': { field: 'term1periodictestobtained', absentField: 'term1periodictestabsent' },
@@ -229,14 +246,18 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
         'term2totalpresentdays': { field: 'term2totalpresentdays' }
       };
 
-      const targetField = mapping[componentname].field;
-      const absentField = mapping[componentname].absentField;
+      const targetField = (mapping[componentname] && mapping[componentname].field) ? mapping[componentname].field : null;
+      const absentField = (mapping[componentname] && mapping[componentname].absentField) ? mapping[componentname].absentField : null;
 
       const updateFields = {
-        [targetField]: obtained || 0,
         isgrace: isgrace || false,
+        teacherremarks: (teacherremarks === undefined || teacherremarks === null) ? '' : teacherremarks,
         updatedat: new Date()
       };
+
+      if (targetField) {
+        updateFields[targetField] = obtained || 0;
+      }
 
       if (absentField) {
         updateFields[absentField] = isabsent || false;
@@ -714,7 +735,8 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
 
       return {
         subjectname: mark.subjectname,
-        isAdditional: config.isadditional || false, // Pass additional flag
+        isAdditional: config.isadditional || false,
+        isCompulsory: config.iscompulsory || false,
         term1PeriodicTest: parseFloat(t1PTScaled.toFixed(1)), // Keep 1 decimal for PT
         term1Notebook: mark.term1notebookobtained || 0,
         term1Enrichment: mark.term1enrichmentobtained || 0,
@@ -880,21 +902,20 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
 
     // Find Rank
     const rankIndex = studentTotals.findIndex(s => s.regno === regno);
-    const rank = rankIndex !== -1 ? rankIndex + 1 : '-';
+    const rank = rankIndex !== -1 ? toRoman(rankIndex + 1) : '-';
 
     // 6a. Calculate Compartment Subjects (Class 6-12 only: failing subject = weighted score < 33)
     const compartmentSubjects = subjects
       .filter(s => !s.isAdditional)
       .filter(s => {
-        const weightedScore = (s.term1Total * 0.5) + (s.term2Total * 0.5);
-        const term1EbutTerm2Passed = (s.term1Grade === 'E' && s.term2Grade !== 'E');
-        return weightedScore < 33 || term1EbutTerm2Passed;
+        const weightedScore = s.term2Total;
+        return weightedScore < 33;
       })
       .map(s => ({
         subjectname: s.subjectname,
         term1Total: s.term1Total,
         term2Total: s.term2Total,
-        finalScore: parseFloat(((s.term1Total * 0.5) + (s.term2Total * 0.5)).toFixed(1)),
+        finalScore: parseFloat(s.term2Total.toFixed(1)),
         compartmentobtained: s.compartmentobtained // Supplementary exam marks (null if not yet entered)
       }));
 
@@ -928,7 +949,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       overallGrade,
       rank: rank,
       compartmentSubjects,   // List of subjects where student scored < 33 (fail)
-      remarks: 'Good', // Default remark
+      remarks: fallbackRecord.teacherremarks || '', // Real teacher remarks from DB
       promotedToClass: '', // User to fill manually?
       newSessionDate: ''
     };

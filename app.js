@@ -104,7 +104,8 @@ app.use(express.json({ limit: '50mb' }));
 app.use(session({
   name: "my_session",
   secret: "my_secret",
-  resave: false
+  resave: false,
+  saveUninitialized: true
 }));
 app.use(flash());
 app.use(cookieParser());
@@ -5488,6 +5489,11 @@ app.get('/api/v2/getdistinctsectionsbyclass9ds', studentmarks9ctlrds.getdistinct
 // Student Marks PDF Route (New)
 app.get('/api/v2/getmarksheetpdfdata9ds', studentmarks9ctlrds.getmarksheetpdfdata9ds);
 
+// ===== CLASS TEACHER REMARKS ROUTES =====
+const classtremarkctlrds = require('./controllers/classtremarkctlrds');
+app.get('/api/v2/getremarksds', classtremarkctlrds.getremarksds);
+app.post('/api/v2/createremarkds', classtremarkctlrds.createremarkds);
+app.post('/api/v2/deleteremarkds', classtremarkctlrds.deleteremarkds);
 
 
 const vendordsctlr = require("./controllers/vendordsctlr");

@@ -58,7 +58,7 @@ exports.getcompartmentstudents9ds = async (req, res) => {
                 const t2PTScaled = t2PTMax > 0 ? ((m.term2periodictestobtained || 0) / t2PTMax) * 10 : 0;
                 const t2Raw = t2PTScaled + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0);
 
-                const weighted = (t1Raw * 0.5) + (t2Raw * 0.5);
+                const weighted = t2Raw;
                 if (weighted < 33) {
                     failedSubjects.push({
                         subjectcode: m.subjectcode,

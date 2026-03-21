@@ -17,6 +17,19 @@ function calculateGrade(obtained, max) {
   return 'E';
 }
 
+function toRoman(num) {
+  if (!num || isNaN(num) || num === '-') return num;
+  const lookup = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 };
+  let roman = '';
+  for (let i in lookup) {
+    while (num >= lookup[i]) {
+      roman += i;
+      num -= lookup[i];
+    }
+  }
+  return roman;
+}
+
 // Helper function to calculate attendance
 async function calculateAttendance(regno, colid, semester, academicyear) {
   try {
@@ -325,7 +338,7 @@ exports.getmarksheetforpdfds = async (req, res) => {
       grandTotal: marksheetData.grandTotal,
       percentage: marksheetData.percentage,
       overallGrade: marksheetData.overallGrade,
-      rank: marksheetData.rank,
+      rank: toRoman(marksheetData.rank),
       remarks: marksheetData.remarks,
       promotedToClass: marksheetData.promotedToClass,
       newSessionDate: marksheetData.newSessionDate
@@ -418,7 +431,7 @@ exports.getbulkmarksheetforpdfds = async (req, res) => {
         grandTotal: marksheetData.grandTotal,
         percentage: marksheetData.percentage,
         overallGrade: marksheetData.overallGrade,
-        rank: marksheetData.rank,
+        rank: toRoman(marksheetData.rank),
         remarks: marksheetData.remarks,
         promotedToClass: marksheetData.promotedToClass,
         newSessionDate: marksheetData.newSessionDate

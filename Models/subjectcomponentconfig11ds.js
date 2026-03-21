@@ -26,6 +26,7 @@ const subjectcomponentconfig11dsschema = new mongoose.Schema({
     // Status
     isactive: { type: Boolean, default: true },
     isadditional: { type: Boolean, default: false }, // Marks subject as additional (not part of main scholastic area)
+    iscompulsory: { type: Boolean, default: false }, // Marks subject as compulsory (always in main scholastic area)
 
     createdat: { type: Date, default: Date.now },
     updatedat: { type: Date, default: Date.now }

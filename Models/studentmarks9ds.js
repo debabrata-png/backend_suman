@@ -52,6 +52,7 @@ const studentmarks9dsschema = new mongoose.Schema({
   term1midexamabsent: { type: Boolean, default: false },
   term2periodictestabsent: { type: Boolean, default: false },
   term2annualexamabsent: { type: Boolean, default: false },
+  teacherremarks: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now },
   updatedat: { type: Date, default: Date.now }
 });
