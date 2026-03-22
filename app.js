@@ -448,8 +448,17 @@ const attendancereportctlr = require('./controllers/attendancereportctlr');
 app.post('/api/v2/getattendancereport', attendancereportctlr.getAttendanceReport);
 
 const examadmitcontrollerds = require('./controllers/examadmitcontrollerds');
+const exammarksmatrixcontrollerds = require('./controllers/exammarksmatrixcontrollerds');
+
+app.get('/api/v2/getexammarksmatrixfilters', exammarksmatrixcontrollerds.getMatrixFilters);
+app.get('/api/v2/getexammarksmatrixdata', exammarksmatrixcontrollerds.getExamMarksMatrixData);
+app.post('/api/v2/saveexammarksmatrix', exammarksmatrixcontrollerds.saveExamMarksMatrix);
+
 app.post('/api/v2/examadmitcontrollerds/release', examadmitcontrollerds.releaseAdmitCard);
 app.get('/api/v2/examadmitcontrollerds/:regno', examadmitcontrollerds.getAdmitCard);
+app.get('/api/v2/getclassenrstudents', examadmitcontrollerds.getClassenrStudentsForExamAdmit);
+app.get('/api/v2/getclassenrdistinctvalues', examadmitcontrollerds.getClassenrDistinctValuesForExamAdmit);
+app.post('/api/v2/postclassenrtoexamadmit', examadmitcontrollerds.postStudentsToExamAdmit);
 
 
 const comunicationdsctlr = require('./controllers/comunicationdsctlr');

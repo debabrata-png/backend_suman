@@ -60,8 +60,8 @@ exports.getCurrentSemesterMarks = async (req, res) => {
   try {
     const { colid, regno, semester, year, program, regulation, branch } = req.query;
 
-    const semesterNum = parseInt(semester);
-    const yearNum = parseInt(year);
+    const semesterNum = semester;
+    const yearNum = year;
 
     // Get structure from ExamMarks1 to know max marks
     const allRecords = await ExamMarks1.find({
@@ -614,8 +614,8 @@ exports.getBulkTabulationData = async (req, res) => {
       program: program,
       branch: branch,
       regulation: regulation,
-      semester: parseInt(semester),
-      year: parseInt(year),
+      semester: semester,
+      year: year,
     }).lean();
 
     if (allMarks.length === 0) {
@@ -637,8 +637,8 @@ exports.getBulkTabulationData = async (req, res) => {
       const studentSemMarks = await ExamMarks2.find({
         colid: Number(colid),
         regno: regno,
-        semester: parseInt(semester),
-        year: parseInt(year),
+        semester: semester,
+        year: year,
       }).lean();
 
       if (studentSemMarks.length === 0) continue;
@@ -657,7 +657,7 @@ exports.getBulkTabulationData = async (req, res) => {
       // Get structure
       const allSemRecords = await ExamMarks1.find({
         colid: Number(colid),
-        semester: parseInt(semester),
+        semester: semester,
         regulation: firstMark.regulation,
         branch: firstMark.branch,
         program: firstMark.program,

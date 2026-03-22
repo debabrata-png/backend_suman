@@ -91,3 +91,127 @@ exports.releaseAdmitCard = async (req, res) => {
         res.status(500).json({ status: "error", message: "Internal server error" });
     }
 };
+
+exports.getClassenrStudentsForExamAdmit = async (req, res) => {
+    try {
+        const { year, programcode, semester, colid } = req.query;
+
+        if (!colid) {
+            return res.status(400).json({ status: "error", message: "College ID (colid) is required" });
+        }
+
+        let query = { colid: colid };
+        if (year) query.year = year;
+        if (programcode) query.programcode = programcode;
+        if (semester) query.semester = semester;
+
+        const students = await Classenr.find(query);
+        
+        res.status(200).json({ status: "success", data: students });
+    } catch (err) {
+        console.error("Error fetching classenr students:", err);
+        res.status(500).json({ status: "error", message: "Internal server error" });
+    }
+};
+
+exports.getClassenrDistinctValuesForExamAdmit = async (req, res) => {
+    try {
+        const { colid, year, programcode } = req.query;
+
+        if (!colid) {
+            return res.status(400).json({ status: "error", message: "College ID (colid) is required" });
+        }
+
+        // Years are always filtered just by colid
+        const years = await Classenr.distinct('year', { colid: colid });
+        
+        // Program codes filtered by colid and selected year
+        let programQuery = { colid: colid };
+        if (year) programQuery.year = year;
+        const programcodes = await Classenr.distinct('programcode', programQuery);
+        
+        // Semesters filtered by colid, selected year, and selected programcode
+        let semQuery = { colid: colid };
+        if (year) semQuery.year = year;
+        if (programcode) semQuery.programcode = programcode;
+        const semesters = await Classenr.distinct('semester', semQuery);
+
+        res.status(200).json({ 
+            status: "success", 
+            data: { 
+                years: years.filter(Boolean), 
+                programcodes: programcodes.filter(Boolean), 
+                semesters: semesters.filter(Boolean) 
+            } 
+        });
+    } catch (err) {
+        console.error("Error fetching distinct values for classenr:", err);
+        res.status(500).json({ status: "error", message: "Internal server error" });
+    }
+};
+
+exports.postStudentsToExamAdmit = async (req, res) => {
+    try {
+        const { students, exam, examcode, colid, user } = req.body;
+
+        if (!colid) {
+            return res.status(400).json({ status: "error", message: "College ID is required" });
+        }
+        if (!students || !Array.isArray(students) || students.length === 0) {
+            return res.status(400).json({ status: "error", message: "Students array is required" });
+        }
+
+        let insertedCount = 0;
+        let skippedCount = 0;
+
+        for (const student of students) {
+            // Check if already exists exactly for this exam and student
+            const existing = await ExamAdmit.findOne({
+                colid: colid,
+                year: student.year,
+                programcode: student.programcode,
+                semester: student.semester,
+                examcode: examcode,
+                student: student.student,
+                regno: student.regno,
+                coursecode: student.coursecode
+            });
+
+            if (!existing) {
+                const newAdmit = new ExamAdmit({
+                    name: student.name || student.student || 'Unknown',
+                    user: user || student.user || 'Unknown',
+                    colid: colid,
+                    year: student.year,
+                    exam: exam,
+                    examcode: examcode,
+                    program: student.program,
+                    programcode: student.programcode,
+                    course: student.course,
+                    coursecode: student.coursecode,
+                    semester: student.semester,
+                    student: student.student,
+                    regno: student.regno,
+                    enabled: 'false',
+                    type: student.coursetype || student.type || 'Regular',
+                    level: student.level || 'UG',
+                    status1: 'Submitted',
+                    comments: ''
+                });
+                await newAdmit.save();
+                insertedCount++;
+            } else {
+                skippedCount++;
+            }
+        }
+
+        res.status(200).json({ 
+            status: "success", 
+            message: `Successfully added ${insertedCount} records. Skipped ${skippedCount} duplicate records.` 
+        });
+
+    } catch (err) {
+        console.error("Error posting to exam admit:", err);
+        res.status(500).json({ status: "error", message: "Internal server error" });
+    }
+};
