@@ -108,7 +108,7 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
             subjects = [{
                 subjectcode: 'ATTENDANCE',
                 subjectname: 'Attendance',
-                maxmarks: 0 // Not applicable
+                maxmarks: 500 
             }];
 
             marks = await StudentMarks11ds.find({
@@ -509,8 +509,21 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
         // Group and Sum
         const studentTotals = {};
         allBatchMarks.forEach(m => {
-            if (!studentTotals[m.regno]) studentTotals[m.regno] = 0;
-            studentTotals[m.regno] += (m.total || 0);
+            const hasMarks = [
+                m.unitpremidobtain, m.unitpostmidobtain, m.unittotal, m.unit20,
+                m.halfyearlythobtain, m.halfyearlypracticalobtain, m.halfyearlytotal, m.halfyearly30,
+                m.annualthobtain, m.annualpracticalobtain, m.annualtotal, m.annual50
+            ].some(val => val !== null && val !== undefined && val !== '') || 
+            [
+                m.unitpremidabsent, m.unitpostmidabsent, 
+                m.halfyearlythabsent, m.halfyearlypracticalabsent,
+                m.annualthabsent, m.annualpracticalabsent
+            ].some(abs => abs === true || abs === 'true');
+
+            if (hasMarks) {
+                if (!studentTotals[m.regno]) studentTotals[m.regno] = 0;
+                studentTotals[m.regno] += (m.total || 0);
+            }
         });
 
         // Convert to array and Sort Descending

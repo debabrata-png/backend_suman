@@ -29,9 +29,9 @@ const seeduser = async () => {
 
         const user = await User.updateMany(
             {
-                colid: { $in: colid }
+                email: "CPS84/2025@cps.edu.in"
             },
-            { $set: { lastlogin: "2030-03-05T16:48:19+05:30" } }
+            { $set: { rollno: "128 B" } }
         )
         // const user = await User.deleteOne(
         //     { email: "sumeet.kothari@cdgi.edu.in" }

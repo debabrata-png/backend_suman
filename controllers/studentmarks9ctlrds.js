@@ -94,7 +94,7 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
       subjects = [{
         subjectcode: isRemarks ? 'REMARKS' : 'ATTENDANCE',
         subjectname: isRemarks ? 'Teacher Remarks' : 'Attendance',
-        maxmarks: 100 
+        maxmarks: 500 
       }];
 
       // Get existing marks for the special subject
@@ -898,6 +898,18 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
 
       const studTotal = sMarks.reduce((acc, m) => {
         const conf = configMap[m.subjectcode] || {};
+
+        // Check if this subject should be included
+        const hasMarks = [
+          m.term1periodictestobtained, m.term1notebookobtained, m.term1enrichmentobtained, m.term1midexamobtained,
+          m.term2periodictestobtained, m.term2notebookobtained, m.term2enrichmentobtained, m.term2annualexamobtained
+        ].some(val => val !== null && val !== undefined && val !== '') || 
+        [
+          m.term1periodictestabsent, m.term1midexamabsent, 
+          m.term2periodictestabsent, m.term2annualexamabsent
+        ].some(abs => abs === true || abs === 'true');
+
+        if (!hasMarks) return acc;
 
         // T1
         const t1Max = conf.term1periodictestmax || 40;
