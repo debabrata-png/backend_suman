@@ -311,12 +311,13 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             academicyear
         }).sort({ createdAt: 1 });
 
-        // Extract Attendance and a Fallback record for remarks/promotion
+        // Extract Attendance, Remarks and a Fallback record for remarks/promotion
         const attRecord = marks.find(m => m.subjectcode === 'ATTENDANCE');
-        const fallbackRecord = marks.find(m => m.subjectcode !== 'ATTENDANCE') || {};
+        const remarksRecord = marks.find(m => m.subjectcode === 'REMARKS');
+        const fallbackRecord = marks.find(m => m.subjectcode !== 'ATTENDANCE' && m.subjectcode !== 'REMARKS') || {};
         
-        // Filter out attendance from subjects list for display/calculation
-        const subjectMarks = marks.filter(m => m.subjectcode !== 'ATTENDANCE');
+        // Filter out attendance and remarks from subjects list for display/calculation
+        const subjectMarks = marks.filter(m => m.subjectcode !== 'ATTENDANCE' && m.subjectcode !== 'REMARKS');
 
         // Fetch Subject Configs — use student's section to get stream-specific subjects
         const subjectCodes = subjectMarks.map(m => m.subjectcode);
@@ -520,7 +521,15 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
 
         // Find Rank
         const rankIndex = sortedRanks.findIndex(s => s.regno === regno);
-        const rank = rankIndex !== -1 ? toRoman(rankIndex + 1) : '-';
+        let rank = rankIndex !== -1 ? toRoman(rankIndex + 1) : '-';
+
+        // NEW: If any student has Grade E in any subject, do not show rank
+        const hasEGrade = subjectsFormatted.some(sub => 
+            sub.grade === 'E' || sub.grade === 'E1' || sub.grade === 'E2'
+        );
+        if (hasEGrade) {
+            rank = '-';
+        }
 
         const pdfData = {
             profile: {
@@ -552,9 +561,9 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             rank: rank,
             failCount,
             compartmentSubjects,
-            remarks: (attRecord && attRecord.teacherremarks) ? attRecord.teacherremarks : (fallbackRecord.teacherremarks || ''),
-            promotedToClass: (attRecord && attRecord.promotedclass) ? attRecord.promotedclass : (fallbackRecord.promotedclass || ''),
-            newSessionDate: (attRecord && attRecord.newsessiondate) ? attRecord.newsessiondate : (fallbackRecord.newsessiondate || '')
+            remarks: remarksRecord ? remarksRecord.teacherremarks : (attRecord && attRecord.teacherremarks ? attRecord.teacherremarks : (fallbackRecord.teacherremarks || '')),
+            promotedToClass: remarksRecord ? remarksRecord.promotedclass : (attRecord && attRecord.promotedclass ? attRecord.promotedclass : (fallbackRecord.promotedclass || '')),
+            newSessionDate: remarksRecord ? remarksRecord.newsessiondate : (attRecord && attRecord.newsessiondate ? attRecord.newsessiondate : (fallbackRecord.newsessiondate || ''))
         };
 
 

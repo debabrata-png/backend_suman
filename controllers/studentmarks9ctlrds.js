@@ -663,9 +663,10 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       academicyear
     }).sort({ createdAt: 1 });
 
-    // Filter out Attendance record for scholastic table
-    const marksData = allMarksData.filter(m => m.subjectcode !== 'ATTENDANCE');
+    // Filter out Attendance and Remarks records for scholastic table
+    const marksData = allMarksData.filter(m => m.subjectcode !== 'ATTENDANCE' && m.subjectcode !== 'REMARKS');
     const attendanceRecord = allMarksData.find(m => m.subjectcode === 'ATTENDANCE') || {};
+    const remarksRecord = allMarksData.find(m => m.subjectcode === 'REMARKS') || {};
 
     // 2.5 Fetch Subject Configs for Max Marks
     const subjectCodes = marksData.map(m => m.subjectcode);
@@ -701,8 +702,15 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     const subjects = marksData.map(mark => {
       const config = configMap[mark.subjectcode] || {};
 
-      // Get max marks from config, default to 40 if not found (or handle as 0 to avoid NaN)
-      // Note: If max is 0, we can't divide, so handle that case
+      // Check if subject has any marks entered
+      const hasMarks = (mark.term1periodictestobtained > 0) ||
+        (mark.term1notebookobtained > 0) ||
+        (mark.term1enrichmentobtained > 0) ||
+        (mark.term1midexamobtained > 0) ||
+        (mark.term2periodictestobtained > 0) ||
+        (mark.term2notebookobtained > 0) ||
+        (mark.term2enrichmentobtained > 0) ||
+        (mark.term2annualexamobtained > 0);
 
       // Term 1 Periodic Test Normalization
       const t1PTMax = config.term1periodictestmax || 40;
@@ -769,9 +777,10 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         term2periodictestabsent: mark.term2periodictestabsent || false,
         term2annualexamabsent: mark.term2annualexamabsent || false,
         compartmentobtained: (mark.compartmentobtained !== undefined && mark.compartmentobtained !== null)
-          ? mark.compartmentobtained : null  // Supplementary exam marks
+          ? mark.compartmentobtained : null,  // Supplementary exam marks
+        hasMarks: hasMarks
       };
-    });
+    }).filter(s => s.hasMarks);
 
     // 4. Calculate Totals with 50% Weightage
     // term1Total and term2Total are out of 100 per subject
@@ -961,9 +970,9 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       overallGrade,
       rank: rank,
       compartmentSubjects,   // List of subjects where student scored < 33 (fail)
-      remarks: fallbackRecord.teacherremarks || '', // Real teacher remarks from DB
-      promotedToClass: fallbackRecord.promotedclass || '',
-      newSessionDate: fallbackRecord.newsessiondate || ''
+      remarks: remarksRecord.teacherremarks || attendanceRecord.teacherremarks || fallbackRecord.teacherremarks || '', // Real teacher remarks from DB
+      promotedToClass: remarksRecord.promotedclass || attendanceRecord.promotedclass || fallbackRecord.promotedclass || '',
+      newSessionDate: remarksRecord.newsessiondate || attendanceRecord.newsessiondate || fallbackRecord.newsessiondate || ''
     };
 
     res.json({
