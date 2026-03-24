@@ -268,7 +268,7 @@ exports.bulksavemarksbycomponent9ds = async (req, res) => {
       };
 
       if (targetField) {
-        updateFields[targetField] = obtained || 0;
+        updateFields[targetField] = (obtained !== undefined && obtained !== null && obtained !== '') ? Number(obtained) : 0;
       }
 
       if (absentField) {
@@ -861,7 +861,8 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       colid: Number(colid),
       semester,
       academicyear,
-      subjectcode: { $ne: 'ATTENDANCE' }
+      subjectcode: { $nin: ['ATTENDANCE', 'REMARKS'] },
+      regno: { $in: sectionRegNos }
     }, {
       regno: 1,
       subjectcode: 1,
@@ -935,7 +936,15 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
 
     // Find Rank
     const rankIndex = studentTotals.findIndex(s => s.regno === regno);
-    const rank = rankIndex !== -1 ? toRoman(rankIndex + 1) : '-';
+    let rank = rankIndex !== -1 ? toRoman(rankIndex + 1) : '-';
+
+    // NEW: If any student has Grade E in final assessment (Term 2) for main scholastic subjects, do not show rank
+    const hasEGrade = subjects.some(sub => 
+      !sub.isAdditional && (sub.term2Grade === 'E' || sub.term2Grade === 'E1' || sub.term2Grade === 'E2')
+    );
+    if (hasEGrade) {
+      rank = '-';
+    }
 
     // 6a. Calculate Compartment Subjects (Class 6-12 only: failing subject = weighted score < 33)
     const compartmentSubjects = subjects
