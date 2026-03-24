@@ -59,11 +59,22 @@ exports.getExamMarksMatrixData = async (req, res) => {
 
         const numericColid = parseInt(colid) || colid;
 
+        // The 'program' param from frontend is actually the 'programcode' value (e.g. "1")
+        // exammarks1ds stores program NAME (e.g. "Humanities & Science"), not programcode
+        // So we need to resolve the actual program name from ExamAdmit first
+        let programName = program;
+        if (program) {
+            const admitRecord = await ExamAdmit.findOne({ colid: colid, programcode: program });
+            if (admitRecord && admitRecord.program) {
+                programName = admitRecord.program;
+            }
+        }
+
         // 1. Fetch papers for this exam
         let paperQuery = { colid: numericColid, examcode: examcode };
         if (year) paperQuery.year = year;
-        if (program) {
-            paperQuery.$or = [{ program: program }, { branch: program }];
+        if (programName) {
+            paperQuery.$or = [{ program: programName }, { branch: programName }];
         }
         
         let papers = await Exammarks1ds.find(paperQuery).lean();
@@ -71,7 +82,7 @@ exports.getExamMarksMatrixData = async (req, res) => {
         // If the user's manually entered exam marks structure has slight typing differences in examcode/year, fallback:
         if (papers.length === 0) {
             let relaxedQuery = { colid: numericColid };
-            if (program) relaxedQuery.$or = [{ program: program }, { branch: program }];
+            if (programName) relaxedQuery.$or = [{ program: programName }, { branch: programName }];
             let relaxedPapers = await Exammarks1ds.find(relaxedQuery).lean();
             
             // if we found relaxed ones, let's use them, trying to match semester if available

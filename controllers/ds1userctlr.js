@@ -313,10 +313,21 @@ exports.ds1getuserbyid = async (req, res) => {
 exports.ds1updateuser = async (req, res) => {
   try {
     const { id } = req.query;
-    const updateData = req.body;
+    const updateData = { ...req.body };
 
     if (!id) {
       return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Remove fields that should not be sent to Mongoose update
+    delete updateData._id;
+    delete updateData.__v;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+
+    // Remove password if empty to avoid required validator failure
+    if (!updateData.password || updateData.password === '') {
+      delete updateData.password;
     }
 
     const user = await User.findByIdAndUpdate(
