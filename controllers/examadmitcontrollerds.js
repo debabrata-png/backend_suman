@@ -123,15 +123,23 @@ exports.getClassenrDistinctValuesForExamAdmit = async (req, res) => {
         }
 
         // Years are always filtered just by colid
-        const years = await Classenr.distinct('year', { colid: colid });
+        const _colid = parseInt(colid) || colid;
+        const years = await Classenr.distinct('year', { colid: _colid });
         
         // Program codes filtered by colid and selected year
-        let programQuery = { colid: colid };
+        let programQuery = { colid: _colid };
         if (year) programQuery.year = year;
-        const programcodes = await Classenr.distinct('programcode', programQuery);
+        
+        const programData = await Classenr.aggregate([
+            { $match: programQuery },
+            { $group: { _id: { program: "$program", programcode: "$programcode" } } },
+            { $project: { _id: 0, program: "$_id.program", programcode: "$_id.programcode" } },
+            { $sort: { program: 1 } }
+        ]);
+        const programcodes = programData.filter(p => p.programcode);
         
         // Semesters filtered by colid, selected year, and selected programcode
-        let semQuery = { colid: colid };
+        let semQuery = { colid: _colid };
         if (year) semQuery.year = year;
         if (programcode) semQuery.programcode = programcode;
         const semesters = await Classenr.distinct('semester', semQuery);
@@ -140,7 +148,7 @@ exports.getClassenrDistinctValuesForExamAdmit = async (req, res) => {
             status: "success", 
             data: { 
                 years: years.filter(Boolean), 
-                programcodes: programcodes.filter(Boolean), 
+                programcodes: programcodes, 
                 semesters: semesters.filter(Boolean) 
             } 
         });

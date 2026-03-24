@@ -46,6 +46,13 @@ const enrollStudents = async () => {
             const matchingCourses = courseRecords.filter(course => {
                 const courseProgCode = String(course.Programcode || '').trim();
                 const courseSemester = String(course.Semester || '').trim();
+                const courseNameStr = String(course.CourseName || course.coursename || '').toLowerCase();
+
+                // Skip courses that contain 'practical' in their name
+                if (courseNameStr.includes('practical')) {
+                    return false;
+                }
+
                 return studentProgCode === courseProgCode && studentSemester === courseSemester;
             });
 
@@ -54,11 +61,11 @@ const enrollStudents = async () => {
                     name: student.name,
                     user: 'adminall@bmusurat.ac.in',
                     colid: Number(student.colid),
-                    year: String(course.Year || ''),
+                    year: String(course.Year || course.year || ''),
                     program: course.Program,
                     programcode: String(course.Programcode || ''),
-                    course: course.CourseName,
-                    coursecode: String(course.CourseCode || ''),
+                    course: course.CourseName || course.coursename,
+                    coursecode: String(course.CourseCode || course.coursecode || ''),
                     student: student.name,
                     regno: String(student.regno || ''),
                     learning: 'Regular',

@@ -15,7 +15,13 @@ exports.getMatrixFilters = async (req, res) => {
         
         let progQuery = { ...baseQuery };
         if (year) progQuery.year = year;
-        const programs = await ExamAdmit.distinct('programcode', progQuery);
+        const programData = await ExamAdmit.aggregate([
+            { $match: progQuery },
+            { $group: { _id: { program: "$program", programcode: "$programcode" } } },
+            { $project: { _id: 0, program: "$_id.program", programcode: "$_id.programcode" } },
+            { $sort: { program: 1 } }
+        ]);
+        const programs = programData.filter(p => p.programcode);
         
         let examQuery = { ...baseQuery };
         if (year) examQuery.year = year;
@@ -82,12 +88,13 @@ exports.getExamMarksMatrixData = async (req, res) => {
 
         const admits = await ExamAdmit.find(admitQuery).lean();
         
-        // Extract unique students
+        // Extract unique students with their admit _id
         const studentMap = {};
         for (const admit of admits) {
             if (!studentMap[admit.regno]) {
                 studentMap[admit.regno] = {
-                    student: admit.student, // name of student
+                    admitid: admit._id, // Exam Admit _id
+                    student: admit.student,
                     regno: admit.regno
                 };
             }
