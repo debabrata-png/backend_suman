@@ -59,18 +59,16 @@ exports.getExamMarksMatrixData = async (req, res) => {
 
         const numericColid = parseInt(colid) || colid;
 
-        // The 'program' param from frontend is actually the 'programcode' value (e.g. "1")
-        // exammarks1ds stores program NAME (e.g. "Humanities & Science"), not programcode
-        // So we need to resolve the actual program name from ExamAdmit first
-        let programName = program;
+        // Resolve program NAME from ExamAdmit using the programcode sent from frontend
+        let programName = null;
         if (program) {
-            const admitRecord = await ExamAdmit.findOne({ colid: colid, programcode: program });
+            const admitRecord = await ExamAdmit.findOne({ colid: numericColid, programcode: program });
             if (admitRecord && admitRecord.program) {
                 programName = admitRecord.program;
             }
         }
 
-        // 1. Fetch papers for this exam
+        // 1. Fetch papers for this exam using program NAME (not code)
         let paperQuery = { colid: numericColid, examcode: examcode };
         if (year) paperQuery.year = year;
         if (programName) {
@@ -79,16 +77,11 @@ exports.getExamMarksMatrixData = async (req, res) => {
         
         let papers = await Exammarks1ds.find(paperQuery).lean();
         
-        // If the user's manually entered exam marks structure has slight typing differences in examcode/year, fallback:
+        // Fallback: if no papers found with program name, try without program filter
         if (papers.length === 0) {
-            let relaxedQuery = { colid: numericColid };
-            if (programName) relaxedQuery.$or = [{ program: programName }, { branch: programName }];
-            let relaxedPapers = await Exammarks1ds.find(relaxedQuery).lean();
-            
-            // if we found relaxed ones, let's use them, trying to match semester if available
-            if (relaxedPapers.length > 0) {
-                papers = relaxedPapers;
-            }
+            let relaxedQuery = { colid: numericColid, examcode: examcode };
+            if (year) relaxedQuery.year = year;
+            papers = await Exammarks1ds.find(relaxedQuery).lean();
         }
 
         // 2. Fetch distinct students assigned to this exam
