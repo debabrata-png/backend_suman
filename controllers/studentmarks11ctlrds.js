@@ -566,7 +566,7 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
         let currentRank = 1;
         for (let i = 0; i < sortedRanks.length; i++) {
             if (i > 0 && sortedRanks[i].percentage.toFixed(2) !== sortedRanks[i - 1].percentage.toFixed(2)) {
-                currentRank = i + 1;
+                currentRank++;
             }
             sortedRanks[i].rank = currentRank;
         }
@@ -877,8 +877,8 @@ exports.getrankreportds = async (req, res) => {
                 if (rankableIndex > 0) {
                     // Find previous rankable student
                     const prevRankable = reportData.slice(0, i).filter(r => !r.noRank).pop();
-                    if (prevRankable && row.pctNum < prevRankable.pctNum) {
-                        currentRank = rankableIndex + 1;
+                    if (prevRankable && row.pctNum.toFixed(2) !== prevRankable.pctNum.toFixed(2)) {
+                        currentRank++;
                     }
                 }
                 row.rank = toRoman(currentRank);

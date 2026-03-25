@@ -904,21 +904,26 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         if (!hasMarks) return null;
 
         // T1
-        const t1Max = conf.term1periodictestmax || 40;
+        const t1MaxConfig = conf.term1periodictestmax || 40;
         const t1Obt = m.term1periodictestobtained || 0;
-        const t1Sc = t1Max > 0 ? (t1Obt / t1Max) * 10 : 0;
+        const t1Sc = t1MaxConfig > 0 ? (t1Obt / t1MaxConfig) * 10 : 0;
         const t1Raw = t1Sc + (m.term1notebookobtained || 0) + (m.term1enrichmentobtained || 0) + (m.term1midexamobtained || 0);
 
         // T2
-        const t2Max = conf.term2periodictestmax || 40;
+        const t2MaxConfig = conf.term2periodictestmax || 40;
         const t2Obt = m.term2periodictestobtained || 0;
-        const t2Sc = t2Max > 0 ? (t2Obt / t2Max) * 10 : 0;
+        const t2Sc = t2MaxConfig > 0 ? (t2Obt / t2MaxConfig) * 10 : 0;
         const t2Raw = t2Sc + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0);
 
-        // Weighted total 50-50
+        // Weighted total 50-50 for overall
         const subTotal = parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
 
-        return { total: subTotal, isAdditional: conf.isadditional || false };
+        return { 
+          t1Total: t1Raw, 
+          t2Total: t2Raw, 
+          overallTotal: subTotal, 
+          isAdditional: conf.isadditional || false 
+        };
       }).filter(Boolean);
 
       // Filter out additional subjects for rank calculation
@@ -926,27 +931,48 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         !s.isAdditional || s.isAdditional === 'false' || s.isAdditional === false
       );
 
-      // Use scholastic subjects for ranking
-      const totalMarks = rankSubjects.reduce((sum, s) => sum + s.total, 0);
+      // Totals
+      const t1Sum = rankSubjects.reduce((sum, s) => sum + s.t1Total, 0);
+      const t2Sum = rankSubjects.reduce((sum, s) => sum + s.t2Total, 0);
+      const overallSum = rankSubjects.reduce((sum, s) => sum + s.overallTotal, 0);
+      
       const maxMarksForRank = rankSubjects.length * 100;
-      const pct = maxMarksForRank > 0 ? parseFloat(((totalMarks / maxMarksForRank) * 100).toFixed(2)) : 0;
+      
+      const t1Pct = maxMarksForRank > 0 ? parseFloat(((t1Sum / maxMarksForRank) * 100).toFixed(2)) : 0;
+      const t2Pct = maxMarksForRank > 0 ? parseFloat(((t2Sum / maxMarksForRank) * 100).toFixed(2)) : 0;
+      const overallPct = maxMarksForRank > 0 ? parseFloat(((overallSum / maxMarksForRank) * 100).toFixed(2)) : 0;
 
-      return { regno: rNo, percentage: pct };
-    })
-    .filter(s => parseFloat(s.percentage.toFixed(1)) >= 33) // Only rank students with >= 33% (rounded to 1 decimal space for consistency with frontend)
-    .sort((a, b) => b.percentage - a.percentage);
+      return { 
+        regno: rNo, 
+        t1Percentage: t1Pct, 
+        t2Percentage: t2Pct, 
+        overallPercentage: overallPct 
+      };
+    });
 
-    // Dense ranking: equal percentages get equal rank
-    let currentDenseRank = 1;
-    for (let i = 0; i < studentRankData.length; i++) {
-      if (i > 0 && studentRankData[i].percentage.toFixed(2) !== studentRankData[i - 1].percentage.toFixed(2)) {
-        currentDenseRank = i + 1;
+    // Function to calculate dense rank for a specific percentage field
+    const calculateDenseRank = (data, pctField) => {
+      const sorted = [...data].sort((a, b) => b[pctField] - a[pctField]);
+      let currentDenseRank = 1;
+      for (let i = 0; i < sorted.length; i++) {
+        if (i > 0 && sorted[i][pctField].toFixed(2) !== sorted[i - 1][pctField].toFixed(2)) {
+          currentDenseRank++;
+        }
+        sorted[i][pctField + 'Rank'] = currentDenseRank;
       }
-      studentRankData[i].rank = currentDenseRank;
-    }
+      return sorted;
+    };
 
-    const myRankEntry = studentRankData.find(s => s.regno === regno);
-    let rank = myRankEntry ? toRoman(myRankEntry.rank) : '-';
+    // Calculate ranks for all three scenarios
+    let rankedData = calculateDenseRank(studentRankData, 't1Percentage');
+    rankedData = calculateDenseRank(rankedData, 't2Percentage');
+    rankedData = calculateDenseRank(rankedData, 'overallPercentage');
+
+    const myRankEntry = rankedData.find(s => s.regno === regno);
+    const term1Rank = myRankEntry ? toRoman(myRankEntry.t1PercentageRank) : '-';
+    const term2Rank = myRankEntry ? toRoman(myRankEntry.t2PercentageRank) : '-';
+    const overallRank = myRankEntry ? toRoman(myRankEntry.overallPercentageRank) : '-';
+    const rank = overallRank; // Fallback for backward compatibility
 
     // 6a. Calculate Compartment Subjects (Class 6-12 only: failing subject = weighted score < 33)
     const compartmentSubjects = subjects
@@ -991,6 +1017,9 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       grandTotal,
       percentage,
       overallGrade,
+      term1Rank: term1Rank,
+      term2Rank: term2Rank,
+      overallRank: overallRank,
       rank: rank,
       compartmentSubjects,   // List of subjects where student scored < 33 (fail)
       remarks: remarksRecord.teacherremarks || attendanceRecord.teacherremarks || fallbackRecord.teacherremarks || '', // Real teacher remarks from DB

@@ -327,7 +327,7 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
     let currentDenseRank = 1;
     for (let i = 0; i < studentRankData.length; i++) {
       if (i > 0 && studentRankData[i].percentage.toFixed(2) !== studentRankData[i - 1].percentage.toFixed(2)) {
-        currentDenseRank = i + 1;
+        currentDenseRank++;
       }
       studentRankData[i].rank = currentDenseRank;
     }
