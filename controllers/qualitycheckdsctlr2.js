@@ -8,7 +8,7 @@ exports.addQualityCheck2 = async (req, res) => {
             grnNo, poid, colid,
             billNo, billDate, challanNo, challanDate, woPoNo,
             inspectorName, items, invoiceAmount, advanceDeduction,
-            paymentDetails, corporateDirectorName, executiveName
+            paymentDetails, corporateDirectorName, executiveName, documentLink
         } = req.body;
 
         // 1. Validate GRN exists and is Pending QC
@@ -44,6 +44,7 @@ exports.addQualityCheck2 = async (req, res) => {
             advanceDeduction: advanceDeduction || 0,
             paymentDetails, netPayableAmount,
             corporateDirectorName, executiveName,
+            documentLink,
             status
         });
 

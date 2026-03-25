@@ -54,6 +54,8 @@ const qualitycheckdsschema = new mongoose.Schema({
     corporateDirectorName: { type: String },
     executiveName: { type: String },
 
+    documentLink: { type: String },
+
     approvaltoken: { type: String, required: false, unique: false }
 });
 

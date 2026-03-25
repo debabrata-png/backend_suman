@@ -910,6 +910,13 @@ app.get('/api/v2/getallqualitycheckds2', qualitycheckdsctlr2.getAllQualityChecks
 app.get('/api/v2/getqualitycheckbyid2/:id', qualitycheckdsctlr2.getQualityCheckById2);    // legacy
 app.get('/api/v2/getqualitycheckdsbyid2/:id', qualitycheckdsctlr2.getQualityCheckById2);  // new
 
+// Manual Quality Check Routes
+const qualitycheckmanualdsctlr2 = require('./controllers/qualitycheckmanualdsctlr2');
+app.post('/api/v2/addmanualqcds2', qualitycheckmanualdsctlr2.addManualQC2);
+app.get('/api/v2/getallmanualqcds2', qualitycheckmanualdsctlr2.getAllManualQC2);
+app.post('/api/v2/updatemanualqcds2', qualitycheckmanualdsctlr2.updateManualQC2);
+app.get('/api/v2/deletemanualqcds2', qualitycheckmanualdsctlr2.deleteManualQC2);
+
 // 9a. PR Configuration
 const prconfigdsctlr2 = require('./controllers/prconfigdsctlr2');
 app.post('/api/v2/addprconfigds2', prconfigdsctlr2.addprconfigds2);
