@@ -36,6 +36,8 @@ exports.addQualityCheck2 = async (req, res) => {
             colid, poid,
             grnNo, grnDate: grn.grnDate,
             gatePassNumber: grn.gatePassNumber,
+            storeId: grn.storeId,
+            storeName: grn.storeName,
             billNo, billDate, challanNo, challanDate, woPoNo,
             partyName: grn.partyName || grn.vendorName,
             inspectorName, items, invoiceAmount,

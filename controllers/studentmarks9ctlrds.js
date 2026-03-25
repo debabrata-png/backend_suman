@@ -6,8 +6,10 @@ const CoScholasticGrade9ds = require('../Models/CoScholasticGrade9ds');
 
 // Helper function to calculate grade
 function calculateGrade(obtained, max) {
-  if (!obtained || !max || max === 0) return 'E';
-  const percentage = (obtained / max) * 100;
+  if (max === 0 || max === null || max === undefined) return '-';
+  if (!obtained && obtained !== 0) return 'E';
+  // Round to 2 decimals to avoid floating-point issues (e.g. 32.999 vs 33.0)
+  const percentage = Math.round((obtained / max) * 10000) / 100;
   if (percentage >= 91) return 'A1';
   if (percentage >= 81) return 'A2';
   if (percentage >= 71) return 'B1';
@@ -782,8 +784,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       };
     }).filter(s => s.hasMarks);
 
-    // 4. Calculate Totals with 50% Weightage
-    // term1Total and term2Total are out of 100 per subject
+    // 4. Calculate Totals with 50% Weightage — all subjects
     const term1TotalMarks = subjects.reduce((sum, s) => sum + s.term1Total, 0);
     const term2TotalMarks = subjects.reduce((sum, s) => sum + s.term2Total, 0);
 
@@ -792,7 +793,6 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     const term2TotalWeighted = term2TotalMarks * 0.5;
     const grandTotal = term1TotalWeighted + term2TotalWeighted;
 
-    // Max marks should be based on the weighted total (50 + 50 = 100 per subject)
     const maxMarks = subjects.length * 100;
 
     const percentage = maxMarks > 0 ? ((grandTotal / maxMarks) * 100).toFixed(2) : 0;
@@ -842,27 +842,22 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       term2Grade: (coGradeMap[act._id.toString()] && coGradeMap[act._id.toString()].term2grade) || ''
     }));
 
-    // 5.8 Dynamic Rank Calculation
-    // Fetch all marks for the same batch (colid, year, semester) to calculate rank
-    // Step 1: Find all students in this specific section
-    const sectionStudents = await User.find({
+    // 5.8 Dynamic Rank Calculation — CLASS-WIDE (no section filter)
+    const classStudents = await User.find({
       colid: Number(colid),
       semester: semester,
-      section: userData.section,
-      admissionyear: academicyear,
       role: 'Student'
     }).lean();
 
+    const classRegNos = classStudents.map(s => s.regno);
 
-    const sectionRegNos = sectionStudents.map(s => s.regno);
-
-    // Fetch all marks for the batch (Filtered by SECTION regnos)
+    // Fetch all marks for the batch (class-wide)
     const allStudentMarks = await StudentMarks9ds.find({
       colid: Number(colid),
       semester,
       academicyear,
       subjectcode: { $nin: ['ATTENDANCE', 'REMARKS'] },
-      regno: { $in: sectionRegNos }
+      regno: { $in: classRegNos }
     }, {
       regno: 1,
       subjectcode: 1,
@@ -883,34 +878,30 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       term2annualexamabsent: 1
     }).lean();
 
-    // Group by regno
+    // Group by regno and collect per-subject data
     const studentGroups = {};
     allStudentMarks.forEach(m => {
       if (!studentGroups[m.regno]) studentGroups[m.regno] = [];
       studentGroups[m.regno].push(m);
     });
 
-    // Calculate Grand Total for key students
-    const studentTotals = Object.keys(studentGroups).map(rNo => {
+    // Calculate per-student percentage for ranking
+    const studentRankData = Object.keys(studentGroups).map(rNo => {
       const sMarks = studentGroups[rNo];
-      // Logic copied from above for total calculation
-      // We need configMap for scaling. Assuming standard 40/10 if config missing for speed
-      // Or better, assume the configMap fetched earlier covers all subjects in class.
 
-      const studTotal = sMarks.reduce((acc, m) => {
+      const subjectScores = sMarks.map(m => {
         const conf = configMap[m.subjectcode] || {};
 
-        // Check if this subject should be included
         const hasMarks = [
           m.term1periodictestobtained, m.term1notebookobtained, m.term1enrichmentobtained, m.term1midexamobtained,
           m.term2periodictestobtained, m.term2notebookobtained, m.term2enrichmentobtained, m.term2annualexamobtained
-        ].some(val => val !== null && val !== undefined && val !== '') || 
+        ].some(val => val !== null && val !== undefined && val !== '') ||
         [
-          m.term1periodictestabsent, m.term1midexamabsent, 
+          m.term1periodictestabsent, m.term1midexamabsent,
           m.term2periodictestabsent, m.term2annualexamabsent
         ].some(abs => abs === true || abs === 'true');
 
-        if (!hasMarks) return acc;
+        if (!hasMarks) return null;
 
         // T1
         const t1Max = conf.term1periodictestmax || 40;
@@ -924,27 +915,38 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         const t2Sc = t2Max > 0 ? (t2Obt / t2Max) * 10 : 0;
         const t2Raw = t2Sc + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0);
 
-        // Weighted
-        return acc + (t1Raw * 0.5) + (t2Raw * 0.5);
-      }, 0);
+        // Weighted total 50-50
+        const subTotal = parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
 
-      return { regno: rNo, total: studTotal };
-    });
+        return { total: subTotal, isAdditional: conf.isadditional || false };
+      }).filter(Boolean);
 
-    // Sort Descending
-    studentTotals.sort((a, b) => b.total - a.total);
+      // Filter out additional subjects for rank calculation
+      const rankSubjects = subjectScores.filter(s => 
+        !s.isAdditional || s.isAdditional === 'false' || s.isAdditional === false
+      );
 
-    // Find Rank
-    const rankIndex = studentTotals.findIndex(s => s.regno === regno);
-    let rank = rankIndex !== -1 ? toRoman(rankIndex + 1) : '-';
+      // Use scholastic subjects for ranking
+      const totalMarks = rankSubjects.reduce((sum, s) => sum + s.total, 0);
+      const maxMarksForRank = rankSubjects.length * 100;
+      const pct = maxMarksForRank > 0 ? parseFloat(((totalMarks / maxMarksForRank) * 100).toFixed(2)) : 0;
 
-    // NEW: If any student has Grade E in final assessment (Term 2) for main scholastic subjects, do not show rank
-    const hasEGrade = subjects.some(sub => 
-      !sub.isAdditional && (sub.term2Grade === 'E' || sub.term2Grade === 'E1' || sub.term2Grade === 'E2')
-    );
-    if (hasEGrade) {
-      rank = '-';
+      return { regno: rNo, percentage: pct };
+    })
+    .filter(s => parseFloat(s.percentage.toFixed(1)) >= 33) // Only rank students with >= 33% (rounded to 1 decimal space for consistency with frontend)
+    .sort((a, b) => b.percentage - a.percentage);
+
+    // Dense ranking: equal percentages get equal rank
+    let currentDenseRank = 1;
+    for (let i = 0; i < studentRankData.length; i++) {
+      if (i > 0 && studentRankData[i].percentage.toFixed(2) !== studentRankData[i - 1].percentage.toFixed(2)) {
+        currentDenseRank = i + 1;
+      }
+      studentRankData[i].rank = currentDenseRank;
     }
+
+    const myRankEntry = studentRankData.find(s => s.regno === regno);
+    let rank = myRankEntry ? toRoman(myRankEntry.rank) : '-';
 
     // 6a. Calculate Compartment Subjects (Class 6-12 only: failing subject = weighted score < 33)
     const compartmentSubjects = subjects

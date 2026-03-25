@@ -6,8 +6,10 @@ const CoScholasticGrade9ds = require('../Models/CoScholasticGrade9ds');
 
 // Helper to calculate grade (generic)
 function calculateGrade(obtained, max) {
-    if (!obtained || !max || max === 0) return 'E';
-    const percentage = (obtained / max) * 100;
+    if (max === 0 || max === null || max === undefined) return '-';
+    if (!obtained && obtained !== 0) return 'E';
+    // Round to 2 decimals to avoid floating-point issues (e.g. 32.999 vs 33.0)
+    const percentage = Math.round((obtained / max) * 10000) / 100;
     if (percentage >= 91) return 'A1';
     if (percentage >= 81) return 'A2';
     if (percentage >= 71) return 'B1';
@@ -108,7 +110,7 @@ exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
             subjects = [{
                 subjectcode: 'ATTENDANCE',
                 subjectname: 'Attendance',
-                maxmarks: 500 
+                maxmarks: 500
             }];
 
             marks = await StudentMarks11ds.find({
@@ -264,7 +266,7 @@ exports.savemarks11ds = async (req, res) => {
                             teacherremarks: mark.teacherremarks || '',
                             promotedclass: mark.promotedclass || '',
                             newsessiondate: mark.newsessiondate || '',
-                            
+
                             // New absent flags for individual components
                             unitpremidabsent: mark.unitpremidabsent || false,
                             unitpostmidabsent: mark.unitpostmidabsent || false,
@@ -315,7 +317,7 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
         const attRecord = marks.find(m => m.subjectcode === 'ATTENDANCE');
         const remarksRecord = marks.find(m => m.subjectcode === 'REMARKS');
         const fallbackRecord = marks.find(m => m.subjectcode !== 'ATTENDANCE' && m.subjectcode !== 'REMARKS') || {};
-        
+
         // Filter out attendance and remarks from subjects list for display/calculation
         const subjectMarks = marks.filter(m => m.subjectcode !== 'ATTENDANCE' && m.subjectcode !== 'REMARKS');
 
@@ -375,24 +377,15 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
                     (m.annualthobtain > 0) ||
                     (m.annualpracticalobtain > 0);
 
-                if (hasMarks) {
-                    grandTotal += (m.total || 0);
-                    maxTotal += 100; // Each subject is evaluated out of 100 weighted
-                    if ((m.total || 0) < 33) failCount++;
-                }
-
                 // Use Config Name if available, else fallback to Marks Name
                 let realSubjectName = codeToNameMap[m.subjectcode] || m.subjectname;
 
                 // INTELLIGENT FIX: Check if the mapping inverted the Name/Code (User data issue)
-                // If the Result (realSubjectName) looks like a Code (has numbers)
-                // AND the Input (m.subjectcode) looks like a Name (no numbers, len > 3),
-                // REVERT to the Input.
                 const isResultCodeLike = /\d/.test(realSubjectName);
                 const isInputNameLike = !/\d/.test(m.subjectcode) && m.subjectcode.length > 2;
 
                 if (isResultCodeLike && isInputNameLike) {
-                    realSubjectName = m.subjectcode; // Keep the name "Biology" instead of "BIO0011"
+                    realSubjectName = m.subjectcode;
                 }
 
                 return {
@@ -424,24 +417,42 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
                     annualthabsent: m.annualthabsent || false,
                     annualpracticalabsent: m.annualpracticalabsent || false,
                     compartmentobtained: (m.compartmentobtained !== undefined && m.compartmentobtained !== null)
-                        ? m.compartmentobtained : null, // Supplementary exam marks
-                    hasMarks: hasMarks, // Helper flag for filtering
+                        ? m.compartmentobtained : null,
+                    hasMarks: hasMarks,
                     isAdditional: codeToAdditionalMap[m.subjectcode] || false,
                     isCompulsory: codeToCompulsoryMap[m.subjectcode] || false
                 };
             })
             .filter(s => s.hasMarks);
 
+        // Determine top 5 subjects by grandTotal — subjects beyond top 5 are "additional"
+        const sortedByScore = [...subjectsFormatted].sort((a, b) => (b.grandTotal || 0) - (a.grandTotal || 0));
+        const top5Codes = new Set(sortedByScore.slice(0, 5).map(s => s.subjectcode));
+
+        // Mark subjects as additional if they fall outside top 5
+        subjectsFormatted.forEach(s => {
+            s.isAdditional = !top5Codes.has(s.subjectcode);
+        });
+
+        // Calculate totals using only top 5 subjects
+        subjectsFormatted.forEach(s => {
+            if (!s.isAdditional) {
+                grandTotal += (s.grandTotal || 0);
+                maxTotal += 100;
+                if ((s.grandTotal || 0) < 33) failCount++;
+            }
+        });
+
         const percentage = maxTotal > 0 ? ((grandTotal / maxTotal) * 100).toFixed(2) : 0;
         const resultStatus = failCount === 0 ? "PASSED" : (failCount === 1 ? "COMPARTMENT" : "FAILED");
 
-        // Build compartmentSubjects list
+        // Build compartmentSubjects list — only from top 5 subjects
         const compartmentSubjects = subjectsFormatted
-            .filter(s => (s.grandTotal || 0) < 33 || s.grade === 'E')
+            .filter(s => !s.isAdditional && ((s.grandTotal || 0) < 33 || s.grade === 'E'))
             .map(s => ({
                 subjectname: s.subjectname,
                 finalScore: s.grandTotal || 0,
-                compartmentobtained: s.compartmentobtained // Supplementary exam marks
+                compartmentobtained: s.compartmentobtained
             }));
 
         // Fetch Co-Scholastic data
@@ -485,64 +496,72 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             console.error("Co-Scholastic fetch error:", e);
         }
 
-        // Dynamic Rank Calculation
-        // Step 1: Find all students in this specific section
-        const sectionStudents = await User.find({
+        // Dynamic Rank Calculation — CLASS-WISE (no section filter)
+        const classStudents = await User.find({
             colid: Number(colid),
             semester: semester,
-            section: student.section,
             admissionyear: academicyear,
             role: 'Student'
         }).lean();
 
-        const sectionRegNos = sectionStudents.map(s => s.regno);
+        const classRegNos = classStudents.map(s => s.regno);
 
-        // Fetch all marks for the batch (Filtered by SECTION regnos)
+        // Fetch all marks for the batch (class-wide)
         const allBatchMarks = await StudentMarks11ds.find({
             colid: Number(colid),
             semester,
             academicyear,
             subjectcode: { $nin: ['ATTENDANCE', 'REMARKS'] },
-            regno: { $in: sectionRegNos }
+            regno: { $in: classRegNos }
         }).lean();
 
-        // Group and Sum
-        const studentTotals = {};
+        // Group by student: collect per-subject totals and grades
+        const studentSubjects = {};
         allBatchMarks.forEach(m => {
             const hasMarks = [
                 m.unitpremidobtain, m.unitpostmidobtain, m.unittotal, m.unit20,
                 m.halfyearlythobtain, m.halfyearlypracticalobtain, m.halfyearlytotal, m.halfyearly30,
                 m.annualthobtain, m.annualpracticalobtain, m.annualtotal, m.annual50
-            ].some(val => val !== null && val !== undefined && val !== '') || 
-            [
-                m.unitpremidabsent, m.unitpostmidabsent, 
-                m.halfyearlythabsent, m.halfyearlypracticalabsent,
-                m.annualthabsent, m.annualpracticalabsent
-            ].some(abs => abs === true || abs === 'true');
+            ].some(val => val !== null && val !== undefined && val !== '') ||
+                [
+                    m.unitpremidabsent, m.unitpostmidabsent,
+                    m.halfyearlythabsent, m.halfyearlypracticalabsent,
+                    m.annualthabsent, m.annualpracticalabsent
+                ].some(abs => abs === true || abs === 'true');
 
             if (hasMarks) {
-                if (!studentTotals[m.regno]) studentTotals[m.regno] = 0;
-                studentTotals[m.regno] += (m.total || 0);
+                if (!studentSubjects[m.regno]) studentSubjects[m.regno] = [];
+                studentSubjects[m.regno].push({ total: m.total || 0, grade: m.totalgrade });
             }
         });
 
-        // Convert to array and Sort Descending
-        const sortedRanks = Object.keys(studentTotals).map(r => ({
-            regno: r,
-            total: studentTotals[r]
-        })).sort((a, b) => b.total - a.total);
+        // Calculate rank using top 5 subjects by score, percentage-based with dense ranking
+        const sortedRanks = Object.keys(studentSubjects).map(r => {
+            const subs = studentSubjects[r];
+            // Sort subjects descending by total, take top 5
+            const sorted = subs.sort((a, b) => b.total - a.total);
+            const top5 = sorted.slice(0, 5);
+            const top5Total = top5.reduce((sum, s) => sum + s.total, 0);
+            const top5Max = top5.length * 100;
+            const pct = top5Max > 0 ? parseFloat(((top5Total / top5Max) * 100).toFixed(2)) : 0;
+            // E-grade check: any of top 5 subjects has grade E
+            const hasE = top5.some(s => s.grade === 'E' || s.grade === 'E1' || s.grade === 'E2');
+            return { regno: r, percentage: pct };
+        })
+        .filter(s => parseFloat(s.percentage.toFixed(1)) >= 33) // Only rank students with >= 33%
+        .sort((a, b) => b.percentage - a.percentage);
 
-        // Find Rank
-        const rankIndex = sortedRanks.findIndex(s => s.regno === regno);
-        let rank = rankIndex !== -1 ? toRoman(rankIndex + 1) : '-';
-
-        // NEW: If any student has Grade E in final assessment for main scholastic subjects, do not show rank
-        const hasEGrade = subjectsFormatted.some(sub => 
-            !sub.isAdditional && (sub.grade === 'E' || sub.grade === 'E1' || sub.grade === 'E2')
-        );
-        if (hasEGrade) {
-            rank = '-';
+        // Dense ranking: equal percentages get equal rank
+        let currentRank = 1;
+        for (let i = 0; i < sortedRanks.length; i++) {
+            if (i > 0 && sortedRanks[i].percentage.toFixed(2) !== sortedRanks[i - 1].percentage.toFixed(2)) {
+                currentRank = i + 1;
+            }
+            sortedRanks[i].rank = currentRank;
         }
+
+        const myRankEntry = sortedRanks.find(s => s.regno === regno);
+        let rank = myRankEntry ? toRoman(myRankEntry.rank) : '-';
 
         const pdfData = {
             profile: {
@@ -645,18 +664,20 @@ exports.getrankreportds = async (req, res) => {
         const { colid, academicyear, semester, section } = req.query;
 
         // Validation
-        if (!colid || !academicyear || !semester || !section) {
+        if (!colid || !academicyear || !semester) {
             return res.status(400).json({ success: false, message: "Missing required parameters." });
         }
 
-        // 1. Fetch Students in the specified Section
-        const students = await User.find({
+        // 1. Fetch Students CLASS-WIDE (no section filter for ranking)
+        const studentQuery = {
             colid: Number(colid),
             admissionyear: academicyear,
             semester,
-            section,
             role: 'Student'
-        }).lean();
+        };
+        // If section is passed, still use it for filtering the display list,
+        // but ranking is calculated across all sections
+        const students = await User.find(studentQuery).lean();
 
         if (students.length === 0) {
             return res.json({ success: true, data: [] });
@@ -707,10 +728,8 @@ exports.getrankreportds = async (req, res) => {
             });
         }
 
-        // 3. Group Marks by Regno and Compute Totals + Subject Count + check for Grade E
-        const studentTotals = {};
-        const studentSubjectCount = {};
-        const studentHasEGrade = {};
+        // 3. Group Marks by Regno — collect per-subject data for top-5 ranking
+        const studentSubjectsMap = {};
 
         allMarks.forEach(m => {
             const rNo = m.regno;
@@ -722,25 +741,18 @@ exports.getrankreportds = async (req, res) => {
                     m.halfyearlythobtain, m.halfyearlypracticalobtain,
                     m.annualthobtain, m.annualpracticalobtain
                 ].some(val => val !== null && val !== undefined && val !== '' && val > 0) ||
-                [
-                    m.unitpremidabsent, m.unitpostmidabsent,
-                    m.halfyearlythabsent, m.halfyearlypracticalabsent,
-                    m.annualthabsent, m.annualpracticalabsent
-                ].some(abs => abs === true || abs === 'true');
+                    [
+                        m.unitpremidabsent, m.unitpostmidabsent,
+                        m.halfyearlythabsent, m.halfyearlypracticalabsent,
+                        m.annualthabsent, m.annualpracticalabsent
+                    ].some(abs => abs === true || abs === 'true');
 
                 if (hasMarks) {
-                    if (!studentTotals[rNo]) studentTotals[rNo] = 0;
-                    if (!studentSubjectCount[rNo]) studentSubjectCount[rNo] = 0;
-                    studentTotals[rNo] += (m.total || 0);
-                    studentSubjectCount[rNo] += 1;
-
-                    // Exclude from ranking if grade E in final assessment
-                    if (m.totalgrade === 'E' || m.totalgrade === 'E1' || m.totalgrade === 'E2') {
-                        // In Class 11-12 context, additional subjects should be checked via configs
-                        // If no config map here, we assume totalgrade 'E' disqualifies unless it's a known additional subject
-                        // To be safe and strict, any 'E' for now flags it as true.
-                        studentHasEGrade[rNo] = true;
-                    }
+                    if (!studentSubjectsMap[rNo]) studentSubjectsMap[rNo] = [];
+                    studentSubjectsMap[rNo].push({
+                        total: m.total || 0,
+                        grade: m.totalgrade
+                    });
                 }
             } else {
                 // Class KG-10: check if subject has marks
@@ -750,14 +762,13 @@ exports.getrankreportds = async (req, res) => {
                     m.term2periodictestobtained, m.term2notebookobtained,
                     m.term2enrichmentobtained, m.term2annualexamobtained
                 ].some(val => val !== null && val !== undefined && val !== '' && val > 0) ||
-                [
-                    m.term1periodictestabsent, m.term1midexamabsent,
-                    m.term2periodictestabsent, m.term2annualexamabsent
-                ].some(abs => abs === true || abs === 'true');
+                    [
+                        m.term1periodictestabsent, m.term1midexamabsent,
+                        m.term2periodictestabsent, m.term2annualexamabsent
+                    ].some(abs => abs === true || abs === 'true');
 
                 if (hasMarks) {
-                    if (!studentTotals[rNo]) studentTotals[rNo] = 0;
-                    if (!studentSubjectCount[rNo]) studentSubjectCount[rNo] = 0;
+                    if (!studentSubjectsMap[rNo]) studentSubjectsMap[rNo] = [];
 
                     // Apply same PT scaling as report card
                     const conf = configMap[m.subjectcode] || {};
@@ -773,55 +784,66 @@ exports.getrankreportds = async (req, res) => {
                     const t2Raw = t2PTScaled + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0);
 
                     // Weighted 50-50
-                    studentTotals[rNo] += parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
-                    studentSubjectCount[rNo] += 1;
+                    const subTotal = parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
 
-                    // Check Grade E in Term 2 for non-additional subjects
-                    if (!conf.isadditional) {
-                        const t2NBMax = conf.term2notebookmax || 5;
-                        const t2ENMax = conf.term2enrichmentmax || 5;
-                        const t2MEMax = conf.term2annualexammax || 80;
-                        const term2Max = 10 + t2NBMax + t2ENMax + t2MEMax;
-                        
-                        const t2Grade = calculateGrade(t2Raw, term2Max);
-                        if (t2Grade === 'E' || t2Grade === 'E1' || t2Grade === 'E2') {
-                            studentHasEGrade[rNo] = true;
-                        }
-                    }
+                    // For class 9/10, E-grade check is Term II only
+                    const t2NBMax = conf.term2notebookmax || 5;
+                    const t2ENMax = conf.term2enrichmentmax || 5;
+                    const t2MEMax = conf.term2annualexammax || 80;
+                    const term2Max = 10 + t2NBMax + t2ENMax + t2MEMax;
+                    const t2Grade = calculateGrade(t2Raw, term2Max);
+
+                    studentSubjectsMap[rNo].push({
+                        total: subTotal,
+                        grade: t2Grade // Use Term II grade for E-check
+                    });
                 }
             }
         });
 
-        // 4. Construct Data Array and Sort
+        // 4. Calculate rank using top 5 subjects, percentage-based with dense ranking
         let reportData = students.map(s => {
-            const studTot = studentTotals[s.regno] || 0;
-            const subjectCount = studentSubjectCount[s.regno] || 1;
-            // Dynamic max: 100 per subject for class 11-12, 100 per subject (weighted) for 9/10
-            const maxTotal = subjectCount * 100;
-            const percentage = studTot > 0 ? ((studTot / maxTotal) * 100).toFixed(2) + "%" : "0%";
+            const subs = studentSubjectsMap[s.regno] || [];
+            // Sort subjects descending by total, take top 5
+            const sorted = [...subs].sort((a, b) => b.total - a.total);
+            const top5 = sorted.slice(0, 5);
+            const top5Total = top5.reduce((sum, sub) => sum + sub.total, 0);
+            const top5Max = top5.length * 100;
+            const pctNum = top5Max > 0 ? parseFloat(((top5Total / top5Max) * 100).toFixed(2)) : 0;
+            // E-grade check: any of top 5 subjects has grade E
+            const hasE = top5.some(sub => sub.grade === 'E' || sub.grade === 'E1' || sub.grade === 'E2');
 
             return {
                 regno: s.regno,
                 admissionno: s.regno,
                 rollno: s.rollno || '-',
                 name: s.name,
-                total: parseFloat(studTot.toFixed(2)),
-                percentage: percentage,
-                rank: studentHasEGrade[s.regno] ? '-' : 0, // '-' if E grade, else placeholder 0
-                hasEGrade: studentHasEGrade[s.regno] || false
+                total: parseFloat(top5Total.toFixed(2)),
+                percentage: pctNum.toFixed(2) + '%',
+                pctNum: pctNum, // numeric for sorting
+                rank: '-',
+                hasEGrade: hasE,
+                noRank: pctNum < 33 // No rank if < 33%
             };
         });
 
-        // Sort descending by total
-        reportData.sort((a, b) => b.total - a.total);
+        // Sort descending by percentage
+        reportData.sort((a, b) => b.pctNum - a.pctNum);
 
-        // 5. Assign Ranks
-        // Only assign sequential ranks to students who don't have an 'E' grade
+        // 5. Assign Ranks — dense ranking, skip students with E-grade or < 33%
         let currentRank = 1;
-        reportData.forEach((row) => {
-            if (!row.hasEGrade) {
+        let rankableIndex = 0;
+        reportData.forEach((row, i) => {
+            if (!row.noRank) {
+                if (rankableIndex > 0) {
+                    // Find previous rankable student
+                    const prevRankable = reportData.slice(0, i).filter(r => !r.noRank).pop();
+                    if (prevRankable && row.pctNum < prevRankable.pctNum) {
+                        currentRank = rankableIndex + 1;
+                    }
+                }
                 row.rank = toRoman(currentRank);
-                currentRank++;
+                rankableIndex++;
             }
         });
 

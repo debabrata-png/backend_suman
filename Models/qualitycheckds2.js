@@ -9,6 +9,8 @@ const qualitycheckdsschema = new mongoose.Schema({
     grnNo: { type: String, required: true },      // NEW — required, links to grnds2
     grnDate: { type: Date },                       // filled from GRN
     gatePassNumber: { type: String },              // carried through from GRN
+    storeId: { type: String },                     // NEW — from GRN
+    storeName: { type: String },                   // NEW — from GRN
 
     // Inspector
     inspectorName: { type: String, required: true },

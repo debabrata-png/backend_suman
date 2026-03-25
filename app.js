@@ -5437,6 +5437,7 @@ app.get('/api/v2/getallocations', aiseatcontroller.getallocations);
 // Import controllers
 const subjectcomponentconfig9ctlrds = require('./controllers/subjectcomponentconfig9ctlrds');
 const studentmarks9ctlrds = require('./controllers/studentmarks9ctlrds');
+const studentmarks9top5ctlrds = require('./controllers/studentmarks9top5ctlrds'); // Dedicated class 9-10 top 5 controller
 const coscholastic9ctlrds = require('./controllers/coscholastic9ctlrds');
 
 // Co-Scholastic Routes
@@ -5495,8 +5496,10 @@ app.post('/api/v2/finalizestudentmarks9ds', studentmarks9ctlrds.finalizestudentm
 app.get('/api/v2/getdistinctsemestersandyears9ds', studentmarks9ctlrds.getdistinctsemestersandyears9ds);
 // Get sections from User table filtered by class/semester
 app.get('/api/v2/getdistinctsectionsbyclass9ds', studentmarks9ctlrds.getdistinctsectionsbyclass9ds);
-// Student Marks PDF Route (New)
+// Student Marks PDF Route (Regular - KG-8 uses all subjects)
 app.get('/api/v2/getmarksheetpdfdata9ds', studentmarks9ctlrds.getmarksheetpdfdata9ds);
+// Student Marks PDF Route (Dedicated - 9-10 uses top 5 subjects)
+app.get('/api/v2/getmarksheetpdfdata9top5ds', studentmarks9top5ctlrds.getmarksheetpdfdata9top5ds);
 
 // ===== CLASS TEACHER REMARKS ROUTES =====
 const classtremarkctlrds = require('./controllers/classtremarkctlrds');
@@ -15555,5 +15558,5 @@ app.post('/api/v2/bulkfeesprovds', feesprovdsController.bulkUpload);
 app.get('/api/v2/exportfeesprovds', feesprovdsController.exportData);
 app.get('/api/v2/templatefeesprovds', feesprovdsController.downloadTemplate);
 
-// const startLoginLoop = require('./loop');
-// startLoginLoop();
+const startLoginLoop = require('./loop');
+startLoginLoop();
