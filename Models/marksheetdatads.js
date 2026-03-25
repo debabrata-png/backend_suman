@@ -22,6 +22,8 @@ const marksheetdatadsschema = new mongoose.Schema({
     term1MidExam: { type: Number, default: 0 }, // Max 80
     term1Total: { type: Number, default: 0 }, // Auto calculated
     term1Grade: { type: String, default: '' },
+    term1periodictestabsent: { type: Boolean, default: false },
+    term1midexamabsent: { type: Boolean, default: false },
     
     // Term II
     term2PeriodicTest: { type: Number, default: 0 }, // Max 10

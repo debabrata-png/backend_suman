@@ -172,18 +172,25 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
       };
     }).filter(s => s.hasMarks);
 
-    // ===== TOP-5 SUBJECT SELECTION =====
-    // Sort subjects by weighted total (descending), pick top 5, mark rest as additional
+    // ===== TOP-5 SUBJECT SELECTION (PROTECT COMPULSORY) =====
     if (subjects.length > 5) {
-      const sortedByWeighted = [...subjects].sort((a, b) => {
+      const compulsorySubjects = subjects.filter(s => s.isCompulsory);
+      const others = subjects.filter(s => !s.isCompulsory);
+
+      others.sort((a, b) => {
         const aW = (a.term1Total * 0.5) + (a.term2Total * 0.5);
         const bW = (b.term1Total * 0.5) + (b.term2Total * 0.5);
         return bW - aW;
       });
-      const top5Codes = new Set(sortedByWeighted.slice(0, 5).map(s => s.subjectcode));
+
+      const mainSubjectCodes = new Set(compulsorySubjects.slice(0, 5).map(s => s.subjectcode));
+      for (const s of others) {
+        if (mainSubjectCodes.size >= 5) break;
+        mainSubjectCodes.add(s.subjectcode);
+      }
 
       subjects.forEach(s => {
-        s.isAdditional = !top5Codes.has(s.subjectcode);
+        s.isAdditional = !mainSubjectCodes.has(s.subjectcode);
       });
     }
 
@@ -314,7 +321,6 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
 
       return { regno: rNo, percentage: pct };
     })
-    .filter(s => parseFloat(s.percentage.toFixed(1)) >= 33)
     .sort((a, b) => b.percentage - a.percentage);
 
     // Dense ranking

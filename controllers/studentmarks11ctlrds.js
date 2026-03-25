@@ -267,13 +267,13 @@ exports.savemarks11ds = async (req, res) => {
                             promotedclass: mark.promotedclass || '',
                             newsessiondate: mark.newsessiondate || '',
 
-                            // New absent flags for individual components
-                            unitpremidabsent: mark.unitpremidabsent || false,
-                            unitpostmidabsent: mark.unitpostmidabsent || false,
-                            halfyearlythabsent: mark.halfyearlythabsent || false,
-                            halfyearlypracticalabsent: mark.halfyearlypracticalabsent || false,
-                            annualthabsent: mark.annualthabsent || false,
-                            annualpracticalabsent: mark.annualpracticalabsent || false,
+                            // Correctly map individual absent flags based on input
+                            unitpremidabsent: mark.unitpremidabsent || (mark.unitpremidobtain !== undefined && mark.isabsent ? true : false),
+                            unitpostmidabsent: mark.unitpostmidabsent || (mark.unitpostmidobtain !== undefined && mark.isabsent ? true : false),
+                            halfyearlythabsent: mark.halfyearlythabsent || (mark.halfyearlythobtain !== undefined && mark.isabsent ? true : false),
+                            halfyearlypracticalabsent: mark.halfyearlypracticalabsent || (mark.halfyearlypracticalobtain !== undefined && mark.isabsent ? true : false),
+                            annualthabsent: mark.annualthabsent || (mark.annualthobtain !== undefined && mark.isabsent ? true : false),
+                            annualpracticalabsent: mark.annualpracticalabsent || (mark.annualpracticalobtain !== undefined && mark.isabsent ? true : false),
 
                             status: 'finalized',
                             updatedat: new Date()
@@ -375,7 +375,10 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
                     (m.halfyearlythobtain > 0) ||
                     (m.halfyearlypracticalobtain > 0) ||
                     (m.annualthobtain > 0) ||
-                    (m.annualpracticalobtain > 0);
+                    (m.annualpracticalobtain > 0) ||
+                    m.unitpremidabsent === true || m.unitpostmidabsent === true ||
+                    m.halfyearlythabsent === true || m.halfyearlypracticalabsent === true ||
+                    m.annualthabsent === true || m.annualpracticalabsent === true;
 
                 // Use Config Name if available, else fallback to Marks Name
                 let realSubjectName = codeToNameMap[m.subjectcode] || m.subjectname;
@@ -425,14 +428,23 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             })
             .filter(s => s.hasMarks);
 
-        // Determine top 5 subjects by grandTotal — subjects beyond top 5 are "additional"
-        const sortedByScore = [...subjectsFormatted].sort((a, b) => (b.grandTotal || 0) - (a.grandTotal || 0));
-        const top5Codes = new Set(sortedByScore.slice(0, 5).map(s => s.subjectcode));
+        // Determine top 5 subjects (Protect Compulsory) — subjects beyond top 5 are "additional"
+        if (subjectsFormatted.length > 5) {
+            const compulsory = subjectsFormatted.filter(s => s.isCompulsory);
+            const others = subjectsFormatted.filter(s => !s.isCompulsory);
 
-        // Mark subjects as additional if they fall outside top 5
-        subjectsFormatted.forEach(s => {
-            s.isAdditional = !top5Codes.has(s.subjectcode);
-        });
+            others.sort((a, b) => (b.grandTotal || 0) - (a.grandTotal || 0));
+
+            const top5Codes = new Set(compulsory.slice(0, 5).map(s => s.subjectcode));
+            for (const s of others) {
+                if (top5Codes.size >= 5) break;
+                top5Codes.add(s.subjectcode);
+            }
+
+            subjectsFormatted.forEach(s => {
+                s.isAdditional = !top5Codes.has(s.subjectcode);
+            });
+        }
 
         // Calculate totals using only top 5 subjects
         subjectsFormatted.forEach(s => {
@@ -548,7 +560,6 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             const hasE = top5.some(s => s.grade === 'E' || s.grade === 'E1' || s.grade === 'E2');
             return { regno: r, percentage: pct };
         })
-        .filter(s => parseFloat(s.percentage.toFixed(1)) >= 33) // Only rank students with >= 33%
         .sort((a, b) => b.percentage - a.percentage);
 
         // Dense ranking: equal percentages get equal rank
@@ -702,6 +713,17 @@ exports.getrankreportds = async (req, res) => {
                 regno: { $in: regNos },
                 subjectcode: { $nin: excludeSubjects }
             }).lean();
+
+            // Fetch subject configs for Class 11/12 to get iscompulsory
+            const configs = await SubjectComponentConfig11ds.find({
+                colid: Number(colid),
+                semester,
+                academicyear,
+                isactive: true
+            }).lean();
+            configs.forEach(cfg => {
+                configMap[cfg.subjectcode] = cfg;
+            });
         } else {
             const StudentMarks9ds = require('../Models/studentmarks9ds');
             allMarks = await StudentMarks9ds.find({
@@ -713,11 +735,16 @@ exports.getrankreportds = async (req, res) => {
             }).lean();
         }
 
-        // 2.5 For class 9/10 and below, fetch subject configs for PT scaling
-        let configMap = {};
-        if (!(semLower.includes("11") || semLower.includes("12"))) {
-            const SubjectComponentConfig9ds = require('../Models/subjectcomponentconfig9ds');
-            const configs = await SubjectComponentConfig9ds.find({
+        // 2.5 Fetch subject configs for all classes (if not already fetched for 11/12)
+        if (Object.keys(configMap).length === 0) {
+            const semLower = semester.toLowerCase();
+            let ConfigModel;
+            if (semLower.includes("11") || semLower.includes("12")) {
+                ConfigModel = SubjectComponentConfig11ds;
+            } else {
+                ConfigModel = require('../Models/subjectcomponentconfig9ds');
+            }
+            const configs = await ConfigModel.find({
                 colid: Number(colid),
                 semester,
                 academicyear,
@@ -749,9 +776,11 @@ exports.getrankreportds = async (req, res) => {
 
                 if (hasMarks) {
                     if (!studentSubjectsMap[rNo]) studentSubjectsMap[rNo] = [];
+                    const conf11 = configMap[m.subjectcode] || {};
                     studentSubjectsMap[rNo].push({
                         total: m.total || 0,
-                        grade: m.totalgrade
+                        grade: m.totalgrade,
+                        isCompulsory: conf11.iscompulsory || false
                     });
                 }
             } else {
@@ -787,15 +816,16 @@ exports.getrankreportds = async (req, res) => {
                     const subTotal = parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
 
                     // For class 9/10, E-grade check is Term II only
-                    const t2NBMax = conf.term2notebookmax || 5;
-                    const t2ENMax = conf.term2enrichmentmax || 5;
-                    const t2MEMax = conf.term2annualexammax || 80;
+                    const t2NBMax = conf9.term2notebookmax || 5;
+                    const t2ENMax = conf9.term2enrichmentmax || 5;
+                    const t2MEMax = conf9.term2annualexammax || 80;
                     const term2Max = 10 + t2NBMax + t2ENMax + t2MEMax;
                     const t2Grade = calculateGrade(t2Raw, term2Max);
 
                     studentSubjectsMap[rNo].push({
                         total: subTotal,
-                        grade: t2Grade // Use Term II grade for E-check
+                        grade: t2Grade, // Use Term II grade for E-check
+                        isCompulsory: conf9.iscompulsory || false
                     });
                 }
             }
@@ -804,9 +834,18 @@ exports.getrankreportds = async (req, res) => {
         // 4. Calculate rank using top 5 subjects, percentage-based with dense ranking
         let reportData = students.map(s => {
             const subs = studentSubjectsMap[s.regno] || [];
-            // Sort subjects descending by total, take top 5
-            const sorted = [...subs].sort((a, b) => b.total - a.total);
-            const top5 = sorted.slice(0, 5);
+            // Determine top 5 subjects (Protect Compulsory)
+            const compulsory = subs.filter(sub => sub.isCompulsory);
+            const others = subs.filter(s => !s.isCompulsory);
+            others.sort((a, b) => b.total - a.total);
+
+            const top5Set = new Set(compulsory.slice(0, 5));
+            for (const s of others) {
+                if (top5Set.size >= 5) break;
+                top5Set.add(s);
+            }
+            const top5 = Array.from(top5Set);
+
             const top5Total = top5.reduce((sum, sub) => sum + sub.total, 0);
             const top5Max = top5.length * 100;
             const pctNum = top5Max > 0 ? parseFloat(((top5Total / top5Max) * 100).toFixed(2)) : 0;
@@ -823,7 +862,7 @@ exports.getrankreportds = async (req, res) => {
                 pctNum: pctNum, // numeric for sorting
                 rank: '-',
                 hasEGrade: hasE,
-                noRank: pctNum < 33 // No rank if < 33%
+                noRank: false // Include all students in ranking
             };
         });
 
