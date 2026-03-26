@@ -78,12 +78,21 @@ exports.saveSubjectConfig11ds = async (req, res) => {
 // 2. Get Students and Subjects for Entry Grid
 exports.getstudentsandsubjectsformarks11ds = async (req, res) => {
     try {
-        const { colid, semester, academicyear, section, term } = req.query;
+        const { colid, academicyear, section, term } = req.query;
+        let { semester } = req.query;
+
+        // Normalize semester (Handle IX/9, VI/6 inconsistencies, including Number vs String)
+        const semesterMap = {
+            'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 'VI': 6, 'VII': 7, 'VIII': 8, 'IX': 9, 'X': 10, 'XI': 11, 'XII': 12
+        };
+        const normalized = semesterMap[semester];
+        const querySemester = { $in: [semester, String(normalized), normalized].filter(v => v !== undefined) };
 
         // Fetch Students
         const studentQuery = {
             colid: Number(colid),
-            semester: semester
+            semester: querySemester,
+            role: 'Student'
         };
         if (section) studentQuery.section = section;
 
@@ -719,7 +728,7 @@ exports.getrankreportds = async (req, res) => {
             allMarks = await StudentMarks11ds.find({
                 colid: Number(colid),
                 academicyear,
-                semester,
+                semester: querySemester,
                 regno: { $in: regNos },
                 subjectcode: { $nin: excludeSubjects }
             }).lean();
@@ -727,7 +736,7 @@ exports.getrankreportds = async (req, res) => {
             // Fetch subject configs for Class 11/12 to get iscompulsory
             const configs = await SubjectComponentConfig11ds.find({
                 colid: Number(colid),
-                semester,
+                semester: querySemester,
                 academicyear,
                 isactive: true
             }).lean();
@@ -739,7 +748,7 @@ exports.getrankreportds = async (req, res) => {
             allMarks = await StudentMarks9ds.find({
                 colid: Number(colid),
                 academicyear,
-                semester,
+                semester: querySemester,
                 regno: { $in: regNos },
                 subjectcode: { $nin: excludeSubjects }
             }).lean();
@@ -756,7 +765,7 @@ exports.getrankreportds = async (req, res) => {
             }
             const configs = await ConfigModel.find({
                 colid: Number(colid),
-                semester,
+                semester: querySemester,
                 academicyear,
                 isactive: true
             }).lean();
@@ -785,6 +794,9 @@ exports.getrankreportds = async (req, res) => {
                     ].some(abs => abs === true || abs === 'true');
 
                 if (hasMarks) {
+                    // Rule: If marks is 0, do not take in calculation for 9-12
+                    if (m.total === 0) return null;
+
                     if (!studentSubjectsMap[rNo]) studentSubjectsMap[rNo] = [];
                     const conf11 = configMap[m.subjectcode] || {};
                     studentSubjectsMap[rNo].push({
@@ -825,6 +837,9 @@ exports.getrankreportds = async (req, res) => {
                     // Weighted 50-50
                     const subTotal = parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
 
+                    // Rule: If marks is 0 in Term II, do not take in calculation for 9-12
+                    if (t2Raw === 0) return null;
+
                     // Use Term 2 for E-grade check in Class 6-10
                     const t2NBMax = conf.term2notebookmax || 5;
                     const t2ENMax = conf.term2enrichmentmax || 5;
@@ -843,31 +858,42 @@ exports.getrankreportds = async (req, res) => {
         });
 
         // 4. Calculate Ranks — Class Tier Logic
+        const semUpper = semester.toString().toUpperCase();
+        const isKG = semUpper.includes("NURSERY") || semUpper.includes("LKG") || semUpper.includes("UKG") || semUpper.includes("KG");
+        const isTop5Class = semUpper.includes("IX") || semUpper.includes("9") || semUpper.includes("X") || semUpper.includes("10") || semUpper.includes("XI") || semUpper.includes("11") || semUpper.includes("XII") || semUpper.includes("12");
+
         let reportData = students.map(s => {
             const subs = studentSubjectsMap[s.regno] || [];
             let targetSubjects = [];
+            let hasFail = false;
 
-            if (semLower.includes("11") || semLower.includes("12") || semLower.includes("ix") || semLower.includes("9") || semLower.includes("x") || semLower.includes("10")) {
-                // TOP-5 Logic for 9-12
+            if (isTop5Class) {
+                // Select Top 5 protecting Compulsory
                 const compulsory = subs.filter(sub => sub.isCompulsory);
-                const others = subs.filter(sub => !sub.isCompulsory);
-                others.sort((a, b) => b.total - a.total);
+                const elective = subs.filter(sub => !sub.isCompulsory);
+                elective.sort((a,b) => b.total - a.total);
 
                 const top5Set = new Set(compulsory.slice(0, 5));
-                for (const o of others) {
+                for (const e of elective) {
                     if (top5Set.size >= 5) break;
-                    top5Set.add(o);
+                    top5Set.add(e);
                 }
                 targetSubjects = Array.from(top5Set);
-            } else {
-                // All Subjects (excluding Additional) for Class 1-8
+                // Fail if any top 5 has E in Term II
+                hasFail = targetSubjects.some(sub => sub.grade === 'E');
+            } else if (isKG) {
+                // All non-additional, no failure skip for KG
                 targetSubjects = subs.filter(sub => !sub.isAdditional);
+                hasFail = false; 
+            } else {
+                // Classes 1-8: All non-additional, skip if any has E in Term II
+                targetSubjects = subs.filter(sub => !sub.isAdditional);
+                hasFail = targetSubjects.some(sub => sub.grade === 'E');
             }
 
             const total = targetSubjects.reduce((sum, sub) => sum + sub.total, 0);
             const max = targetSubjects.length * 100;
             const pct = parseFloat((max > 0 ? (total / max) * 100 : 0).toFixed(2));
-            const hasFail = targetSubjects.some(sub => sub.grade === 'E' || sub.grade === 'E1' || sub.grade === 'E2' || sub.total < 33);
 
             return {
                 regno: s.regno,
@@ -891,7 +917,8 @@ exports.getrankreportds = async (req, res) => {
             if (!row.hasFail) {
                 if (rankableIndex > 0) {
                     const prevPass = reportData.slice(0, i).filter(r => !r.hasFail).pop();
-                    if (prevPass && row.pctNum !== prevPass.pctNum) {
+                    // Robust tie-breaking
+                    if (prevPass && Math.round(row.pctNum * 100) !== Math.round(prevPass.pctNum * 100)) {
                         currentRank++;
                     }
                 }

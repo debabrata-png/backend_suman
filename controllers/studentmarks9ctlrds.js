@@ -642,7 +642,16 @@ async function calculateAttendance(regno, colid, semester, academicyear) {
 // Get marksheet data for PDF using StudentMarks9ds
 exports.getmarksheetpdfdata9ds = async (req, res) => {
   try {
-    const { regno, colid, semester, academicyear } = req.query;
+    const { regno, colid, academicyear } = req.query;
+    let { semester } = req.query;
+
+    // Normalize semester (Handle IX/9, VI/6 inconsistencies, including Number vs String)
+    const semesterMap = {
+      'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 'VI': 6, 'VII': 7, 'VIII': 8, 'IX': 9, 'X': 10, 'XI': 11, 'XII': 12
+    };
+    const normalized = semesterMap[semester];
+    // Include the original semester, the mapped string, and the mapped number
+    const querySemester = { $in: [semester, String(normalized), normalized].filter(v => v !== undefined) };
 
     // 1. Fetch Student/User Data
     const userData = await User.findOne({
@@ -671,18 +680,15 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     const remarksRecord = allMarksData.find(m => m.subjectcode === 'REMARKS') || {};
 
     // 2.5 Fetch Subject Configs for Max Marks
-    const subjectCodes = marksData.map(m => m.subjectcode);
-    const componentConfigs = await SubjectComponentConfig9ds.find({
+    // Fetch Subject Configs for ALL subjects in this class for ranking
+    const allConfigs = await SubjectComponentConfig9ds.find({
       colid: Number(colid),
-      semester,
-      academicyear,
-      subjectcode: { $in: subjectCodes }
-
+      semester: querySemester,
+      academicyear
     });
 
-    // Create config map for easy lookup (includes createdAt for subject ordering)
     const configMap = {};
-    componentConfigs.forEach(config => {
+    allConfigs.forEach(config => {
       configMap[config.subjectcode] = config;
     });
 
@@ -821,14 +827,14 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     // 5.5 Fetch Co-Scholastic Grades
     const coActivities = await CoScholasticActivity9ds.find({
       colid: Number(colid),
-      semester: semester,
+      semester: querySemester,
       academicyear: academicyear,
       isactive: true
     }).sort({ createdat: 1 });
     const coGrades = await CoScholasticGrade9ds.find({
       colid: Number(colid),
       regno: regno,
-      semester: semester,
+      semester: querySemester,
       academicyear: academicyear
     });
 
@@ -847,7 +853,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     // 5.8 Dynamic Rank Calculation — CLASS-WIDE (no section filter)
     const classStudents = await User.find({
       colid: Number(colid),
-      semester: semester,
+      semester: querySemester,
       role: 'Student'
     }).lean();
 
@@ -856,7 +862,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     // Fetch all marks for the batch (class-wide)
     const allStudentMarks = await StudentMarks9ds.find({
       colid: Number(colid),
-      semester,
+      semester: querySemester,
       academicyear,
       subjectcode: { $nin: ['ATTENDANCE', 'REMARKS'] },
       regno: { $in: classRegNos }
@@ -923,6 +929,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         return {
           t1Total: t1Raw,
           t2Total: t2Raw,
+          t2Grade: calculateGrade(t2Raw, 100), 
           overallTotal: subTotal,
           isAdditional: conf.isadditional || false
         };
@@ -944,15 +951,23 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       const t2Pct = parseFloat((maxMarksForRank > 0 ? (t2Sum / maxMarksForRank) * 100 : 0).toFixed(2));
       const overallPct = parseFloat((maxMarksForRank > 0 ? (overallSum / maxMarksForRank) * 100 : 0).toFixed(2));
 
-      // Detect if student has failed in any core subject
-      const hasFail = rankSubjects.some(s => s.overallTotal < 33 || (s.t2Total < 33 && s.t2Total !== null));
+      // Rule 1: Nursery to KG II — Separate ranks for Term I and Term II
+      // Rule 2: 1 to 8 — Skip if any core subject has 'E' in Term II
+      const semUpper = semester.toString().toUpperCase();
+      const isKG = semUpper.includes("NURSERY") || semUpper.includes("LKG") || semUpper.includes("UKG") || semUpper.includes("KG");
+      
+      let hasFail = false;
+      if (!isKG) {
+        hasFail = rankSubjects.some(s => s.t2Grade === 'E' || (s.t2Total < 33 && s.t2Total !== null));
+      }
 
       return {
         regno: rNo,
         t1Percentage: t1Pct,
         t2Percentage: t2Pct,
         overallPercentage: overallPct,
-        hasFail: hasFail
+        hasFail: hasFail,
+        isKG: isKG
       };
     });
 
@@ -970,7 +985,11 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
           if (rankableIndex > 0) {
             // Find previous passing student to compare percentage
             const prevPass = sorted.slice(0, i).filter(s => !s.hasFail).pop();
-            if (prevPass && sorted[i][pctField].toFixed(2) !== prevPass[pctField].toFixed(2)) {
+            // Use rounded comparison to handle ties perfectly
+            const currentPct = Math.round(sorted[i][pctField] * 100);
+            const prevPct = prevPass ? Math.round(prevPass[pctField] * 100) : null;
+            
+            if (prevPass && currentPct !== prevPct) {
               currentDenseRank++;
             }
           }
@@ -981,10 +1000,17 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       return sorted;
     };
 
-    // Calculate ranks for all three scenarios
-    let rankedData = calculateDenseRank(studentRankData, 't1Percentage');
-    rankedData = calculateDenseRank(rankedData, 't2Percentage');
-    rankedData = calculateDenseRank(rankedData, 'overallPercentage');
+    // Rule 1 Logic: Run separate rankers for KG, single ranker for others
+    let rankedData = studentRankData;
+    const isKGTier = rankedData.length > 0 && rankedData[0].isKG;
+
+    if (isKGTier) {
+      rankedData = calculateDenseRank(rankedData, 't1Percentage');
+      rankedData = calculateDenseRank(rankedData, 't2Percentage');
+      rankedData = calculateDenseRank(rankedData, 'overallPercentage');
+    } else {
+      rankedData = calculateDenseRank(rankedData, 'overallPercentage');
+    }
 
     const myRankEntry = rankedData.find(s => s.regno === regno);
     const term1Rank = myRankEntry ? toRoman(myRankEntry.t1PercentageRank) : '-';

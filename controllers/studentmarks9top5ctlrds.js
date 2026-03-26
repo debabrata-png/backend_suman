@@ -38,7 +38,15 @@ function toRoman(num) {
 // ============================================================
 exports.getmarksheetpdfdata9top5ds = async (req, res) => {
   try {
-    const { regno, colid, semester, academicyear } = req.query;
+    const { regno, colid, academicyear } = req.query;
+    let { semester } = req.query;
+
+    // Normalize semester (Handle IX/9, VI/6 inconsistencies)
+    const semesterMap = {
+      'I': '1', 'II': '2', 'III': '3', 'IV': '4', 'V': '5', 'VI': '6', 'VII': '7', 'VIII': '8', 'IX': '9', 'X': '10', 'XI': '11', 'XII': '12'
+    };
+    const normalizedSemester = semesterMap[semester] || semester;
+    const querySemester = { $in: [semester, normalizedSemester] };
 
     // 1. Fetch Student/User Data
     const userData = await User.findOne({
@@ -57,7 +65,7 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
     const allMarksData = await StudentMarks9ds.find({
       regno,
       colid: Number(colid),
-      semester,
+      semester: querySemester,
       academicyear
     }).sort({ createdAt: 1 });
 
@@ -65,17 +73,15 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
     const attendanceRecord = allMarksData.find(m => m.subjectcode === 'ATTENDANCE') || {};
     const remarksRecord = allMarksData.find(m => m.subjectcode === 'REMARKS') || {};
 
-    // 2.5 Fetch Subject Configs for Max Marks
-    const subjectCodes = marksData.map(m => m.subjectcode);
-    const componentConfigs = await SubjectComponentConfig9ds.find({
+    // 2.5 Fetch Subject Configs for ALL subjects in this class for ranking
+    const allConfigs = await SubjectComponentConfig9ds.find({
       colid: Number(colid),
-      semester,
-      academicyear,
-      subjectcode: { $in: subjectCodes }
+      semester: querySemester,
+      academicyear
     });
 
     const configMap = {};
-    componentConfigs.forEach(config => {
+    allConfigs.forEach(config => {
       configMap[config.subjectcode] = config;
     });
 
@@ -172,27 +178,8 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
       };
     }).filter(s => s.hasMarks);
 
-    // ===== TOP-5 SUBJECT SELECTION (PROTECT COMPULSORY) =====
-    if (subjects.length > 5) {
-      const compulsorySubjects = subjects.filter(s => s.isCompulsory);
-      const others = subjects.filter(s => !s.isCompulsory);
-
-      others.sort((a, b) => {
-        const aW = (a.term1Total * 0.5) + (a.term2Total * 0.5);
-        const bW = (b.term1Total * 0.5) + (b.term2Total * 0.5);
-        return bW - aW;
-      });
-
-      const mainSubjectCodes = new Set(compulsorySubjects.slice(0, 5).map(s => s.subjectcode));
-      for (const s of others) {
-        if (mainSubjectCodes.size >= 5) break;
-        mainSubjectCodes.add(s.subjectcode);
-      }
-
-      subjects.forEach(s => {
-        s.isAdditional = !mainSubjectCodes.has(s.subjectcode);
-      });
-    }
+    // Reverted Top-5 logic back to original simple scholastic filtering for the Report Card
+    // (Ranking continues to use Top-5 below)
 
     // 4. Calculate Totals — only top 5 (non-additional) subjects
     const mainSubjects = subjects.filter(s => !s.isAdditional);
@@ -226,14 +213,14 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
     // 5.5 Fetch Co-Scholastic Grades
     const coActivities = await CoScholasticActivity9ds.find({
       colid: Number(colid),
-      semester: semester,
+      semester: querySemester,
       academicyear: academicyear,
       isactive: true
     }).sort({ createdat: 1 });
     const coGrades = await CoScholasticGrade9ds.find({
       colid: Number(colid),
       regno: regno,
-      semester: semester,
+      semester: querySemester,
       academicyear: academicyear
     });
 
@@ -252,7 +239,7 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
     // 5.8 Dynamic Rank Calculation — CLASS-WIDE, TOP-5 SUBJECTS
     const classStudents = await User.find({
       colid: Number(colid),
-      semester: semester,
+      semester: querySemester,
       role: 'Student'
     }).lean();
 
@@ -260,7 +247,7 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
 
     const allStudentMarks = await StudentMarks9ds.find({
       colid: Number(colid),
-      semester,
+      semester: querySemester,
       academicyear,
       subjectcode: { $nin: ['ATTENDANCE', 'REMARKS'] },
       regno: { $in: classRegNos }
@@ -308,7 +295,10 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
         const t2Raw = (t2Sc + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0));
 
         const subTotal = parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
-        
+
+        // Rule: If marks is 0 in Term II, do not take in calculation (treat as invalid/skipped)
+        if (t2Raw === 0) return null;
+
         // Fail check for Term 2 (standard for class 9/10)
         const t2MEMax = conf.term2annualexammax || 80;
         const t2NBMax = conf.term2notebookmax || 5;
@@ -316,10 +306,12 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
         const term2Max = 10 + t2NBMax + t2ENMax + t2MEMax;
         const isFail = t2Raw < (term2Max * 0.33);
 
-        return { 
-            total: subTotal, 
-            isCompulsory: conf.iscompulsory || false,
-            isFail: isFail
+        return {
+          total: subTotal,
+          subjectcode: m.subjectcode,
+          t2Raw: t2Raw,
+          isCompulsory: conf.iscompulsory || false,
+          isFail: isFail
         };
       }).filter(Boolean);
 
@@ -327,11 +319,11 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
       const compulsory = subjectScores.filter(s => s.isCompulsory);
       const others = subjectScores.filter(s => !s.isCompulsory);
       others.sort((a, b) => b.total - a.total);
-      
+
       const top5Set = new Set(compulsory.slice(0, 5));
       for (const s of others) {
-          if (top5Set.size >= 5) break;
-          top5Set.add(s);
+        if (top5Set.size >= 5) break;
+        top5Set.add(s);
       }
       const top5 = Array.from(top5Set);
 
@@ -342,7 +334,7 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
 
       return { regno: rNo, percentage: pct, hasFail: hasFail };
     })
-    .sort((a, b) => b.percentage - a.percentage);
+      .sort((a, b) => b.percentage - a.percentage);
 
     // Dense ranking with failure skip
     let currentDenseRank = 1;
@@ -353,7 +345,11 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
       } else {
         if (rankableIndex > 0) {
           const prevPass = studentRankData.slice(0, i).filter(s => !s.hasFail).pop();
-          if (prevPass && studentRankData[i].percentage.toFixed(2) !== prevPass.percentage.toFixed(2)) {
+          // Use rounded comparison to handle ties perfectly
+          const currentPct = Math.round(studentRankData[i].percentage * 100);
+          const prevPct = prevPass ? Math.round(prevPass.percentage * 100) : null;
+
+          if (prevPass && currentPct !== prevPct) {
             currentDenseRank++;
           }
         }
