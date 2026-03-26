@@ -1,16 +1,32 @@
 const localgrnds2 = require("../Models/localgrnds2");
+const gatewaypassds2 = require("../Models/gatewaypassds2");
+const storepoorderds2 = require("../Models/storepoorderds2");
 
 exports.addLocalGRN2 = async (req, res) => {
     try {
-        const { grnNo, lpoId, storeid, storeName, vendorName, items, receivedBy, colid } = req.body;
+        const { grnNo, lpoId, storeid, storeName, vendorName, items, receivedBy, colid, gatePassNumber } = req.body;
 
         if (!grnNo || !lpoId || !storeid || !colid) {
             return res.status(400).json({ success: false, message: "Missing required fields for GRN." });
         }
 
         const newGRN = await localgrnds2.create({
-            grnNo, lpoId, storeid, storeName, vendorName, items, receivedBy, colid
+            grnNo, lpoId, storeid, storeName, vendorName, items, receivedBy, colid, gatePassNumber
         });
+
+        // Update Gate Pass status if gatePassNumber is provided
+        if (gatePassNumber) {
+            await gatewaypassds2.findOneAndUpdate(
+                { passNumber: gatePassNumber, colid },
+                { status: 'GRN Created' }
+            );
+        }
+
+        // Update PO status to Completed
+        await storepoorderds2.findOneAndUpdate(
+            { poid: lpoId, colid },
+            { postatus: 'Completed' }
+        );
 
         res.status(201).json({ success: true, data: newGRN });
     } catch (error) {

@@ -40,19 +40,54 @@ exports.addvendords2 = async (req, res) => {
 // Get all vendors
 exports.getallvendords2 = async (req, res) => {
   try {
-    const { colid } = req.query;
+    const { colid, page, limit, search } = req.query;
+    const query = { colid };
 
-    const vendors = await vendords2.find({ colid }).sort({ createdAt: -1 });
+    if (search) {
+      query.$or = [
+        { vendorname: { $regex: search, $options: 'i' } },
+        { mobileno: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
 
-    return res.status(200).json({
-      success: true,
-      count: vendors.length,
-      data: vendors
-    });
+    if (page && limit) {
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const skip = (pageNum - 1) * limitNum;
 
+      const total = await vendords2.countDocuments(query);
+      const vendors = await vendords2.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum);
+
+      res.status(200).json({
+        success: true,
+        status: 'success',
+        results: vendors.length,
+        total,
+        data: { vendors },
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          pages: Math.ceil(total / limitNum)
+        }
+      });
+    } else {
+      const vendors = await vendords2.find(query).sort({ createdAt: -1 });
+      res.status(200).json({
+        success: true,
+        status: 'success',
+        results: vendors.length,
+        data: { vendors }
+      });
+    }
   } catch (error) {
     res.status(500).json({
       success: false,
+      status: 'fail',
       message: "Error fetching vendors",
       error: error.message
     });

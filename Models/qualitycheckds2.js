@@ -56,6 +56,8 @@ const qualitycheckdsschema = new mongoose.Schema({
 
     documentLink: { type: String },
 
+    returnType: { type: String }, // 'RGP', 'NRGP'
+
     approvaltoken: { type: String, required: false, unique: false }
 });
 

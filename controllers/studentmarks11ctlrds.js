@@ -560,8 +560,8 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             const hasE = top5.some(s => s.grade === 'E' || s.grade === 'E1' || s.grade === 'E2' || s.grade === 'E (Needs improvement)');
             return { regno: r, percentage: pct, hasE };
         })
-        .filter(s => !s.hasE) // Remove failed students from global ranking
-        .sort((a, b) => b.percentage - a.percentage);
+            .filter(s => !s.hasE) // Remove failed students from global ranking
+            .sort((a, b) => b.percentage - a.percentage);
 
         // Dense ranking: equal percentages get equal rank
         let currentRank = 1;

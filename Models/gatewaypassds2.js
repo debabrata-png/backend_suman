@@ -59,6 +59,11 @@ const gatewaypassdsschema = new mongoose.Schema({
         enum: ['Open', 'GRN Created'],
         default: 'Open'
     },
+    attachment: { type: String },
+    remarkType: { type: String }, // 'Countable', 'Non Countable'
+    orderType: { type: String },  // 'PO', 'NPO'
+    npoType: { type: String },    // 'LPO', 'Cash Memo', 'Imprest'
+    returnType: { type: String }, // 'RGP', 'NRGP'
     createdAt: {
         type: Date,
         default: Date.now

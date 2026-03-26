@@ -71,6 +71,9 @@ const storepoorderdsschema = new mongoose.Schema({
     },
     actualAmount: {
         type: Number // Used for Local POs
+    },
+    localOrderType: {
+        type: String // 'LPO', 'Cash Memo', 'Imprest'
     }
 }, { timestamps: true });
 

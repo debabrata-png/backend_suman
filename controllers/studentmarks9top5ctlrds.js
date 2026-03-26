@@ -291,10 +291,10 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
           m.term1periodictestobtained, m.term1notebookobtained, m.term1enrichmentobtained, m.term1midexamobtained,
           m.term2periodictestobtained, m.term2notebookobtained, m.term2enrichmentobtained, m.term2annualexamobtained
         ].some(val => val !== null && val !== undefined && val !== '') ||
-        [
-          m.term1periodictestabsent, m.term1midexamabsent,
-          m.term2periodictestabsent, m.term2annualexamabsent
-        ].some(abs => abs === true || abs === 'true');
+          [
+            m.term1periodictestabsent, m.term1midexamabsent,
+            m.term2periodictestabsent, m.term2annualexamabsent
+          ].some(abs => abs === true || abs === 'true');
 
         if (!hasMarks) return null;
 
@@ -321,7 +321,7 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
 
       return { regno: rNo, percentage: pct };
     })
-    .sort((a, b) => b.percentage - a.percentage);
+      .sort((a, b) => b.percentage - a.percentage);
 
     // Dense ranking
     let currentDenseRank = 1;

@@ -12,6 +12,7 @@ const localgrnSchema = new mongoose.Schema({
         unit: String,
         remarks: String
     }],
+    gatePassNumber: { type: String, index: true },
     grnDate: { type: Date, default: Date.now },
     receivedBy: { type: String, required: true },
     colid: { type: Number, required: true },
