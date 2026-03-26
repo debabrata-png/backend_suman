@@ -152,13 +152,13 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
         term1Notebook: mark.term1notebookobtained || 0,
         term1Enrichment: mark.term1enrichmentobtained || 0,
         term1MidExam: mark.term1midexamobtained || 0,
-        term1Total: parseFloat(term1TotalRaw.toFixed(1)),
+        term1Total: parseFloat(term1TotalRaw.toFixed(2)),
         term1Grade: term1GradeRecalc,
         term2PeriodicTest: parseFloat(t2PTScaled.toFixed(1)),
         term2Notebook: mark.term2notebookobtained || 0,
         term2Enrichment: mark.term2enrichmentobtained || 0,
         term2AnnualExam: mark.term2annualexamobtained || 0,
-        term2Total: parseFloat(term2TotalRaw.toFixed(1)),
+        term2Total: parseFloat(term2TotalRaw.toFixed(2)),
         term2Grade: term2GradeRecalc,
         isgrace: mark.isgrace || false,
         isabsent: mark.isabsent || false,
@@ -301,12 +301,12 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
         const t1Max = conf.term1periodictestmax || 40;
         const t1Obt = m.term1periodictestobtained || 0;
         const t1Sc = t1Max > 0 ? (t1Obt / t1Max) * 10 : 0;
-        const t1Raw = t1Sc + (m.term1notebookobtained || 0) + (m.term1enrichmentobtained || 0) + (m.term1midexamobtained || 0);
+        const t1Raw = parseFloat((t1Sc + (m.term1notebookobtained || 0) + (m.term1enrichmentobtained || 0) + (m.term1midexamobtained || 0)).toFixed(1));
 
         const t2Max = conf.term2periodictestmax || 40;
         const t2Obt = m.term2periodictestobtained || 0;
         const t2Sc = t2Max > 0 ? (t2Obt / t2Max) * 10 : 0;
-        const t2Raw = t2Sc + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0);
+        const t2Raw = parseFloat((t2Sc + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0)).toFixed(1));
 
         const subTotal = parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
         return { total: subTotal };
@@ -317,7 +317,7 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
       const top5 = subjectScores.slice(0, 5);
       const top5Total = top5.reduce((sum, s) => sum + s.total, 0);
       const top5Max = top5.length * 100;
-      const pct = top5Max > 0 ? parseFloat(((top5Total / top5Max) * 100).toFixed(2)) : 0;
+      const pct = parseFloat(((top5Max > 0 ? (top5Total / top5Max) * 100 : 0)).toFixed(2));
 
       return { regno: rNo, percentage: pct };
     })

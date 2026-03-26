@@ -17,22 +17,22 @@ const connectDB = async () => {
 
 const seeduser = async () => {
     await connectDB();
-    
+
     try {
         // Read Excel file
         const rows = await readXlsxFile('./cps_student_list.xlsx');
-        
+
         // Get headers from first row
         const headers = rows[0];
-        
+
         // Convert rows to user objects (skip header row)
         const users = rows.slice(1).map((row) => {
             const userObj = {};
-            
+
             headers.forEach((header, index) => {
                 userObj[header] = row[index];
             });
-            
+
             // Set default values for required fields
             return {
                 email: userObj.email || '',
@@ -69,14 +69,14 @@ const seeduser = async () => {
                 scholarship: userObj.scholarship || '',
                 colid: 3052,
                 status: 1,
-                lastlogin: new Date('2026-12-01T10:00:00Z')
+                lastlogin: new Date('2028-12-01T10:00:00Z')
             };
         });
-        
+
         // Insert users into database
         const insertedUsers = await User.insertMany(users);
         console.log(`Successfully seeded ${insertedUsers.length} users`);
-        
+
         mongoose.connection.close();
     } catch (err) {
         console.error("Error seeding users:", err);

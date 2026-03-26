@@ -555,11 +555,12 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             const top5 = sorted.slice(0, 5);
             const top5Total = top5.reduce((sum, s) => sum + s.total, 0);
             const top5Max = top5.length * 100;
-            const pct = top5Max > 0 ? parseFloat(((top5Total / top5Max) * 100).toFixed(2)) : 0;
+            const pct = parseFloat(((top5Max > 0 ? (top5Total / top5Max) * 100 : 0)).toFixed(2));
             // E-grade check: any of top 5 subjects has grade E
-            const hasE = top5.some(s => s.grade === 'E' || s.grade === 'E1' || s.grade === 'E2');
-            return { regno: r, percentage: pct };
+            const hasE = top5.some(s => s.grade === 'E' || s.grade === 'E1' || s.grade === 'E2' || s.grade === 'E (Needs improvement)');
+            return { regno: r, percentage: pct, hasE };
         })
+        .filter(s => !s.hasE) // Remove failed students from global ranking
         .sort((a, b) => b.percentage - a.percentage);
 
         // Dense ranking: equal percentages get equal rank
@@ -572,7 +573,15 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
         }
 
         const myRankEntry = sortedRanks.find(s => s.regno === regno);
-        let rank = myRankEntry ? toRoman(myRankEntry.rank) : '-';
+        const myFullData = Object.keys(studentSubjects).map(r => {
+            const subs = studentSubjects[r];
+            const sorted = subs.sort((a, b) => b.total - a.total);
+            const top5 = sorted.slice(0, 5);
+            const hasE = top5.some(s => s.grade === 'E' || s.grade === 'E1' || s.grade === 'E2' || s.grade === 'E (Needs improvement)');
+            return { regno: r, hasE };
+        }).find(s => s.regno === regno);
+
+        let rank = (myRankEntry && (!myFullData || !myFullData.hasE)) ? toRoman(myRankEntry.rank) : '-';
 
         const pdfData = {
             profile: {
@@ -848,7 +857,7 @@ exports.getrankreportds = async (req, res) => {
 
             const top5Total = top5.reduce((sum, sub) => sum + sub.total, 0);
             const top5Max = top5.length * 100;
-            const pctNum = top5Max > 0 ? parseFloat(((top5Total / top5Max) * 100).toFixed(2)) : 0;
+            const pctNum = parseFloat(((top5Max > 0 ? (top5Total / top5Max) * 100 : 0)).toFixed(2));
             // E-grade check: any of top 5 subjects has grade E
             const hasE = top5.some(sub => sub.grade === 'E' || sub.grade === 'E1' || sub.grade === 'E2');
 
@@ -862,7 +871,7 @@ exports.getrankreportds = async (req, res) => {
                 pctNum: pctNum, // numeric for sorting
                 rank: '-',
                 hasEGrade: hasE,
-                noRank: false // Include all students in ranking
+                noRank: hasE // Include all students in ranking
             };
         });
 

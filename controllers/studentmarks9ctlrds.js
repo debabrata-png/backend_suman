@@ -763,14 +763,14 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         term1Notebook: mark.term1notebookobtained || 0,
         term1Enrichment: mark.term1enrichmentobtained || 0,
         term1MidExam: mark.term1midexamobtained || 0,
-        term1Total: parseFloat(term1TotalRaw.toFixed(1)), // Total with scaled PT
+        term1Total: parseFloat(term1TotalRaw.toFixed(2)), // Total with scaled PT (2 decimals for rank precision)
         term1Grade: term1GradeRecalc,
 
         term2PeriodicTest: parseFloat(t2PTScaled.toFixed(1)), // Keep 1 decimal for PT
         term2Notebook: mark.term2notebookobtained || 0,
         term2Enrichment: mark.term2enrichmentobtained || 0,
         term2AnnualExam: mark.term2annualexamobtained || 0,
-        term2Total: parseFloat(term2TotalRaw.toFixed(1)), // Total with scaled PT
+        term2Total: parseFloat(term2TotalRaw.toFixed(2)), // Total with scaled PT (2 decimals for rank precision)
         term2Grade: term2GradeRecalc,
         isgrace: mark.isgrace || false,
         isabsent: mark.isabsent || false, // Added isabsent
@@ -907,13 +907,13 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         const t1MaxConfig = conf.term1periodictestmax || 40;
         const t1Obt = m.term1periodictestobtained || 0;
         const t1Sc = t1MaxConfig > 0 ? (t1Obt / t1MaxConfig) * 10 : 0;
-        const t1Raw = t1Sc + (m.term1notebookobtained || 0) + (m.term1enrichmentobtained || 0) + (m.term1midexamobtained || 0);
+        const t1Raw = parseFloat((t1Sc + (m.term1notebookobtained || 0) + (m.term1enrichmentobtained || 0) + (m.term1midexamobtained || 0)).toFixed(1));
 
         // T2
         const t2MaxConfig = conf.term2periodictestmax || 40;
         const t2Obt = m.term2periodictestobtained || 0;
         const t2Sc = t2MaxConfig > 0 ? (t2Obt / t2MaxConfig) * 10 : 0;
-        const t2Raw = t2Sc + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0);
+        const t2Raw = parseFloat((t2Sc + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0)).toFixed(1));
 
         // Weighted total 50-50 for overall
         const subTotal = parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
@@ -938,9 +938,9 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       
       const maxMarksForRank = rankSubjects.length * 100;
       
-      const t1Pct = maxMarksForRank > 0 ? parseFloat(((t1Sum / maxMarksForRank) * 100).toFixed(2)) : 0;
-      const t2Pct = maxMarksForRank > 0 ? parseFloat(((t2Sum / maxMarksForRank) * 100).toFixed(2)) : 0;
-      const overallPct = maxMarksForRank > 0 ? parseFloat(((overallSum / maxMarksForRank) * 100).toFixed(2)) : 0;
+      const t1Pct = parseFloat((maxMarksForRank > 0 ? (t1Sum / maxMarksForRank) * 100 : 0).toFixed(2));
+      const t2Pct = parseFloat((maxMarksForRank > 0 ? (t2Sum / maxMarksForRank) * 100 : 0).toFixed(2));
+      const overallPct = parseFloat((maxMarksForRank > 0 ? (overallSum / maxMarksForRank) * 100 : 0).toFixed(2));
 
       return { 
         regno: rNo, 

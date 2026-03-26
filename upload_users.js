@@ -50,7 +50,7 @@ async function uploadUsers() {
         await mongoose.connect(DB_URL);
         console.log('MongoDB successfully connected.');
 
-        const workbook = xlsx.readFile('CPS_Student.xlsx');
+        const workbook = xlsx.readFile('CPS_Student_new.xlsx');
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
 
