@@ -5,7 +5,7 @@ exports.addstorepoitemsds2 = async (req, res) => {
         // Validations for Phase 1
         const storepoorderds2 = require("../Models/storepoorderds2");
         const poOrder = await storepoorderds2.findOne({ poid: req.body.poid, colid: req.body.colid });
-        if (poOrder && poOrder.postatus && poOrder.postatus !== 'Draft') {
+        if (poOrder && poOrder.postatus && poOrder.postatus !== 'Draft' && poOrder.poType !== 'Local') {
             return res.status(400).json({ success: false, message: "PO is not in Draft state. Items cannot be added." });
         }
 
@@ -38,6 +38,7 @@ exports.addstorepoitemsds2 = async (req, res) => {
             data: newItem
         });
     } catch (error) {
+        console.error("Error in addstorepoitemsds2:", error);
         res.status(500).json({
             success: false,
             message: "Error adding PO item",
@@ -48,8 +49,11 @@ exports.addstorepoitemsds2 = async (req, res) => {
 
 exports.getallstorepoitemsds2 = async (req, res) => {
     try {
-        const { colid } = req.query;
-        const poItems = await storepoitemsds2.find({ colid });
+        const { colid, poid } = req.query;
+        let query = { colid };
+        if (poid) query.poid = poid;
+        
+        const poItems = await storepoitemsds2.find(query);
         res.status(200).json({
             success: true,
             count: poItems.length,

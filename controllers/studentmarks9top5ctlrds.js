@@ -280,13 +280,12 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
       studentGroups[m.regno].push(m);
     });
 
-    // Rank using TOP 5 subjects per student
+    // Rank using TOP 5 subjects per student (Unified Selection Logic)
     const studentRankData = Object.keys(studentGroups).map(rNo => {
       const sMarks = studentGroups[rNo];
 
       const subjectScores = sMarks.map(m => {
         const conf = configMap[m.subjectcode] || {};
-
         const hasMarks = [
           m.term1periodictestobtained, m.term1notebookobtained, m.term1enrichmentobtained, m.term1midexamobtained,
           m.term2periodictestobtained, m.term2notebookobtained, m.term2enrichmentobtained, m.term2annualexamobtained
@@ -300,40 +299,71 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
 
         const t1Max = conf.term1periodictestmax || 40;
         const t1Obt = m.term1periodictestobtained || 0;
-        const t1Sc = t1Max > 0 ? (t1Obt / t1Max) * 10 : 0;
-        const t1Raw = parseFloat((t1Sc + (m.term1notebookobtained || 0) + (m.term1enrichmentobtained || 0) + (m.term1midexamobtained || 0)).toFixed(1));
+        const t1Sc = t1Max > 0 ? (t1Obt / t1Max) * 10 : 10;
+        const t1Raw = (t1Sc + (m.term1notebookobtained || 0) + (m.term1enrichmentobtained || 0) + (m.term1midexamobtained || 0));
 
         const t2Max = conf.term2periodictestmax || 40;
         const t2Obt = m.term2periodictestobtained || 0;
-        const t2Sc = t2Max > 0 ? (t2Obt / t2Max) * 10 : 0;
-        const t2Raw = parseFloat((t2Sc + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0)).toFixed(1));
+        const t2Sc = t2Max > 0 ? (t2Obt / t2Max) * 10 : 10;
+        const t2Raw = (t2Sc + (m.term2notebookobtained || 0) + (m.term2enrichmentobtained || 0) + (m.term2annualexamobtained || 0));
 
         const subTotal = parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
-        return { total: subTotal };
+        
+        // Fail check for Term 2 (standard for class 9/10)
+        const t2MEMax = conf.term2annualexammax || 80;
+        const t2NBMax = conf.term2notebookmax || 5;
+        const t2ENMax = conf.term2enrichmentmax || 5;
+        const term2Max = 10 + t2NBMax + t2ENMax + t2MEMax;
+        const isFail = t2Raw < (term2Max * 0.33);
+
+        return { 
+            total: subTotal, 
+            isCompulsory: conf.iscompulsory || false,
+            isFail: isFail
+        };
       }).filter(Boolean);
 
-      // Sort descending, take top 5
-      subjectScores.sort((a, b) => b.total - a.total);
-      const top5 = subjectScores.slice(0, 5);
+      // Select Top-5 protecting compulsory
+      const compulsory = subjectScores.filter(s => s.isCompulsory);
+      const others = subjectScores.filter(s => !s.isCompulsory);
+      others.sort((a, b) => b.total - a.total);
+      
+      const top5Set = new Set(compulsory.slice(0, 5));
+      for (const s of others) {
+          if (top5Set.size >= 5) break;
+          top5Set.add(s);
+      }
+      const top5 = Array.from(top5Set);
+
       const top5Total = top5.reduce((sum, s) => sum + s.total, 0);
       const top5Max = top5.length * 100;
       const pct = parseFloat(((top5Max > 0 ? (top5Total / top5Max) * 100 : 0)).toFixed(2));
+      const hasFail = top5.some(s => s.isFail);
 
-      return { regno: rNo, percentage: pct };
+      return { regno: rNo, percentage: pct, hasFail: hasFail };
     })
-      .sort((a, b) => b.percentage - a.percentage);
+    .sort((a, b) => b.percentage - a.percentage);
 
-    // Dense ranking
+    // Dense ranking with failure skip
     let currentDenseRank = 1;
+    let rankableIndex = 0;
     for (let i = 0; i < studentRankData.length; i++) {
-      if (i > 0 && studentRankData[i].percentage.toFixed(2) !== studentRankData[i - 1].percentage.toFixed(2)) {
-        currentDenseRank++;
+      if (studentRankData[i].hasFail) {
+        studentRankData[i].rankValue = null;
+      } else {
+        if (rankableIndex > 0) {
+          const prevPass = studentRankData.slice(0, i).filter(s => !s.hasFail).pop();
+          if (prevPass && studentRankData[i].percentage.toFixed(2) !== prevPass.percentage.toFixed(2)) {
+            currentDenseRank++;
+          }
+        }
+        studentRankData[i].rankValue = currentDenseRank;
+        rankableIndex++;
       }
-      studentRankData[i].rank = currentDenseRank;
     }
 
     const myRankEntry = studentRankData.find(s => s.regno === regno);
-    let rank = myRankEntry ? toRoman(myRankEntry.rank) : '-';
+    let rank = (myRankEntry && myRankEntry.rankValue) ? toRoman(myRankEntry.rankValue) : '-';
 
     // 6a. Compartment Subjects — only from top 5 (non-additional)
     const compartmentSubjects = subjects

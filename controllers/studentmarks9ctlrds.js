@@ -96,7 +96,7 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
       subjects = [{
         subjectcode: isRemarks ? 'REMARKS' : 'ATTENDANCE',
         subjectname: isRemarks ? 'Teacher Remarks' : 'Attendance',
-        maxmarks: 500 
+        maxmarks: 500
       }];
 
       // Get existing marks for the special subject
@@ -113,7 +113,7 @@ exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
           $project: {
             regno: 1,
             subjectcode: 1,
-            obtainedmarks: (isAttendance ? `$${componentname}` : { $literal: '' }), 
+            obtainedmarks: (isAttendance ? `$${componentname}` : { $literal: '' }),
             term1totalworkingdays: 1,
             term2totalworkingdays: 1,
             term1total: 1,
@@ -784,18 +784,20 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       };
     }).filter(s => s.hasMarks);
 
-    // 4. Calculate Totals with 50% Weightage — all subjects
-    const term1TotalMarks = subjects.reduce((sum, s) => sum + s.term1Total, 0);
-    const term2TotalMarks = subjects.reduce((sum, s) => sum + s.term2Total, 0);
+    // 4. Calculate Totals with 50% Weightage — EXCLUDING Additional for consistency with Rank
+    const rankSubjectsDisplay = subjects.filter(s => !s.isAdditional);
+    const term1TotalMarks = rankSubjectsDisplay.reduce((sum, s) => sum + s.term1Total, 0);
+    const term2TotalMarks = rankSubjectsDisplay.reduce((sum, s) => sum + s.term2Total, 0);
 
     // Apply 50% weightage for Final Assessment
     const term1TotalWeighted = term1TotalMarks * 0.5;
     const term2TotalWeighted = term2TotalMarks * 0.5;
     const grandTotal = term1TotalWeighted + term2TotalWeighted;
 
-    const maxMarks = subjects.length * 100;
+    const maxMarks = rankSubjectsDisplay.length * 100;
 
     const percentage = maxMarks > 0 ? ((grandTotal / maxMarks) * 100).toFixed(2) : 0;
+
     const overallGrade = calculateGrade(grandTotal, maxMarks);
 
     // 5. Fetch Attendance (Manual from StudentMarks)
@@ -896,10 +898,10 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
           m.term1periodictestobtained, m.term1notebookobtained, m.term1enrichmentobtained, m.term1midexamobtained,
           m.term2periodictestobtained, m.term2notebookobtained, m.term2enrichmentobtained, m.term2annualexamobtained
         ].some(val => val !== null && val !== undefined && val !== '') ||
-        [
-          m.term1periodictestabsent, m.term1midexamabsent,
-          m.term2periodictestabsent, m.term2annualexamabsent
-        ].some(abs => abs === true || abs === 'true');
+          [
+            m.term1periodictestabsent, m.term1midexamabsent,
+            m.term2periodictestabsent, m.term2annualexamabsent
+          ].some(abs => abs === true || abs === 'true');
 
         if (!hasMarks) return null;
 
@@ -918,16 +920,16 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         // Weighted total 50-50 for overall
         const subTotal = parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
 
-        return { 
-          t1Total: t1Raw, 
-          t2Total: t2Raw, 
-          overallTotal: subTotal, 
-          isAdditional: conf.isadditional || false 
+        return {
+          t1Total: t1Raw,
+          t2Total: t2Raw,
+          overallTotal: subTotal,
+          isAdditional: conf.isadditional || false
         };
       }).filter(Boolean);
 
       // Filter out additional subjects for rank calculation
-      const rankSubjects = subjectScores.filter(s => 
+      const rankSubjects = subjectScores.filter(s =>
         !s.isAdditional || s.isAdditional === 'false' || s.isAdditional === false
       );
 
@@ -935,30 +937,46 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       const t1Sum = rankSubjects.reduce((sum, s) => sum + s.t1Total, 0);
       const t2Sum = rankSubjects.reduce((sum, s) => sum + s.t2Total, 0);
       const overallSum = rankSubjects.reduce((sum, s) => sum + s.overallTotal, 0);
-      
+
       const maxMarksForRank = rankSubjects.length * 100;
-      
+
       const t1Pct = parseFloat((maxMarksForRank > 0 ? (t1Sum / maxMarksForRank) * 100 : 0).toFixed(2));
       const t2Pct = parseFloat((maxMarksForRank > 0 ? (t2Sum / maxMarksForRank) * 100 : 0).toFixed(2));
       const overallPct = parseFloat((maxMarksForRank > 0 ? (overallSum / maxMarksForRank) * 100 : 0).toFixed(2));
 
-      return { 
-        regno: rNo, 
-        t1Percentage: t1Pct, 
-        t2Percentage: t2Pct, 
-        overallPercentage: overallPct 
+      // Detect if student has failed in any core subject
+      const hasFail = rankSubjects.some(s => s.overallTotal < 33 || (s.t2Total < 33 && s.t2Total !== null));
+
+      return {
+        regno: rNo,
+        t1Percentage: t1Pct,
+        t2Percentage: t2Pct,
+        overallPercentage: overallPct,
+        hasFail: hasFail
       };
     });
 
     // Function to calculate dense rank for a specific percentage field
     const calculateDenseRank = (data, pctField) => {
+      // Sort by percentage descending
       const sorted = [...data].sort((a, b) => b[pctField] - a[pctField]);
       let currentDenseRank = 1;
+      let rankableIndex = 0;
+
       for (let i = 0; i < sorted.length; i++) {
-        if (i > 0 && sorted[i][pctField].toFixed(2) !== sorted[i - 1][pctField].toFixed(2)) {
-          currentDenseRank++;
+        if (sorted[i].hasFail) {
+          sorted[i][pctField + 'Rank'] = null; // No rank for failing students
+        } else {
+          if (rankableIndex > 0) {
+            // Find previous passing student to compare percentage
+            const prevPass = sorted.slice(0, i).filter(s => !s.hasFail).pop();
+            if (prevPass && sorted[i][pctField].toFixed(2) !== prevPass[pctField].toFixed(2)) {
+              currentDenseRank++;
+            }
+          }
+          sorted[i][pctField + 'Rank'] = currentDenseRank;
+          rankableIndex++;
         }
-        sorted[i][pctField + 'Rank'] = currentDenseRank;
       }
       return sorted;
     };

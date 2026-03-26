@@ -11,8 +11,11 @@ exports.addLocalGRN2 = async (req, res) => {
         }
 
         const newGRN = await localgrnds2.create({
-            grnNo, lpoId, storeid, storeName, vendorName, items, receivedBy, colid, gatePassNumber
+            grnNo, lpoId, storeid, storeName, vendorName, items, receivedBy, colid, gatePassNumber,
+            status: 'Pending QC'
         });
+
+        // Update Gate Pass status if gatePassNumber is provided
 
         // Update Gate Pass status if gatePassNumber is provided
         if (gatePassNumber) {
@@ -25,7 +28,7 @@ exports.addLocalGRN2 = async (req, res) => {
         // Update PO status to Completed
         await storepoorderds2.findOneAndUpdate(
             { poid: lpoId, colid },
-            { postatus: 'Completed' }
+            { postatus: 'Completed', actualAmount: items.reduce((sum, i) => sum + (i.netprice || 0), 0) || undefined }
         );
 
         res.status(201).json({ success: true, data: newGRN });

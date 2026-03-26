@@ -22,6 +22,7 @@ exports.addstorepoorderds2 = async (req, res) => {
             data: newPO
         });
     } catch (error) {
+        console.error("Error in addstorepoorderds2:", error);
         res.status(500).json({
             success: false,
             message: 'Error adding store PO',

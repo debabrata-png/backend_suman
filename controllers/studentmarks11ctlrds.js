@@ -713,6 +713,7 @@ exports.getrankreportds = async (req, res) => {
         let allMarks = [];
         const semLower = semester.toLowerCase();
         const excludeSubjects = ['ATTENDANCE', 'REMARKS'];
+        let configMap = {}; // CRITICAL: Initialize configMap
 
         if (semLower.includes("11") || semLower.includes("12")) {
             allMarks = await StudentMarks11ds.find({
@@ -824,69 +825,73 @@ exports.getrankreportds = async (req, res) => {
                     // Weighted 50-50
                     const subTotal = parseFloat(((t1Raw * 0.5) + (t2Raw * 0.5)).toFixed(2));
 
-                    // For class 9/10, E-grade check is Term II only
-                    const t2NBMax = conf9.term2notebookmax || 5;
-                    const t2ENMax = conf9.term2enrichmentmax || 5;
-                    const t2MEMax = conf9.term2annualexammax || 80;
-                    const term2Max = 10 + t2NBMax + t2ENMax + t2MEMax;
-                    const t2Grade = calculateGrade(t2Raw, term2Max);
+                    // Use Term 2 for E-grade check in Class 6-10
+                    const t2NBMax = conf.term2notebookmax || 5;
+                    const t2ENMax = conf.term2enrichmentmax || 5;
+                    const t2MEMax = conf.term2annualexammax || 80;
+                    const term2MaxTotal = 10 + t2NBMax + t2ENMax + t2MEMax;
+                    const isFail = t2Raw < (term2MaxTotal * 0.33);
 
                     studentSubjectsMap[rNo].push({
                         total: subTotal,
-                        grade: t2Grade, // Use Term II grade for E-check
-                        isCompulsory: conf9.iscompulsory || false
+                        grade: isFail ? 'E' : 'PASS', // Use E to trigger noRank
+                        isCompulsory: conf.iscompulsory || false,
+                        isAdditional: conf.isadditional || false
                     });
                 }
             }
         });
 
-        // 4. Calculate rank using top 5 subjects, percentage-based with dense ranking
+        // 4. Calculate Ranks — Class Tier Logic
         let reportData = students.map(s => {
             const subs = studentSubjectsMap[s.regno] || [];
-            // Determine top 5 subjects (Protect Compulsory)
-            const compulsory = subs.filter(sub => sub.isCompulsory);
-            const others = subs.filter(s => !s.isCompulsory);
-            others.sort((a, b) => b.total - a.total);
+            let targetSubjects = [];
 
-            const top5Set = new Set(compulsory.slice(0, 5));
-            for (const s of others) {
-                if (top5Set.size >= 5) break;
-                top5Set.add(s);
+            if (semLower.includes("11") || semLower.includes("12") || semLower.includes("ix") || semLower.includes("9") || semLower.includes("x") || semLower.includes("10")) {
+                // TOP-5 Logic for 9-12
+                const compulsory = subs.filter(sub => sub.isCompulsory);
+                const others = subs.filter(sub => !sub.isCompulsory);
+                others.sort((a, b) => b.total - a.total);
+
+                const top5Set = new Set(compulsory.slice(0, 5));
+                for (const o of others) {
+                    if (top5Set.size >= 5) break;
+                    top5Set.add(o);
+                }
+                targetSubjects = Array.from(top5Set);
+            } else {
+                // All Subjects (excluding Additional) for Class 1-8
+                targetSubjects = subs.filter(sub => !sub.isAdditional);
             }
-            const top5 = Array.from(top5Set);
 
-            const top5Total = top5.reduce((sum, sub) => sum + sub.total, 0);
-            const top5Max = top5.length * 100;
-            const pctNum = parseFloat(((top5Max > 0 ? (top5Total / top5Max) * 100 : 0)).toFixed(2));
-            // E-grade check: any of top 5 subjects has grade E
-            const hasE = top5.some(sub => sub.grade === 'E' || sub.grade === 'E1' || sub.grade === 'E2');
+            const total = targetSubjects.reduce((sum, sub) => sum + sub.total, 0);
+            const max = targetSubjects.length * 100;
+            const pct = parseFloat((max > 0 ? (total / max) * 100 : 0).toFixed(2));
+            const hasFail = targetSubjects.some(sub => sub.grade === 'E' || sub.grade === 'E1' || sub.grade === 'E2' || sub.total < 33);
 
             return {
                 regno: s.regno,
-                admissionno: s.regno,
                 rollno: s.rollno || '-',
                 name: s.name,
-                total: parseFloat(top5Total.toFixed(2)),
-                percentage: pctNum.toFixed(2) + '%',
-                pctNum: pctNum, // numeric for sorting
+                total: parseFloat(total.toFixed(2)),
+                percentage: pct.toFixed(2) + '%',
+                pctNum: pct,
                 rank: '-',
-                hasEGrade: hasE,
-                noRank: hasE // Include all students in ranking
+                hasFail: hasFail
             };
         });
 
         // Sort descending by percentage
         reportData.sort((a, b) => b.pctNum - a.pctNum);
 
-        // 5. Assign Ranks — dense ranking, skip students with E-grade or < 33%
+        // 5. Assign Ranks — seq skip for failing students
         let currentRank = 1;
         let rankableIndex = 0;
         reportData.forEach((row, i) => {
-            if (!row.noRank) {
+            if (!row.hasFail) {
                 if (rankableIndex > 0) {
-                    // Find previous rankable student
-                    const prevRankable = reportData.slice(0, i).filter(r => !r.noRank).pop();
-                    if (prevRankable && row.pctNum.toFixed(2) !== prevRankable.pctNum.toFixed(2)) {
+                    const prevPass = reportData.slice(0, i).filter(r => !r.hasFail).pop();
+                    if (prevPass && row.pctNum !== prevPass.pctNum) {
                         currentRank++;
                     }
                 }

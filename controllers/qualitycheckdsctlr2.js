@@ -1,6 +1,7 @@
 const qualitycheckds2 = require('../Models/qualitycheckds2');
 const storepoorderds2 = require('../Models/storepoorderds2');
 const grnds2 = require('../Models/grnds2');
+const localgrnds2 = require('../Models/localgrnds2');
 
 exports.addQualityCheck2 = async (req, res) => {
     try {
@@ -12,9 +13,16 @@ exports.addQualityCheck2 = async (req, res) => {
         } = req.body;
 
         // 1. Validate GRN exists and is Pending QC
-        const grn = await grnds2.findOne({ grnNo, colid });
+        let grn = await grnds2.findOne({ grnNo, colid });
+        let isLocal = false;
+        
+        if (!grn) {
+            grn = await localgrnds2.findOne({ grnNo, colid });
+            if (grn) isLocal = true;
+        }
+
         if (!grn) return res.status(404).json({ success: false, message: 'GRN not found' });
-        if (grn.status === 'QC Done') {
+        if (grn.status === 'QC Done' || grn.status === 'Accepted') {
             return res.status(400).json({ success: false, message: 'Quality Check already completed for this GRN' });
         }
 
@@ -50,7 +58,11 @@ exports.addQualityCheck2 = async (req, res) => {
 
         // 4. Update GRN status
         const grnStatus = status === 'Accepted' ? 'QC Done' : 'Partially Rejected';
-        await grnds2.findByIdAndUpdate(grn._id, { status: grnStatus });
+        if (isLocal) {
+            await localgrnds2.findByIdAndUpdate(grn._id, { status: grnStatus });
+        } else {
+            await grnds2.findByIdAndUpdate(grn._id, { status: grnStatus });
+        }
 
         // 5. Update PO status — check if all items are fully received & inspected
         const poOrder = await storepoorderds2.findOne({ poid, colid });
@@ -112,29 +124,63 @@ exports.addQualityCheck2 = async (req, res) => {
                 const poItem = await storepoitemsds2.findOne(poItemQuery);
 
                 if (poItem && poItem.storeid) {
-                    const itemCode = item.itemid || poItem.itemid;
-                    const existing = await storeitemds2.findOne({ itemcode: itemCode, colid, storeid: poItem.storeid });
+                    const itemCode = item.itemid || poItem.itemid || item.itemcode;
+                    const storeId = poItem.storeid;
+                    const storeName = poItem.storename;
+                    
+                    const existing = await storeitemds2.findOne({ itemcode: itemCode, colid, storeid: storeId });
                     let saved;
                     if (existing) {
-                        saved = await storeitemds2.findByIdAndUpdate(existing._id, { $inc: { quantity: Number(item.acceptedQuantity) } }, { new: true });
+                        saved = await storeitemds2.findByIdAndUpdate(existing._id, { $inc: { quantity: Number(item.acceptedQuantity) }, status: 'Available' }, { new: true });
                     } else {
                         saved = await storeitemds2.create({
                             colid, user: inspectorName || 'System',
-                            storeid: poItem.storeid, storename: poItem.storename,
+                            storeid: storeId, storename: storeName,
                             itemcode: itemCode, itemname: item.itemname,
                             quantity: Number(item.acceptedQuantity),
-                            type: poItem.itemtype || 'Consume',
-                            category: poItem.category || 'General',
+                            type: poItem.itemtype || item.type || 'Consume',
+                            category: poItem.category || item.category || 'General',
                             unit: poItem.unit || item.unit || 'Nos',
                             status: 'Available', name: 'QC Delivery'
                         });
                     }
                     await stockregisterds2.create({
-                        storeid: poItem.storeid, store: poItem.storename || poItem.storeid,
+                        storeid: storeId, store: storeName || storeId,
                         itemid: itemCode, item: item.itemname,
                         quantityadded: Number(item.acceptedQuantity), quantityreturn: 0,
                         netquantity: saved.quantity, user: inspectorName || 'System',
-                        colid, stockdate: new Date(), name: 'QC Delivery'
+                        colid, stockdate: new Date(), name: 'QC Delivery',
+                        remarks: `GRN: ${grnNo}`
+                    });
+                } else if (isLocal && grn.storeid) {
+                    // Fallback for Local GRNs if poItem is not found (though it should be)
+                    const itemCode = item.itemid || item.itemcode;
+                    const storeId = grn.storeid;
+                    const storeName = grn.storeName;
+
+                    const existing = await storeitemds2.findOne({ itemcode: itemCode, colid, storeid: storeId });
+                    let saved;
+                    if (existing) {
+                        saved = await storeitemds2.findByIdAndUpdate(existing._id, { $inc: { quantity: Number(item.acceptedQuantity) }, status: 'Available' }, { new: true });
+                    } else {
+                        saved = await storeitemds2.create({
+                            colid, user: inspectorName || 'System',
+                            storeid: storeId, storename: storeName,
+                            itemcode: itemCode, itemname: item.itemname,
+                            quantity: Number(item.acceptedQuantity),
+                            type: item.type || 'Consume',
+                            category: item.category || 'General',
+                            unit: item.unit || 'Nos',
+                            status: 'Available', name: 'QC Delivery'
+                        });
+                    }
+                    await stockregisterds2.create({
+                        storeid: storeId, store: storeName || storeId,
+                        itemid: itemCode, item: item.itemname,
+                        quantityadded: Number(item.acceptedQuantity), quantityreturn: 0,
+                        netquantity: saved.quantity, user: inspectorName || 'System',
+                        colid, stockdate: new Date(), name: 'QC Delivery',
+                        remarks: `Local GRN: ${grnNo}`
                     });
                 }
             }

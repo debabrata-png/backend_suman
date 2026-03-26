@@ -60,6 +60,7 @@ exports.addstoreitemds2 = async (req, res) => {
             data: newItem
         });
     } catch (error) {
+        console.error("Error in addstoreitemds2:", error);
         res.status(500).json({
             success: false,
             message: "Error adding store item",

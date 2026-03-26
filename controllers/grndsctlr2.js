@@ -1,5 +1,6 @@
 const grnds2 = require('../Models/grnds2');
 const gatewaypassds2 = require('../Models/gatewaypassds2');
+const localgrnds2 = require('../Models/localgrnds2');
 
 // Create GRN from a completed Gateway Pass
 exports.addgrnds2 = async (req, res) => {
@@ -54,11 +55,36 @@ exports.getallgrnds2 = async (req, res) => {
     }
 };
 
-// Get GRNs pending Quality Check
+// Get GRNs pending Quality Check (Standard + Local)
 exports.getpendinggrnds2 = async (req, res) => {
     try {
-        const grns = await grnds2.find({ colid: Number(req.query.colid), status: 'Pending QC' }).sort({ createdAt: -1 });
-        res.status(200).json({ success: true, data: grns });
+        const colid = Number(req.query.colid);
+        const [stdGrns, localGrns] = await Promise.all([
+            grnds2.find({ colid, status: 'Pending QC' }).sort({ createdAt: -1 }).lean(),
+            localgrnds2.find({ colid, status: 'Pending QC' }).sort({ createdAt: -1 }).lean()
+        ]);
+        
+        // Unify fields for frontend (poid and storeName casing)
+        const localMapped = localGrns.map(g => ({ 
+            ...g, 
+            poid: g.lpoId,
+            id: g._id, // Ensure unique ID for DataGrid
+            items: (g.items || []).map(item => ({
+                ...item,
+                expectedQuantity: item.quantity,
+                deliveredQuantity: item.quantity,
+                grnQuantity: item.quantity
+            }))
+        }));
+
+        const stdMapped = stdGrns.map(g => ({
+            ...g,
+            id: g._id
+        }));
+        
+        const allPending = [...stdMapped, ...localMapped].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        res.status(200).json({ success: true, data: allPending });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }

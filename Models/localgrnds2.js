@@ -8,7 +8,12 @@ const localgrnSchema = new mongoose.Schema({
     vendorName: { type: String },
     items: [{
         itemname: String,
+        itemcode: String,
+        itemid: String,
+        category: String,
+        vendor: String,
         quantity: Number,
+        price: Number,
         unit: String,
         remarks: String
     }],
@@ -16,7 +21,7 @@ const localgrnSchema = new mongoose.Schema({
     grnDate: { type: Date, default: Date.now },
     receivedBy: { type: String, required: true },
     colid: { type: Number, required: true },
-    status: { type: String, default: 'Completed' },
+    status: { type: String, default: 'Pending QC' },
     createdAt: { type: Date, default: Date.now }
 });
 
