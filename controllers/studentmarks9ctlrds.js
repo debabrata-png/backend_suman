@@ -645,13 +645,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
     const { regno, colid, academicyear } = req.query;
     let { semester } = req.query;
 
-    // Normalize semester (Handle IX/9, VI/6 inconsistencies, including Number vs String)
-    const semesterMap = {
-      'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 'VI': 6, 'VII': 7, 'VIII': 8, 'IX': 9, 'X': 10, 'XI': 11, 'XII': 12
-    };
-    const normalized = semesterMap[semester];
-    // Include the original semester, the mapped string, and the mapped number
-    const querySemester = { $in: [semester, String(normalized), normalized].filter(v => v !== undefined) };
+    const querySemester = semester;
 
     // 1. Fetch Student/User Data
     const userData = await User.findOne({

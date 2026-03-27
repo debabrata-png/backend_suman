@@ -186,13 +186,7 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
         const { regno, colid, academicyear } = req.query;
         let { semester } = req.query;
 
-        // Normalize semester (handle Roman ↔ numeric inconsistencies)
-        const semesterMap = {
-            'I': '1', 'II': '2', 'III': '3', 'IV': '4', 'V': '5', 'VI': '6',
-            'VII': '7', 'VIII': '8', 'IX': '9', 'X': '10', 'XI': '11', 'XII': '12'
-        };
-        const normalizedSemester = semesterMap[semester] || semester;
-        const querySemester = { $in: [semester, normalizedSemester] };
+        const querySemester = semester;
 
         // ── 1. Fetch Student / User Data ─────────────────────────
         const userData = await User.findOne({ regno, colid: Number(colid) });
@@ -555,13 +549,7 @@ exports.calculateAndStoreRank9top5ds = async (req, res) => {
             });
         }
 
-        // Normalize semester
-        const semesterMap = {
-            'I': '1', 'II': '2', 'III': '3', 'IV': '4', 'V': '5', 'VI': '6',
-            'VII': '7', 'VIII': '8', 'IX': '9', 'X': '10', 'XI': '11', 'XII': '12'
-        };
-        const normalizedSemester = semesterMap[semester] || semester;
-        const querySemester = { $in: [semester, normalizedSemester] };
+        const querySemester = semester;
 
         // ── 1. Fetch Class Students ──────────────────────────────
         const classStudents = await User.find({
