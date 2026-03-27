@@ -229,12 +229,31 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
       coGradeMap[g.activityid.toString()] = g;
     });
 
-    const coScholasticData = coActivities.map(act => ({
-      code: act.code || '',
-      area: act.activityname,
-      term1Grade: (coGradeMap[act._id.toString()] && coGradeMap[act._id.toString()].term1grade) || '',
-      term2Grade: (coGradeMap[act._id.toString()] && coGradeMap[act._id.toString()].term2grade) || ''
-    }));
+    // De-duplicate by activityname to prevent double display if multiple semesters are configured
+    const coScholasticMap = {};
+    coActivities.forEach(act => {
+      const activityName = (act.activityname || '').trim().toUpperCase();
+      const t1Grade = (coGradeMap[act._id.toString()] && coGradeMap[act._id.toString()].term1grade) || '';
+      const t2Grade = (coGradeMap[act._id.toString()] && coGradeMap[act._id.toString()].term2grade) || '';
+
+      const item = {
+        code: act.code || '',
+        area: act.activityname,
+        term1Grade: t1Grade,
+        term2Grade: t2Grade
+      };
+
+      // Prioritize entry that has at least one grade
+      if (!coScholasticMap[activityName]) {
+        coScholasticMap[activityName] = item;
+      } else if (!coScholasticMap[activityName].term1Grade && !coScholasticMap[activityName].term2Grade) {
+        if (t1Grade || t2Grade) {
+          coScholasticMap[activityName] = item;
+        }
+      }
+    });
+
+    const coScholasticData = Object.values(coScholasticMap);
 
     // 5.8 Dynamic Rank Calculation — CLASS-WIDE, TOP-5 SUBJECTS
     const classStudents = await User.find({
