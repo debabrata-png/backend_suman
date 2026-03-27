@@ -929,7 +929,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
         return {
           t1Total: t1Raw,
           t2Total: t2Raw,
-          t2Grade: calculateGrade(t2Raw, 100), 
+          t2Grade: calculateGrade(t2Raw, 100),
           overallTotal: subTotal,
           isAdditional: conf.isadditional || false
         };
@@ -954,8 +954,8 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
       // Rule 1: Nursery to KG II — Separate ranks for Term I and Term II
       // Rule 2: 1 to 8 — Skip if any core subject has 'E' in Term II
       const semUpper = semester.toString().toUpperCase();
-      const isKG = semUpper.includes("NURSERY") || semUpper.includes("LKG") || semUpper.includes("UKG") || semUpper.includes("KG");
-      
+      const isKG = semUpper.includes("NURSERY") || semUpper.includes("LKG") || semUpper.includes("UKG") || semUpper.includes("KG") || semUpper.includes("KG - I") || semUpper.includes("KG - II");
+
       let hasFail = false;
       if (!isKG) {
         hasFail = rankSubjects.some(s => s.t2Grade === 'E' || (s.t2Total < 33 && s.t2Total !== null));
@@ -988,7 +988,7 @@ exports.getmarksheetpdfdata9ds = async (req, res) => {
             // Use rounded comparison to handle ties perfectly
             const currentPct = Math.round(sorted[i][pctField] * 100);
             const prevPct = prevPass ? Math.round(prevPass[pctField] * 100) : null;
-            
+
             if (prevPass && currentPct !== prevPct) {
               currentDenseRank++;
             }

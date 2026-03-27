@@ -871,7 +871,7 @@ exports.getrankreportds = async (req, res) => {
                 // Select Top 5 protecting Compulsory
                 const compulsory = subs.filter(sub => sub.isCompulsory);
                 const elective = subs.filter(sub => !sub.isCompulsory);
-                elective.sort((a,b) => b.total - a.total);
+                elective.sort((a, b) => b.total - a.total);
 
                 const top5Set = new Set(compulsory.slice(0, 5));
                 for (const e of elective) {
@@ -884,7 +884,7 @@ exports.getrankreportds = async (req, res) => {
             } else if (isKG) {
                 // All non-additional, no failure skip for KG
                 targetSubjects = subs.filter(sub => !sub.isAdditional);
-                hasFail = false; 
+                hasFail = false;
             } else {
                 // Classes 1-8: All non-additional, skip if any has E in Term II
                 targetSubjects = subs.filter(sub => !sub.isAdditional);
