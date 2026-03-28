@@ -8,55 +8,35 @@ const challantemplatedsSchema = new mongoose.Schema(
             index: true
         },
 
-        name: {
+        configName: {
+            type: String,
+            required: true,
+            index: true
+        },
+
+        templateHtml: {
             type: String,
             required: true
         },
 
-        description: String,
-        template: {
+        orientation: {
             type: String,
-            required: true
+            enum: ["portrait", "landscape"],
+            default: "landscape"
+        },
+        
+        copies: {
+            type: Number,
+            default: 3
         },
 
-        fields: [
-            {
-                key: { type: String, required: true },
-                label: { type: String, required: true },
-                type: {
-                    type: String,
-                    enum: ["text", "number", "date", "select"],
-                    default: "text"
-                },
-                required: { type: Boolean, default: false },
-                defaultValue: mongoose.Schema.Types.Mixed,
-                options: [String] // for select dropdown
-            }
-        ],
-        sections: [
-            {
-                name: String,
-                template: String
-            }
-        ],
-        styles: {
-            fontFamily: { type: String, default: "Arial" },
-            fontSize: { type: String, default: "12px" },
-            primaryColor: String,
-            secondaryColor: String,
-            customCSS: String
-        },
-        defaults: {
-            type: Map,
-            of: mongoose.Schema.Types.Mixed
+        isActive: {
+            type: Boolean,
+            default: true
         },
         version: {
             type: Number,
             default: 1
-        },
-        isActive: {
-            type: Boolean,
-            default: true
         },
         createdBy: String,
         updatedBy: String
@@ -65,6 +45,9 @@ const challantemplatedsSchema = new mongoose.Schema(
         timestamps: true
     }
 );
+
+// Ensure a single template per config per colid
+challantemplatedsSchema.index({ colid: 1, configName: 1 }, { unique: true });
 
 const challantemplateds = mongoose.model("Challantemplateds", challantemplatedsSchema);
 

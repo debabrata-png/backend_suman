@@ -1,6 +1,7 @@
 const ChallanConfig = require('../Models/challanconfig');
 const mfeescol = require('../Models/mfeescol');
 const ledgerstud = require('../Models/ledgerstud');
+const ChallanTemplate = require('../Models/challantemplateds');
 
 exports.getchallanconfig = async (req, res) => {
   try {
@@ -16,10 +17,10 @@ exports.getchallanconfig = async (req, res) => {
 
 exports.savechallanconfig = async (req, res) => {
   try {
-    const { colid, configName, bankName, accountNo, branch, institutionName, address, session } = req.body;
+    const { colid, configName, bankName, accountNo, branch, institutionName, address, session, logo } = req.body;
     const config = await ChallanConfig.findOneAndUpdate(
       { colid: parseInt(colid), configName },
-      { bankName, accountNo, branch, institutionName, address, session },
+      { bankName, accountNo, branch, institutionName, address, session, logo },
       { upsert: true, new: true }
     );
     return res.status(200).json({
@@ -52,6 +53,9 @@ exports.generatechallanpayment = async (req, res) => {
     });
 
     // 2. Update student ledger
+    // Only set Status to 'Paid' if the balance is fully cleared, otherwise keep as 'Active'
+    const finalStatus = Number(balance) <= 0 ? 'Paid' : 'Active';
+
     await ledgerstud.findByIdAndUpdate(ledgerId, {
       paiddate: paiddate || new Date(),
       paid: amount,
@@ -59,7 +63,7 @@ exports.generatechallanpayment = async (req, res) => {
       paymode: paymode || 'Challan',
       paydetails: paydetails || 'Challan Generated',
       installment,
-      status,
+      status: finalStatus,
       doclink,
       status1: 'Submitted',
       comments: 'Challan Generated'
@@ -67,6 +71,38 @@ exports.generatechallanpayment = async (req, res) => {
 
     return res.status(200).json({
       status: 'Success'
+    });
+  } catch (err) {
+    return res.status(400).json({ status: 'Failed', message: err.message });
+  }
+};
+
+// --- Template Management ---
+
+exports.getChallanTemplate = async (req, res) => {
+  try {
+    const { colid, configName } = req.query;
+    const template = await ChallanTemplate.findOne({ colid: parseInt(colid), configName });
+    return res.status(200).json({
+      status: 'Success',
+      data: template
+    });
+  } catch (err) {
+    return res.status(400).json({ status: 'Failed', message: err.message });
+  }
+};
+
+exports.saveChallanTemplate = async (req, res) => {
+  try {
+    const { colid, configName, templateHtml, orientation, copies } = req.body;
+    const template = await ChallanTemplate.findOneAndUpdate(
+      { colid: parseInt(colid), configName },
+      { templateHtml, orientation, copies },
+      { upsert: true, new: true }
+    );
+    return res.status(200).json({
+      status: 'Success',
+      data: template
     });
   } catch (err) {
     return res.status(400).json({ status: 'Failed', message: err.message });

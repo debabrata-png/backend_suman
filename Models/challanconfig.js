@@ -30,11 +30,18 @@ const challanconfigschema = new mongoose.Schema({
         type: String,
         required: [true, 'Please enter address']
     },
+    logo: {
+        type: String,
+        default: ""
+    },
     session: {
         type: String,
         required: [true, 'Please enter session']
     }
 });
+
+// Allow multiple configs per institution, but each config name must be unique within that institution
+challanconfigschema.index({ colid: 1, configName: 1 }, { unique: true });
 
 const ChallanConfig = mongoose.model('ChallanConfig', challanconfigschema);
 module.exports = ChallanConfig;

@@ -6553,6 +6553,8 @@ const challancontroller = require('./controllers/challancontroller');
 app.get('/api/v2/getchallanconfig', challancontroller.getchallanconfig);
 app.post('/api/v2/savechallanconfig', challancontroller.savechallanconfig);
 app.post('/api/v2/generatechallanpayment', challancontroller.generatechallanpayment);
+app.get('/api/v2/getChallanTemplate', challancontroller.getChallanTemplate);
+app.post('/api/v2/saveChallanTemplate', challancontroller.saveChallanTemplate);
 
 
 app.get('/api/v2/getserbplanbyfac', aimatcontroller.getserbplanbyfac);
