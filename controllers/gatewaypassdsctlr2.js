@@ -16,10 +16,12 @@ exports.addGatewayPass2 = async (req, res) => {
             passData.passNumber = `GP-${yyyy}${mm}${uniq}`;
         }
 
-        // Fetch PO details to validate/link
-        const po = await storepoorderds2.findOne({ poid: passData.poid, colid: passData.colid });
-        if (!po) {
-            return res.status(404).json({ success: false, message: "Linked PO not found." });
+        // Only validate PO for Inward passes with an associated poid
+        if (passData.passType === 'Inward' && passData.poid && passData.poid !== 'N/A') {
+            const po = await storepoorderds2.findOne({ poid: passData.poid, colid: passData.colid });
+            if (!po) {
+                return res.status(404).json({ success: false, message: "Linked PO not found." });
+            }
         }
 
         // For Inward passes, we want to update the PO status to Partially Delivered or Delivered based on items

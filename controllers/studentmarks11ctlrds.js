@@ -266,18 +266,18 @@ exports.savemarks11ds = async (req, res) => {
                             total: total,
                             totalgrade: totalgrade,
                             isgrace: mark.isgrace || false,
-                            isabsent: mark.isabsent || false, // Overall absent flag (legacy)
+                            isabsent: !!(mark.unitpremidabsent || mark.unitpostmidabsent || mark.halfyearlythabsent || mark.halfyearlypracticalabsent || mark.annualthabsent || mark.annualpracticalabsent), // Overall absent flag (legacy)
                             teacherremarks: mark.teacherremarks || '',
                             promotedclass: mark.promotedclass || '',
                             newsessiondate: mark.newsessiondate || '',
 
                             // Correctly map individual absent flags based on input
-                            unitpremidabsent: mark.unitpremidabsent || (mark.unitpremidobtain !== undefined && mark.isabsent ? true : false),
-                            unitpostmidabsent: mark.unitpostmidabsent || (mark.unitpostmidobtain !== undefined && mark.isabsent ? true : false),
-                            halfyearlythabsent: mark.halfyearlythabsent || (mark.halfyearlythobtain !== undefined && mark.isabsent ? true : false),
-                            halfyearlypracticalabsent: mark.halfyearlypracticalabsent || (mark.halfyearlypracticalobtain !== undefined && mark.isabsent ? true : false),
-                            annualthabsent: mark.annualthabsent || (mark.annualthobtain !== undefined && mark.isabsent ? true : false),
-                            annualpracticalabsent: mark.annualpracticalabsent || (mark.annualpracticalobtain !== undefined && mark.isabsent ? true : false),
+                            unitpremidabsent: mark.unitpremidabsent || false,
+                            unitpostmidabsent: mark.unitpostmidabsent || false,
+                            halfyearlythabsent: mark.halfyearlythabsent || false,
+                            halfyearlypracticalabsent: mark.halfyearlypracticalabsent || false,
+                            annualthabsent: mark.annualthabsent || false,
+                            annualpracticalabsent: mark.annualpracticalabsent || false,
 
                             status: 'finalized',
                             updatedat: new Date()

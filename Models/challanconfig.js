@@ -4,7 +4,11 @@ const challanconfigschema = new mongoose.Schema({
     colid: {
         type: Number,
         required: [true, 'Please enter colid'],
-        unique: true
+        unique: false
+    },
+    configName: {
+        type: String,
+        required: [true, 'Please enter configuration name']
     },
     bankName: {
         type: String,

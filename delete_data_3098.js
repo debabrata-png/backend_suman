@@ -35,7 +35,7 @@ const crmh1 = require("./Models/crmh1")
 const MONGODB_URI = "mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 //const MONGODB_URI = "mongodb+srv://erppu_db_user:Erp123pu@cluster0.23ikja9.mongodb.net/?appName=Cluster0";
 
-const TARGET_COLID = 3090;
+const TARGET_COLID = 5050;
 
 const connectDB = async () => {
     try {
@@ -54,14 +54,14 @@ const deleteData = async () => {
         console.log(`\n🗑️  Deleting data for colid: ${TARGET_COLID} ...\n`);
 
         // ── Existing deletions (kept for reference) ────────────────────────
-        // const res1 = await Classenr1.deleteMany({ colid: TARGET_COLID });
-        // console.log(`Deleted ${res1.deletedCount} records from Classenr1.`);
+        const res1 = await Classenr1.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${res1.deletedCount} records from Classenr1.`);
 
         // const re2 = await Institution.deleteMany({ admincolid: 3090 });
         // console.log(`Deleted ${re2.deletedCount} records from Institution.`);
 
-        // const res2 = await MfacCourses.deleteMany({ colid: TARGET_COLID });
-        // console.log(`Deleted ${res2.deletedCount} records from MfacCourses.`);
+        const res2 = await MfacCourses.deleteMany({ colid: TARGET_COLID });
+        console.log(`Deleted ${res2.deletedCount} records from MfacCourses.`);
 
         // const res3 = await User.deleteMany({ colid: TARGET_COLID, role: 'Student' });
         // console.log(`Deleted ${res3.deletedCount} records from User (Students).`);
@@ -143,8 +143,8 @@ const deleteData = async () => {
         // const r18 = await storerequisationds.deleteMany({ colid: TARGET_COLID });
         // console.log(`Deleted ${r18.deletedCount} records from storerequisationds.`);
 
-        const r19 = await crmh1.deleteMany({ colid: 6050 });
-        console.log(`Deleted Leads in ${r19.deletedCount} records from crmh1`)
+        // const r19 = await crmh1.deleteMany({ colid: 6050 });
+        // console.log(`Deleted Leads in ${r19.deletedCount} records from crmh1`)
 
 
         // const r8 = await categoryag1.deleteMany({ colid: 6050 })

@@ -7,7 +7,7 @@ const gatewaypassdsschema = new mongoose.Schema({
     },
     passType: {
         type: String,
-        enum: ['Inward', 'Outdoor'],
+        enum: ['Inward', 'Outward'],
         required: true
     },
     colid: {
@@ -16,7 +16,7 @@ const gatewaypassdsschema = new mongoose.Schema({
     },
     poid: {
         type: String,
-        required: true,
+        required: false,
         index: true
     },
     vendorName: {
@@ -38,7 +38,7 @@ const gatewaypassdsschema = new mongoose.Schema({
     },
     contactNo: {
         type: String,
-        required: true
+        required: false
     },
     securityName: {
         type: String, // from global1.name
@@ -63,7 +63,16 @@ const gatewaypassdsschema = new mongoose.Schema({
     remarkType: { type: String }, // 'Countable', 'Non Countable'
     orderType: { type: String },  // 'PO', 'NPO'
     npoType: { type: String },    // 'LPO', 'Cash Memo', 'Imprest'
-    returnType: { type: String }, // 'RGP', 'NRGP'
+    returnType: { type: String }, // 'RGP', 'NRGP' or 'Institution Movement'
+    returnCategory: { type: String },
+    storeName: { type: String },
+    shiftFrom: { type: String },
+    shiftTo: { type: String },
+    totalTrip: { type: String },
+    purpose: { type: String },
+    authorizedBy: { type: String },
+    expectedDateOfReturn: { type: Date },
+    materialTakenBy: { type: String },
     createdAt: {
         type: Date,
         default: Date.now

@@ -6549,9 +6549,10 @@ app.get('/api/v2/updatemfeescolcomments', aimatcontroller.updatemfeescolcomments
 app.get('/api/v2/mfeescoldocs', aimatcontroller.mfeescoldocs);
 app.get('/api/v2/deletemfeescolbyfac', aimatcontroller.deletemfeescolbyfac);
 app.get('/api/v2/createmfeescolbyfac', aimatcontroller.createmfeescolbyfac);
-app.get('/api/v2/getchallanconfig', aimatcontroller.getchallanconfig);
-app.post('/api/v2/savechallanconfig', aimatcontroller.savechallanconfig);
-app.post('/api/v2/generatechallanpayment', aimatcontroller.generatechallanpayment);
+const challancontroller = require('./controllers/challancontroller');
+app.get('/api/v2/getchallanconfig', challancontroller.getchallanconfig);
+app.post('/api/v2/savechallanconfig', challancontroller.savechallanconfig);
+app.post('/api/v2/generatechallanpayment', challancontroller.generatechallanpayment);
 
 
 app.get('/api/v2/getserbplanbyfac', aimatcontroller.getserbplanbyfac);
