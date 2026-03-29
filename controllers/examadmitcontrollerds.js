@@ -1,5 +1,6 @@
 const Classenr = require('../Models/classenr1');
 const ExamAdmit = require('../Models/examadmit');
+const Exammarks1ds = require('../Models/exammarks1ds'); // Added for program name lookup
 const ExamTimetable = require('../Models/examtimetable');
 
 exports.getAdmitCard = async (req, res) => {
@@ -136,6 +137,23 @@ exports.getClassenrDistinctValuesForExamAdmit = async (req, res) => {
             { $project: { _id: 0, program: "$_id.program", programcode: "$_id.programcode" } },
             { $sort: { program: 1 } }
         ]);
+
+        // Enrichment: Fetch full names from ExamMarks1 (Structure) if available
+        for (let p of programData) {
+            if (p.programcode) {
+                const structure = await Exammarks1ds.findOne({ 
+                    colid: _colid, 
+                    $or: [
+                        { program: { $regex: p.programcode, $options: 'i' } },
+                        { branch: { $regex: p.programcode, $options: 'i' } }
+                    ]
+                }).lean();
+                if (structure && structure.program && structure.program.length > p.program.length) {
+                    p.program = structure.program;
+                }
+            }
+        }
+
         const programcodes = programData.filter(p => p.programcode);
         
         // Semesters filtered by colid, selected year, and selected programcode
@@ -172,7 +190,38 @@ exports.postStudentsToExamAdmit = async (req, res) => {
         let insertedCount = 0;
         let skippedCount = 0;
 
+        // Pre-fetch all paper structures for the given exam and college
+        // This allows us to dynamically map a student's coursecode to the correct Full Program Name
+        const structures = await Exammarks1ds.find({ 
+            colid: parseInt(colid) || colid,
+            examcode: examcode
+        }).lean();
+        
+        // Build a dynamic map of papercode -> program (Full Name)
+        const courseToProgramMap = {};
+        for (const s of structures) {
+            if (s.papercode && s.program) {
+                // E.g., courseToProgramMap['MEC101'] = 'Diploma & Engineering in Mechanical Engineering'
+                courseToProgramMap[s.papercode] = s.program;
+            }
+        }
+
         for (const student of students) {
+            let finalProgramName = student.program;
+            
+            // Look up the full name dynamically using the student's passing coursecode
+            // This completely eliminates any need to hardcode branch names like "Mechanical"
+            if (student.coursecode && courseToProgramMap[student.coursecode]) {
+                finalProgramName = courseToProgramMap[student.coursecode];
+            } else if (student.program && student.program.length < 5) {
+                // Deep Fallback: if we still have a short code like "12", try to find any structure
+                // for this exam that might match.
+                const match = structures.find(s => s.program && s.program.toLowerCase().includes(student.program.toLowerCase()));
+                if (match) {
+                    finalProgramName = match.program;
+                }
+            }
+
             // Check if already exists exactly for this exam and student
             const existing = await ExamAdmit.findOne({
                 colid: colid,
@@ -193,7 +242,7 @@ exports.postStudentsToExamAdmit = async (req, res) => {
                     year: student.year,
                     exam: exam,
                     examcode: examcode,
-                    program: student.program,
+                    program: finalProgramName,
                     programcode: student.programcode,
                     course: student.course,
                     coursecode: student.coursecode,
