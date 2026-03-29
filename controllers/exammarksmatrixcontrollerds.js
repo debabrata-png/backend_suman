@@ -72,7 +72,11 @@ exports.getExamMarksMatrixData = async (req, res) => {
         let paperQuery = { colid: numericColid, examcode: examcode };
         if (year) paperQuery.year = year;
         if (programName) {
-            paperQuery.$or = [{ program: programName }, { branch: programName }];
+            paperQuery.$or = [
+                { program: programName },
+                { branch: programName },
+                { program: program } // Fallback to the code sent from frontend
+            ];
         }
         
         let papers = await Exammarks1ds.find(paperQuery).lean();

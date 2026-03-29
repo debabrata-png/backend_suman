@@ -66,7 +66,7 @@ exports.getCurrentSemesterMarks = async (req, res) => {
     // Get structure from ExamMarks1 to know max marks
     const allRecords = await ExamMarks1.find({
       colid: Number(colid),
-      program: program,
+      $or: [{ program: program }, { branch: program }], // Be flexible with program name
       semester: semesterNum,
       regulation: regulation,
       branch: branch
@@ -263,7 +263,7 @@ exports.getAllSemesterSummary = async (req, res) => {
         semester: semData.semester,
         regulation: firstMark.regulation,
         branch: firstMark.branch,
-        program: firstMark.program
+        $or: [{ program: firstMark.program }, { branch: firstMark.program }]
       }).lean();
 
       let totalObtained = 0;
@@ -660,7 +660,10 @@ exports.getBulkTabulationData = async (req, res) => {
         semester: semester,
         regulation: firstMark.regulation,
         branch: firstMark.branch,
-        program: firstMark.program,
+        $or: [
+          { program: firstMark.program },
+          { program: firstMark.programcode || firstMark.program }
+        ],
       }).lean();
 
       let totalObtained = 0;
@@ -774,7 +777,10 @@ exports.getBulkTabulationData = async (req, res) => {
           semester: semData.semester,
           regulation: semFirstMark.regulation,
           branch: semFirstMark.branch,
-          program: semFirstMark.program,
+          $or: [
+            { program: semFirstMark.program },
+            { program: semFirstMark.programcode || semFirstMark.program }
+          ],
         }).lean();
 
         let semCredits = 0;
@@ -834,7 +840,10 @@ exports.getBulkTabulationData = async (req, res) => {
           semester: sem.semester,
           regulation: semFirstMark.regulation,
           branch: semFirstMark.branch,
-          program: semFirstMark.program,
+          $or: [
+            { program: semFirstMark.program },
+            { program: semFirstMark.programcode || semFirstMark.program }
+          ],
         }).lean();
 
         let semTotal = 0, semMax = 0, semCredits = 0, semGradePoints = 0;
