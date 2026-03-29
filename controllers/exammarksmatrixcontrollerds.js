@@ -21,6 +21,23 @@ exports.getMatrixFilters = async (req, res) => {
             { $project: { _id: 0, program: "$_id.program", programcode: "$_id.programcode" } },
             { $sort: { program: 1 } }
         ]);
+
+        // Enrichment: Fetch full names from ExamMarks1 (Structure) if available
+        for (let p of programData) {
+            if (p.programcode) {
+                const structure = await Exammarks1ds.findOne({ 
+                    colid: numericColid, 
+                    $or: [
+                        { program: { $regex: p.programcode, $options: 'i' } },
+                        { branch: { $regex: p.programcode, $options: 'i' } }
+                    ]
+                }).lean();
+                if (structure && structure.program && structure.program.length > p.program.length) {
+                    p.program = structure.program;
+                }
+            }
+        }
+        
         const programs = programData.filter(p => p.programcode);
         
         let examQuery = { ...baseQuery };

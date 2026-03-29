@@ -611,8 +611,10 @@ exports.getBulkTabulationData = async (req, res) => {
     // Get all unique students from ExamMarks2 for this semester/year
     const allMarks = await ExamMarks2.find({
       colid: Number(colid),
-      program: program,
-      branch: branch,
+      $and: [
+        { $or: [{ program: program }, { branch: program }, { programcode: program }] },
+        { $or: [{ branch: branch }, { program: branch }] }
+      ],
       regulation: regulation,
       semester: semester,
       year: year,
