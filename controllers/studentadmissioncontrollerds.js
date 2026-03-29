@@ -55,6 +55,9 @@ exports.confirmadmissionds = async (req, res) => {
         if (provFees && provFees.length > 0) {
             let remainingConcession = Number(concession) || 0;
 
+            const nextMonthDate = new Date();
+            nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+
             for (const fee of provFees) {
                 let itemConcession = 0;
                 if (remainingConcession > 0) {
@@ -75,7 +78,7 @@ exports.confirmadmissionds = async (req, res) => {
                     balance: fee.amount - itemConcession,
                     academicyear: studentData.admissionyear,
                     colid: Number(colid),
-                    classdate: new Date(),
+                    classdate: nextMonthDate,
                     status: 'Active',
                     programcode: studentData.programcode,
                     admissionyear: studentData.admissionyear,
