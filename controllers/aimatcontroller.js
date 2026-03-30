@@ -8078,7 +8078,7 @@ exports.createmfaccoursesbyfac = async (req, res) => {
       coursename: req.query.coursename,
       coursecode: req.query.coursecode,
       program: req.query.program,
-      programode: req.query.programcode,
+      programcode: req.query.programcode,
       semester: req.query.semester,
       hours: req.query.hours,
       type: req.query.type,
