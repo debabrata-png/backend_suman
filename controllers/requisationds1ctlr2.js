@@ -42,7 +42,7 @@ exports.getallrequisationds12 = async (req, res) => {
 // Approve: Move from ds1 to ds
 exports.approverequisationds12 = async (req, res) => {
     try {
-        const { id } = req.body;
+        const { id, approverRole, approverName } = req.body;
         const stagingReq = await requisationds12.findById(id);
 
         if (!stagingReq) {
@@ -53,24 +53,55 @@ exports.approverequisationds12 = async (req, res) => {
             return res.status(400).json({ success: false, message: "Already Approved" });
         }
 
-        // Create in Main Store Request
-        // We strip _id to let mongo generate new one, or mapped fields
-        const mainReqPayload = stagingReq.toObject();
-        delete mainReqPayload._id;
-        delete mainReqPayload.__v;
-        mainReqPayload.reqstatus = 'Pending'; // Pending for Store Manager now
+        let shouldGoToStore = false;
 
-        const newMainReq = await requisationds2.create(mainReqPayload);
+        if (stagingReq.approvalOption === 'Manual') {
+            if (approverRole === 'AHOI') {
+                stagingReq.ahoiApproved = true;
+                stagingReq.ahoiApproverName = approverName || 'AHOI';
+            } else if (approverRole === 'HOI') {
+                stagingReq.hoiApproved = true;
+                stagingReq.hoiApproverName = approverName || 'HOI';
+            }
 
-        // Update Staging Status
-        stagingReq.reqstatus = 'Approved';
-        await stagingReq.save();
+            // Check if BOTH have approved for Manual option
+            if (stagingReq.hoiApproved && stagingReq.ahoiApproved) {
+                shouldGoToStore = true;
+            }
+        } else {
+            // Default HOI path (Direct to Store after HOI approval)
+            stagingReq.hoiApproved = true;
+            stagingReq.hoiApproverName = approverName || 'HOI';
+            shouldGoToStore = true;
+        }
 
-        res.status(200).json({
-            success: true,
-            message: "Requisition Approved and Sent to Store",
-            data: newMainReq
-        });
+        if (shouldGoToStore) {
+            // Create in Main Store Request
+            // We strip _id to let mongo generate new one, or mapped fields
+            const mainReqPayload = stagingReq.toObject();
+            delete mainReqPayload._id;
+            delete mainReqPayload.__v;
+            mainReqPayload.reqstatus = 'Pending'; // Pending for Store Manager now
+
+            const newMainReq = await requisationds2.create(mainReqPayload);
+
+            // Update Staging Status
+            stagingReq.reqstatus = 'Approved';
+            await stagingReq.save();
+
+            return res.status(200).json({
+                success: true,
+                message: "Requisition Approved and Sent to Store",
+                data: newMainReq
+            });
+        } else {
+            await stagingReq.save();
+            return res.status(200).json({
+                success: true,
+                message: "Requisition partially approved by HOI.",
+                data: stagingReq
+            });
+        }
 
     } catch (error) {
         res.status(500).json({

@@ -17,7 +17,10 @@ const requisastiondsschema = new mongoose.Schema({
     storeid: { type: String },
     storename: { type: String },
     reqstatus: { type: String },
-    year: { type: String }
+    year: { type: String },
+    hoiApproverName: { type: String, default: '' },
+    ahoiApproverName: { type: String, default: '' },
+    remark: { type: String }
 });
 
 const requisationds2 = mongoose.model('requisitionds2', requisastiondsschema);

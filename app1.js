@@ -5263,6 +5263,15 @@ app.get('/api/v2/deletevendords', vendordsctlr1.deletevendords);
 app.get('/api/v2/getallvendords', vendordsctlr1.getallvendords);
 app.get('/api/v2/getvendordsbyid', vendordsctlr1.getvendordsbyid);
 
+// --- RFP Vendor Submissions --
+const rfpdsctlr = require('./controllers/rfpdsctlr');
+app.post('/api/v2/createrfp', rfpdsctlr.createrfp);
+app.get('/api/v2/getallrfps', rfpdsctlr.getallrfps);
+app.get('/api/v2/getrfpbyid', rfpdsctlr.getrfpbyid);
+app.post('/api/v2/submitrfp', rfpdsctlr.submitrfp);
+app.get('/api/v2/getallrfpsubmissions', rfpdsctlr.getallrfpsubmissions);
+app.post('/api/v2/approverfpsubmission', rfpdsctlr.approverfpsubmission);
+app.post('/api/v2/rejectrfpsubmission', rfpdsctlr.rejectrfpsubmission);
 
 const approvalconfigdsctlr = require('./controllers/approvalconfigdsctlr');
 

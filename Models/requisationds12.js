@@ -17,7 +17,13 @@ const requisastiondsschema = new mongoose.Schema({
     storeid: { type: String },
     storename: { type: String },
     reqstatus: { type: String },
-    year: { type: String }
+    year: { type: String },
+    approvalOption: { type: String, default: 'HOI' },
+    hoiApproved: { type: Boolean, default: false },
+    ahoiApproved: { type: Boolean, default: false },
+    hoiApproverName: { type: String, default: '' },
+    ahoiApproverName: { type: String, default: '' },
+    remark: { type: String, default: '' }
 });
 
 const requisationds12 = mongoose.model('requisationds12', requisastiondsschema);
