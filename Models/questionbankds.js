@@ -15,6 +15,7 @@ const questionbankdsschema = new mongoose.Schema({
     isfinalized: {type: Boolean, default: false},
     finalizedby: {type: String},
     finalizedat: {type: Date},
+    papertype: {type: String, enum: ['standard', 'dynamic'], default: 'standard'},
 }, {timestamps: true});
 
 const questionbankds = mongoose.model("questionbankds", questionbankdsschema);

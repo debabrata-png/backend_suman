@@ -491,6 +491,13 @@ app.get("/api/v2/getcounselorbyedpds", categoryag1ctlr.getcounselorbyedpds);
 const studentadmissioncontrollerds = require('./controllers/studentadmissioncontrollerds');
 app.post('/api/v2/confirmadmissionds', studentadmissioncontrollerds.confirmadmissionds);
 
+const dynamicformatctlr = require('./controllers/dynamicformatctlr');
+app.post('/api/v2/savedynamicformatds', dynamicformatctlr.saveDynamicFormat);
+app.get('/api/v2/getdynamicformatdsbycode', dynamicformatctlr.getDynamicFormatByCode);
+app.post('/api/v2/savedynamicquestionsds', dynamicformatctlr.saveDynamicQuestions);
+app.get('/api/v2/getdynamicquestionsds', dynamicformatctlr.getDynamicQuestions);
+app.post('/api/v2/generatequestionsai', dynamicformatctlr.generateQuestionsAI);
+
 const standardAdmissionController = require('./controllers/standardAdmissionController');
 app.post('/api/v2/admission/register', standardAdmissionController.registerStep0);
 app.post('/api/v2/admission/login', standardAdmissionController.loginToResume);
