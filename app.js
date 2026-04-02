@@ -5260,13 +5260,15 @@ const applicationCtrl = require('./controllers/applicationController');
 // Admission Form (template-based)
 app.post('/api/v2/createApplicationForm', applicationCtrl.createApplication);
 app.get('/api/v2/getApplicationForm', applicationCtrl.getFormMetadata);
+app.post('/api/v2/updateApplicationForm/:id', applicationCtrl.updateApplication);
+app.post('/api/v2/deleteApplicationForm/:id', applicationCtrl.deleteApplication);
 // Subject routes
 const subjectCtrl = require('./controllers/subjectController');
 app.post('/api/v2/subjects', subjectCtrl.createSubject);
 app.get('/api/v2/subjects', subjectCtrl.getAllSubjects);
 app.get('/api/v2/subjects/:id', subjectCtrl.getSubjectById);
-app.put('/api/v2/subjects/:id', subjectCtrl.updateSubject);
-app.delete('/api/v2/subjects/:id', subjectCtrl.deleteSubject);
+app.post('/api/v2/subjects/update/:id', subjectCtrl.updateSubject);
+app.post('/api/v2/subjects/delete/:id', subjectCtrl.deleteSubject);
 
 // Form metadata for admission form (programs + subjects by colid)
 app.get('/api/v2/formMetadata', subjectCtrl.getFormMetadata);

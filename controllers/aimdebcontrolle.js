@@ -22,8 +22,11 @@ exports.createApplicationForm = async (req, res) => {
   try {
     const formData = { ...req.body };
 
-    // Provide defaults for required fields that some form templates may not collect
-    if (!formData.email) formData.email = `pending_${Date.now()}@example.com`;
+    // Provide defaults for required fields if missing
+    //console.log('Incoming Admission Email (aimdeb):', formData.email);
+    if (formData.email === undefined || formData.email === null) {
+      formData.email = `pending_${Date.now()}@example.com`;
+    }
     if (!formData.password) formData.password = "TemporaryPass123!";
     if (!formData.phone) formData.phone = "0000000000";
     if (!formData.name && (formData.firstName || formData.lastName)) {
@@ -666,3 +669,29 @@ exports.getExamFilters = async (req, res) => {
 };
 
 
+
+exports.updateApplicationForm = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await applicationFormModel.findByIdAndUpdate(id, req.body, { new: true });
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Application form not found" });
+    }
+    return res.status(200).json({ success: true, message: "Application form updated successfully", data: updated });
+  } catch (error) {
+    res.status(400).json({ success: false, message: "Error updating application form", error: error.message });
+  }
+};
+
+exports.deleteApplicationForm = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await applicationFormModel.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Application form not found" });
+    }
+    return res.status(200).json({ success: true, message: "Application form deleted successfully" });
+  } catch (error) {
+    res.status(400).json({ success: false, message: "Error deleting application form", error: error.message });
+  }
+};

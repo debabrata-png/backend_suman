@@ -25,7 +25,10 @@ exports.createApplication = async (req, res) => {
         formData.applicationNo = lastApp ? lastApp.applicationNo + 1 : start;
 
         // Default mandatory fields if missing
-        if (!formData.email) formData.email = `pending_${Date.now()}@example.com`;
+        //console.log('Incoming Admission Email:', formData.email);
+        if (formData.email === undefined || formData.email === null) {
+            formData.email = `pending_${Date.now()}@example.com`;
+        }
         if (!formData.password) formData.password = "TemporaryPass123!";
         if (!formData.phone) formData.phone = "0000000000";
 
@@ -41,21 +44,47 @@ exports.createApplication = async (req, res) => {
     }
 };
 
+exports.updateApplication = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updated = await UnifiedAdmissionForm.findByIdAndUpdate(id, req.body, { new: true });
+        if (!updated) {
+            return res.status(404).json({ success: false, message: "Application not found" });
+        }
+        res.status(200).json({ success: true, data: updated });
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+};
+
+exports.deleteApplication = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deleted = await UnifiedAdmissionForm.findByIdAndDelete(id);
+        if (!deleted) {
+            return res.status(404).json({ success: false, message: "Application not found" });
+        }
+        res.status(200).json({ success: true, message: "Application deleted successfully" });
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+};
+
 
 exports.getFormMetadata = async (req, res) => {
     try {
         const { colid } = req.query;
-        
+
         // Fetch active programs for this college
         const programs = await MPrograms.find({ colid, status1: "Active" });
-        
+
         // Fetch all subjects
         const subjects = await SubjectConfig.find({});
 
         res.status(200).json({
             success: true,
-            programs, 
-            subjects  
+            programs,
+            subjects
         });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
