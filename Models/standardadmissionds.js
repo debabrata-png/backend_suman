@@ -29,12 +29,19 @@ const StandardAdmissionSchema = new mongoose.Schema({
     fatherName: { type: String },
     fatherEmail: { type: String },
     fatherMobile: { type: String },
-    fatherProfession: { type: String, enum: ['Self Employed', 'Service', 'Retired', 'Others'] },
+    fatherProfession: { type: String },
     
     motherName: { type: String },
     motherEmail: { type: String },
     motherMobile: { type: String },
-    motherProfession: { type: String, enum: ['Self Employed', 'Service', 'Retired', 'Others'] },
+    motherOccupation: { type: String }, // User mentioned occupation
+    motherProfession: { type: String },
+    
+    guardianName: { type: String },
+    guardianEmail: { type: String },
+    guardianMobile: { type: String },
+    guardianOccupation: { type: String },
+    guardianProfession: { type: String },
     
     familyIncome: { type: String, enum: ['Below 5L', '5L - 10L', 'Above 10L'] },
     applyForScholarship: { type: String, default: 'No' },
@@ -46,7 +53,8 @@ const StandardAdmissionSchema = new mongoose.Schema({
         state: { type: String },
         district: { type: String },
         city: { type: String },
-        pincode: { type: String }
+        pincode: { type: String },
+        nationality: { type: String }
     },
     isCorrespondenceSameAsPermanent: { type: Boolean, default: true },
     correspondenceAddress: {
@@ -55,7 +63,8 @@ const StandardAdmissionSchema = new mongoose.Schema({
         state: { type: String },
         district: { type: String },
         city: { type: String },
-        pincode: { type: String }
+        pincode: { type: String },
+        nationality: { type: String }
     },
 
     // Step 2: Progamme Details and Academic Qualification

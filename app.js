@@ -494,10 +494,10 @@ app.post('/api/v2/confirmadmissionds', studentadmissioncontrollerds.confirmadmis
 const standardAdmissionController = require('./controllers/standardAdmissionController');
 app.post('/api/v2/admission/register', standardAdmissionController.registerStep0);
 app.post('/api/v2/admission/login', standardAdmissionController.loginToResume);
-app.patch('/api/v2/admission/update/:id', standardAdmissionController.updateStepData);
+app.post('/api/v2/admission/update/:id', standardAdmissionController.updateStepData);
 app.get('/api/v2/admission/applications', standardAdmissionController.getAllApplications);
 app.get('/api/v2/admission/application/:id', standardAdmissionController.getApplicationDetails);
-app.patch('/api/v2/admission/status/:id', standardAdmissionController.updateApplicationStatus);
+app.post('/api/v2/admission/status/:id', standardAdmissionController.updateApplicationStatus);
 app.post('/api/v2/admission/approve/:id', standardAdmissionController.approveApplication);
 
 const filemasterdsctlr = require('./controllers/filemasterdsctlr');

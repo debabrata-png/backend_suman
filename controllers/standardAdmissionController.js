@@ -90,6 +90,7 @@ exports.getAllApplications = async (req, res) => {
         if (programLevel) query.programLevel = programLevel;
         if (status) query.status = status;
 
+        console.log("Fetching Applications with query:", query);
         const applications = await StandardAdmission.find(query).sort({ createdAt: -1 });
 
         res.status(200).json({
