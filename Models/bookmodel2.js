@@ -34,7 +34,7 @@ const bookSchema = new mongoose.Schema({
   accessid: {
     type: String,
     required: [true, "Access ID is required"],
-    unique: true,
+    unique: false,
     trim: true
   },
   category: {

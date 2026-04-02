@@ -25,19 +25,21 @@ const connectDB = async () => {
 const seeduser = async () => {
     await connectDB();
     try {
-        // const user = await User.find({ email: "admin1@ogi.com" });
+        const user = await User.find({ email: "7566664891" });
 
-        const user = await User.updateMany(
-            {
-                colid: { $in: colid }
-            },
-            { $set: { lastlogin: "2030-03-05T16:48:19+05:30" } }
-        )
+
+
+        // const user = await User.updateMany(
+        //     {
+        //         colid: { $in: colid }
+        //     },
+        //     { $set: { lastlogin: "2030-03-05T16:48:19+05:30" } }
+        // )
         // const user = await User.updateOne(
         //     {
-        //         email: "CPS72/2025@cps.edu.in"
+        //         email: "chandantiwari498@gmail.com"
         //     },
-        //     { $set: { rollno: "120 B" } }
+        //     { $set: { user: "chandantiwari498@gmail.com", email: "7000809725" } }
         // )
         // const user = await User.deleteOne(
         //     { email: "sumeet.kothari@cdgi.edu.in" }
