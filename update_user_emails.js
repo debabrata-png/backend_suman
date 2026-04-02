@@ -1,8 +1,8 @@
 const User = require("./Models/user");
 const mongoose = require("mongoose");
 
-const colid_list = [3098, 3090, 3091, 4000, 3098, 3096, 4004, 4008, 4010, 4012, 4014];
-const roles_list = ['NFS 1', 'NFS 2', 'NFS 3'];
+const colid_list = [3092, 3094];
+const roles_list = ['NFS 1', 'NFS 2', 'NFS 3', "NS", "NS3", "NON FACULTY", "DT", "DTS"];
 
 const connectDB = async () => {
     try {

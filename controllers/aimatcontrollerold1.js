@@ -3,8 +3,8 @@ const jwt = require("jsonwebtoken");
 const User = require("./../Models/user");
 const Kpi = require("./../Models/kpi");
 
-const socketManager = require("../socket");
-
+// const socketManager = require("../socket");
+// const io = socketManager.getIO();
 
 const AWS = require('aws-sdk');
 
@@ -317,7 +317,23 @@ const storerequisationds = require('./../Models/storerequisationds');
 const storepoorderds = require('./../Models/storepoorderds');
 const storepoitemsds = require('./../Models/storepoitemsds');
 const stockregisterds = require('./../Models/stockregisterds');
-const ChallanConfig = require("./../Models/challanconfig");
+
+const webcourses = require('./../Models/webcourses');
+
+// const WebEvents = require("../models/webevents");
+const WebEvents = require("./../Models/webevents");
+const WebBlogs = require("./../Models/webblogs");
+
+const keiquestionModel = require('./../Models/keiquestionModel2');
+
+const keiyear = require('./../Models/keiyear');
+
+const univampus = require('./../Models/univampus');
+const univfac = require('./../Models/univfac');
+const univdep = require('./../Models/univdep');
+
+
+
 
 
 
@@ -8078,7 +8094,7 @@ exports.createmfaccoursesbyfac = async (req, res) => {
       coursename: req.query.coursename,
       coursecode: req.query.coursecode,
       program: req.query.program,
-      programcode: req.query.programcode,
+      programode: req.query.programcode,
       semester: req.query.semester,
       hours: req.query.hours,
       type: req.query.type,
@@ -70198,7 +70214,6 @@ exports.createledgerstudbyfac = async (req, res) => {
       feecategory: req.query.feecategory,
       classdate: req.query.classdate,
       amount: req.query.amount,
-      balance: req.query.amount,
       paymode: req.query.paymode,
       paydetails: req.query.paydetails,
       installment: req.query.installment,
@@ -70213,6 +70228,7 @@ exports.createledgerstudbyfac = async (req, res) => {
     });
 
   } catch (err) {
+    //console.log(err);
     // res.status(400).json({
     //     status:'Failed',
     //     message: err
@@ -70249,14 +70265,11 @@ exports.updateledgerstudbyfac = async (req, res) => {
       //console.log(err1234);
     }
 
-    let finalStatus = req.query.status;
-    if (parseFloat(req.query.balance) <= 0) {
-      finalStatus = 'Paid';
-    } else if (finalStatus === 'Paid') {
-      finalStatus = 'Partial';
-    }
+    //console.log(req.query);
 
     const lcat1 = await ledgerstud.findByIdAndUpdate(req.query.id, {
+
+
       academicyear: req.query.academicyear,
       student: req.query.student,
       regno: req.query.regno,
@@ -70272,7 +70285,7 @@ exports.updateledgerstudbyfac = async (req, res) => {
       paymode: req.query.paymode,
       paydetails: req.query.paydetails,
       installment: req.query.installment,
-      status: finalStatus,
+      status: req.query.status,
       status1: 'Submitted',
       comments: 'NA'
     });
@@ -103408,69 +103421,6 @@ exports.getfeesbycatyrpl = async (req, res) => {
   }
 };
 
-exports.getfeescountbyfac = async (req, res) => {
-  try {
-    const user1 = req.query.user;
-    const colid1 = parseInt(req.query.colid);
-    const lcat1233 = await ledgerstud.aggregate([
-      {
-        $match: { colid: colid1, user: user1 }
-      },
-      {
-        $group: {
-          _id: '$academicyear',
-          total_attendance: { $sum: 1 }
-        }
-      }
-    ]);
-    //console.log(lcat1233);
-    return res.status(200).json({
-      status: 'Success',
-      data: {
-        classes: lcat1233
-      }
-    });
-  } catch (err) {
-    // res.status(400).json({
-    // status:'Failed',
-    // message: err
-    // });
-
-  }
-};
-
-
-exports.getfeessecondbyfac = async (req, res) => {
-  try {
-    const user1 = req.query.user;
-    const colid1 = parseInt(req.query.colid);
-    const lcat1233 = await ledgerstud.aggregate([
-      {
-        $match: { colid: colid1, user: user1 }
-      },
-      {
-        $group: {
-          _id: '$status',
-          total_attendance: { $sum: 1 }
-        }
-      }
-    ]);
-    //console.log(lcat1233);
-    return res.status(200).json({
-      status: 'Success',
-      data: {
-        classes: lcat1233
-      }
-    });
-  } catch (err) {
-    //   res.status(400).json({
-    //   status:'Failed',
-    //   message: err
-    //   });
-
-  }
-};
-
 exports.updateledgerpayment = async (req, res) => {
 
   try {
@@ -103527,6 +103477,7 @@ exports.updateledgerstud = async (req, res) => {
 
   try {
 
+    //console.log(req.query);
 
 
     const lcat1 = await ledgerstud.findByIdAndUpdate(req.query.id, {
@@ -103534,7 +103485,7 @@ exports.updateledgerstud = async (req, res) => {
 
 
       paiddate: req.query.paiddate,
-      paid: req.query.amount,
+      paid: req.query.paid,
       concession: req.query.concession,
       doclink: req.query.doclink,
       balance: req.query.balance,
@@ -103553,13 +103504,2816 @@ exports.updateledgerstud = async (req, res) => {
     return res.status(200).json({
       status: 'Success'
     });
+
+
+
+
   } catch (err) {
     // res.status(400).json({
     //     status:'Failed',
     //     message: err
     // });
+
   }
 };
+
+// 11/03/26
+
+
+exports.getwebcourses = async (req, res) => {
+  try {
+
+    const lcat1233 = await webcourses
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid)
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      lcat1233
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+// GET all courses
+exports.getwebcourses1 = async (req, res) => {
+
+  try {
+
+    const courses = await webcourses.find(
+      {
+        "colid": parseInt(req.query.colid),
+        "level": req.query.level
+      }
+    );
+
+    res.json(courses);
+
+  } catch (error) {
+
+    res.status(500).json({ error: error.message });
+
+  }
+
+};
+
+
+
+exports.getWebEvents = async (req, res) => {
+
+  try {
+
+    const colid = Number(req.query.colid);
+
+    if (!colid) {
+      return res.status(400).json({ message: "colid is required" });
+    }
+
+    const events = await WebEvents.find({ colid: colid });
+
+    res.json(events);
+
+  } catch (error) {
+
+    console.log(error);
+    res.status(500).json({ message: "Server error" });
+
+  }
+
+};
+
+
+exports.getBlogs = async (req, res) => {
+
+  try {
+
+    const colid = parseInt(req.query.colid);
+
+    if (!colid) {
+      return res.status(400).json({
+        success: false,
+        message: "colid is required"
+      });
+    }
+
+    const blogs = await WebBlogs.find({ colid: colid })
+      .sort({ createdon: -1 });
+
+    res.json({
+      success: true,
+      data: blogs
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
+  }
+
+};
+
+// 16/03/2026 1
+
+exports.getcrmleadstage = async (req, res) => {
+  try {
+    //const token=req.query.token;
+    //console.log(token);
+    let jwtuser = "";
+    let jwtcolid = "";
+    // const date1 = new Date(req.query.date1);
+    // const date2 = new Date(req.query.date2);
+    //date2.setDate(date1.getDate() + 1);
+    //date1.setDate(date1.getDate() - 180);
+
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await crmh1.aggregate([
+      {
+        $match: {
+          colid: colid1,
+          leadstatus: 'Active',
+          // classdate: {
+          //   $gte: date1,
+          //   $lte: date2,
+          // },
+        },
+      },
+      {
+        $group: {
+          // _id:['$regno','$name'],
+          // _id:['$regno','$name'],
+          _id: {
+            assignedto: "$assignedto",
+            pipeline_stage: "$pipeline_stage"
+          },
+          total_attendance: { $sum: 1 },
+        },
+      },
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: "Success",
+      data: {
+        classes: lcat1233,
+      },
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //    status:'Failed',
+    //     message: err
+    //  });
+  }
+};
+
+exports.getcrmleadstage1 = async (req, res) => {
+  try {
+    //const token=req.query.token;
+    //console.log(token);
+    let jwtuser = "";
+    let jwtcolid = "";
+    // const date1 = new Date(req.query.date1);
+    // const date2 = new Date(req.query.date2);
+    //date2.setDate(date1.getDate() + 1);
+    //date1.setDate(date1.getDate() - 180);
+
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await crmh1.aggregate([
+      {
+        $match: {
+          colid: colid1,
+          leadstatus: 'Active',
+          // classdate: {
+          //   $gte: date1,
+          //   $lte: date2,
+          // },
+        },
+      },
+      {
+        $group: {
+          // _id:['$regno','$name'],
+          // _id:['$regno','$name'],
+          _id: {
+            assignedto: "$assignedto",
+            pipeline_stage: "$pipeline_stage"
+          },
+          total_attendance: { $sum: 1 },
+        },
+      },
+      {
+        $sort: {
+          "_id.assignedto": 1   // ascending order
+        },
+      },
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: "Success",
+      data: {
+        classes: lcat1233,
+      },
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //    status:'Failed',
+    //     message: err
+    //  });
+  }
+};
+
+
+exports.getcrmleadstage2 = async (req, res) => {
+  try {
+    //const token=req.query.token;
+    //console.log(token);
+    let jwtuser = "";
+    let jwtcolid = "";
+    // const date1 = new Date(req.query.date1);
+    // const date2 = new Date(req.query.date2);
+    //date2.setDate(date1.getDate() + 1);
+    //date1.setDate(date1.getDate() - 180);
+
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await crmh1.aggregate([
+      {
+        $match: {
+          colid: colid1,
+          leadstatus: 'Active',
+          // classdate: {
+          //   $gte: date1,
+          //   $lte: date2,
+          // },
+        },
+      },
+      {
+        $group: {
+          // _id:['$regno','$name'],
+          // _id:['$regno','$name'],
+          _id: {
+            assignedto: "$assignedto",
+            pipeline_stage: "$pipeline_stage"
+          },
+          total_attendance: { $sum: 1 },
+        },
+      },
+      {
+        $sort: {
+          "_id.assignedto": 1   // ascending order
+        },
+      },
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: "Success",
+      data: {
+        classes: lcat1233,
+      },
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //    status:'Failed',
+    //     message: err
+    //  });
+  }
+};
+
+
+
+exports.getcrmleadstagepivot = async (req, res) => {
+  try {
+    //const token=req.query.token;
+    //console.log(token);
+    let jwtuser = "";
+    let jwtcolid = "";
+    // const date1 = new Date(req.query.date1);
+    // const date2 = new Date(req.query.date2);
+    //date2.setDate(date1.getDate() + 1);
+    //date1.setDate(date1.getDate() - 180);
+
+    const colid1 = parseInt(req.query.colid);
+
+    const lcat1233 = await crmh1.aggregate([
+      {
+        $match: {
+          colid: colid1,
+          leadstatus: "Active",
+          // classdate: {
+          //   $gte: date1,
+          //   $lte: date2,
+          // },
+        },
+      },
+
+      {
+        $group: {
+          _id: {
+            assignedto: "$assignedto",
+            stage: "$pipeline_stage",
+          },
+          count: { $sum: 1 },
+        },
+      },
+
+      {
+        $group: {
+          _id: "$_id.assignedto",
+          stages: {
+            $push: {
+              k: "$_id.stage",
+              v: "$count",
+            },
+          },
+          total: { $sum: "$count" },
+        },
+      },
+
+      {
+        $project: {
+          _id: 0,
+          assignedto: "$_id",
+          total: 1,
+          stageCounts: { $arrayToObject: "$stages" },
+        },
+      },
+
+      {
+        $replaceRoot: {
+          newRoot: {
+            $mergeObjects: [
+              { assignedto: "$assignedto", total: "$total" },
+              "$stageCounts",
+            ],
+          },
+        },
+      },
+
+      {
+        $sort: { assignedto: 1 },
+      },
+    ]);
+
+
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: "Success",
+      data: {
+        classes: lcat1233,
+      },
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //    status:'Failed',
+    //     message: err
+    //  });
+  }
+};
+
+// 16/03/26
+
+
+exports.getkeiquestionModelbyfac = async (req, res) => {
+  try {
+
+    const lcat1233 = await keiquestionModel
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid)
+            // 'user':req.query.user
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.keiquestionModeldocs = async (req, res) => {
+  try {
+
+    const lcat1233 = await keiquestionModel
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid)
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+exports.keiquestionModellinks = async (req, res) => {
+  try {
+
+    const lcat1233 = await keiquestionModel
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid),
+            'status1': { $ne: req.query.status1 }
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'Failed',
+      message: err
+    });
+
+  }
+};
+
+
+
+exports.createkeiquestionModelbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const pub1 = await keiquestionModel.create({
+      name: req.query.name,
+      colid: req.query.colid,
+      user: req.query.user,
+      year: req.query.year,
+      role: req.query.role,
+      category: req.query.category,
+      expectation: req.query.expectation,
+      status1: 'Submitted',
+      comments: 'NA'
+    });
+
+    //res.status(200).send('Hello world for all the tours through db new router');
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.updatekeiquestionModelbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const lcat1 = await keiquestionModel.findByIdAndUpdate(req.query.id, {
+
+
+      year: req.query.year,
+      role: req.query.role,
+      category: req.query.category,
+      expectation: req.query.expectation,
+      status1: 'Submitted',
+      comments: 'NA'
+    });
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+
+
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.updatekeiquestionModelcomments = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+    const lcat1 = await keiquestionModel.findByIdAndUpdate(req.query.id, {
+      status1: req.query.status1,
+      comments: req.query.comments
+
+    });
+
+    res.status(200).json({
+      status: 'Success'
+
+    });
+
+  } catch (err) {
+    res.status(400).json({
+      status: 'Failed',
+      message: err
+    });
+
+  }
+};
+
+exports.deletekeiquestionModelbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const user1 = req.query.user;
+    await keiquestionModel.findByIdAndDelete(req.query.id);
+
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+exports.getkeiquestionModelcount = async (req, res) => {
+  try {
+    //const user1=req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await keiquestionModel.aggregate([
+      {
+        $match: { colid: colid1 }
+      },
+      {
+        $group: {
+          _id: '$category',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    // status:'Failed',
+    // message: err
+    // });
+
+  }
+};
+
+
+exports.getkeiquestionModelsecond = async (req, res) => {
+  try {
+    //const user1=req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await keiquestionModel.aggregate([
+      {
+        $match: { colid: colid1 }
+      },
+      {
+        $group: {
+          _id: '$year',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //   status:'Failed',
+    //   message: err
+    //   });
+
+  }
+};
+
+
+
+exports.getkeiquestionModelcountbyfac = async (req, res) => {
+  try {
+    const user1 = req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await keiquestionModel.aggregate([
+      {
+        $match: { colid: colid1, user: user1 }
+      },
+      {
+        $group: {
+          _id: '$category',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    // status:'Failed',
+    // message: err
+    // });
+
+  }
+};
+
+
+exports.getkeiquestionModelsecondbyfac = async (req, res) => {
+  try {
+    const user1 = req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await keiquestionModel.aggregate([
+      {
+        $match: { colid: colid1, user: user1 }
+      },
+      {
+        $group: {
+          _id: '$year',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //   status:'Failed',
+    //   message: err
+    //   });
+
+  }
+};
+
+
+
+
+exports.getkeiyearbyfac = async (req, res) => {
+  try {
+
+    const lcat1233 = await keiyear
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid),
+            'user': req.query.user
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.keiyeardocs = async (req, res) => {
+  try {
+
+    const lcat1233 = await keiyear
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid)
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+exports.keiyearlinks = async (req, res) => {
+  try {
+
+    const lcat1233 = await keiyear
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid),
+            'status1': { $ne: req.query.status1 }
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'Failed',
+      message: err
+    });
+
+  }
+};
+
+
+
+exports.createkeiyearbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const pub1 = await keiyear.create({
+      name: req.query.name,
+      colid: req.query.colid,
+      user: req.query.user,
+      year: req.query.year,
+      yearstatus: req.query.yearstatus,
+      role: req.query.role,
+      status1: 'Submitted',
+      comments: 'NA'
+    });
+
+    //res.status(200).send('Hello world for all the tours through db new router');
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.updatekeiyearbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const lcat1 = await keiyear.findByIdAndUpdate(req.query.id, {
+
+
+      year: req.query.year,
+      yearstatus: req.query.yearstatus,
+      role: req.query.role,
+      status1: 'Submitted',
+      comments: 'NA'
+    });
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+
+
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.updatekeiyearcomments = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+    const lcat1 = await keiyear.findByIdAndUpdate(req.query.id, {
+      status1: req.query.status1,
+      comments: req.query.comments
+
+    });
+
+    res.status(200).json({
+      status: 'Success'
+
+    });
+
+  } catch (err) {
+    res.status(400).json({
+      status: 'Failed',
+      message: err
+    });
+
+  }
+};
+
+exports.deletekeiyearbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const user1 = req.query.user;
+    await keiyear.findByIdAndDelete(req.query.id);
+
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+exports.getkeiyearcount = async (req, res) => {
+  try {
+    //const user1=req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await keiyear.aggregate([
+      {
+        $match: { colid: colid1 }
+      },
+      {
+        $group: {
+          _id: '$role',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    // status:'Failed',
+    // message: err
+    // });
+
+  }
+};
+
+
+exports.getkeiyearsecond = async (req, res) => {
+  try {
+    //const user1=req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await keiyear.aggregate([
+      {
+        $match: { colid: colid1 }
+      },
+      {
+        $group: {
+          _id: '$year',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //   status:'Failed',
+    //   message: err
+    //   });
+
+  }
+};
+
+
+
+exports.getkeiyearcountbyfac = async (req, res) => {
+  try {
+    const user1 = req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await keiyear.aggregate([
+      {
+        $match: { colid: colid1, user: user1 }
+      },
+      {
+        $group: {
+          _id: '$role',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    // status:'Failed',
+    // message: err
+    // });
+
+  }
+};
+
+
+exports.getkeiyearsecondbyfac = async (req, res) => {
+  try {
+    const user1 = req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await keiyear.aggregate([
+      {
+        $match: { colid: colid1, user: user1 }
+      },
+      {
+        $group: {
+          _id: '$year',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //   status:'Failed',
+    //   message: err
+    //   });
+
+  }
+};
+
+
+
+
+exports.getkeiyearbymy = async (req, res) => {
+  try {
+
+    const lcat1233 = await keiyear
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid),
+            'role': req.query.role
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+// 27/03/2026
+
+
+exports.getunivampusbyfac = async (req, res) => {
+  try {
+
+    const lcat1233 = await univampus
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid),
+            'user': req.query.user
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.univampusdocs = async (req, res) => {
+  try {
+
+    const lcat1233 = await univampus
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid)
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+exports.univampuslinks = async (req, res) => {
+  try {
+
+    const lcat1233 = await univampus
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid),
+            'status1': { $ne: req.query.status1 }
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'Failed',
+      message: err
+    });
+
+  }
+};
+
+
+
+exports.createunivampusbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const pub1 = await univampus.create({
+      name: req.query.name,
+      colid: req.query.colid,
+      user: req.query.user,
+      campus: req.query.campus,
+      address: req.query.address,
+      type: req.query.type,
+      level: req.query.level,
+      status1: 'Submitted',
+      comments: 'NA'
+    });
+
+    //res.status(200).send('Hello world for all the tours through db new router');
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.updateunivampusbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const lcat1 = await univampus.findByIdAndUpdate(req.query.id, {
+
+
+      campus: req.query.campus,
+      address: req.query.address,
+      type: req.query.type,
+      level: req.query.level,
+      status1: 'Submitted',
+      comments: 'NA'
+    });
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+
+
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.updateunivampuscomments = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+    const lcat1 = await univampus.findByIdAndUpdate(req.query.id, {
+      status1: req.query.status1,
+      comments: req.query.comments
+
+    });
+
+    res.status(200).json({
+      status: 'Success'
+
+    });
+
+  } catch (err) {
+    res.status(400).json({
+      status: 'Failed',
+      message: err
+    });
+
+  }
+};
+
+exports.deleteunivampusbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const user1 = req.query.user;
+    await univampus.findByIdAndDelete(req.query.id);
+
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.getunivfacbyfac = async (req, res) => {
+  try {
+
+    const lcat1233 = await univfac
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid),
+            'user': req.query.user
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.univfacdocs = async (req, res) => {
+  try {
+
+    const lcat1233 = await univfac
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid)
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+exports.univfaclinks = async (req, res) => {
+  try {
+
+    const lcat1233 = await univfac
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid),
+            'status1': { $ne: req.query.status1 }
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'Failed',
+      message: err
+    });
+
+  }
+};
+
+
+
+exports.createunivfacbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const pub1 = await univfac.create({
+      name: req.query.name,
+      colid: req.query.colid,
+      user: req.query.user,
+      faculty: req.query.faculty,
+      description: req.query.description,
+      address: req.query.address,
+      campus: req.query.campus,
+      dean: req.query.dean,
+      deanemail: req.query.deanemail,
+      type: req.query.type,
+      level: req.query.level,
+      status1: 'Submitted',
+      comments: 'NA'
+    });
+
+    //res.status(200).send('Hello world for all the tours through db new router');
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.updateunivfacbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const lcat1 = await univfac.findByIdAndUpdate(req.query.id, {
+
+
+      faculty: req.query.faculty,
+      description: req.query.description,
+      address: req.query.address,
+      campus: req.query.campus,
+      dean: req.query.dean,
+      deanemail: req.query.deanemail,
+      type: req.query.type,
+      level: req.query.level,
+      status1: 'Submitted',
+      comments: 'NA'
+    });
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+
+
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.updateunivfaccomments = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+    const lcat1 = await univfac.findByIdAndUpdate(req.query.id, {
+      status1: req.query.status1,
+      comments: req.query.comments
+
+    });
+
+    res.status(200).json({
+      status: 'Success'
+
+    });
+
+  } catch (err) {
+    res.status(400).json({
+      status: 'Failed',
+      message: err
+    });
+
+  }
+};
+
+exports.deleteunivfacbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const user1 = req.query.user;
+    await univfac.findByIdAndDelete(req.query.id);
+
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.getunivdepbyfac = async (req, res) => {
+  try {
+
+    const lcat1233 = await univdep
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid),
+            'user': req.query.user
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.univdepdocs = async (req, res) => {
+  try {
+
+    const lcat1233 = await univdep
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid)
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+exports.univdeplinks = async (req, res) => {
+  try {
+
+    const lcat1233 = await univdep
+      .aggregate([
+        { $addFields: { 'userId': { $toString: '$_id' } } },
+        {
+          $lookup: {
+            from: 'supportingdocs',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'seminars'
+          }
+        },
+        {
+          $lookup: {
+            from: 'accrcomments',
+            localField: 'userId',
+            foreignField: 'field1',
+            as: 'allcomments'
+          }
+        },
+        {
+          $match: {
+            'colid': parseInt(req.query.colid),
+            'status1': { $ne: req.query.status1 }
+          }
+        }
+      ]);
+
+    //console.log(lcat1233);
+    res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'Failed',
+      message: err
+    });
+
+  }
+};
+
+
+
+exports.createunivdepbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const pub1 = await univdep.create({
+      name: req.query.name,
+      colid: req.query.colid,
+      user: req.query.user,
+      campus: req.query.campus,
+      faculty: req.query.faculty,
+      department: req.query.department,
+      description: req.query.description,
+      address: req.query.address,
+      hod: req.query.hod,
+      hodemail: req.query.hodemail,
+      type: req.query.type,
+      level: req.query.level,
+      status1: 'Submitted',
+      comments: 'NA'
+    });
+
+    //res.status(200).send('Hello world for all the tours through db new router');
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.updateunivdepbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const lcat1 = await univdep.findByIdAndUpdate(req.query.id, {
+
+
+      campus: req.query.campus,
+      faculty: req.query.faculty,
+      department: req.query.department,
+      description: req.query.description,
+      address: req.query.address,
+      hod: req.query.hod,
+      hodemail: req.query.hodemail,
+      type: req.query.type,
+      level: req.query.level,
+      status1: 'Submitted',
+      comments: 'NA'
+    });
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+
+
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.updateunivdepcomments = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+    const lcat1 = await univdep.findByIdAndUpdate(req.query.id, {
+      status1: req.query.status1,
+      comments: req.query.comments
+
+    });
+
+    res.status(200).json({
+      status: 'Success'
+
+    });
+
+  } catch (err) {
+    res.status(400).json({
+      status: 'Failed',
+      message: err
+    });
+
+  }
+};
+
+exports.deleteunivdepbyfac = async (req, res) => {
+
+  try {
+    const token = req.query.token;
+    //console.log(token);
+    let jwtuser = '';
+    let jwtcolid = '';
+    try {
+      const verified = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        (err123, verified) => {
+          if (err123) {
+            return res.status(401).json({
+              status: 'Unauthorized',
+              error: err123
+            });
+          }
+          jwtuser = verified.user;
+          jwtcolid = verified.colid;
+          return verified;
+        }
+      );
+    } catch (err1234) {
+      //console.log(err1234);
+    }
+
+    const user1 = req.query.user;
+    await univdep.findByIdAndDelete(req.query.id);
+
+    return res.status(200).json({
+      status: 'Success'
+    });
+
+
+  } catch (err) {
+    // res.status(400).json({
+    //     status:'Failed',
+    //     message: err
+    // });
+
+  }
+};
+
+
+exports.getunivampuscount = async (req, res) => {
+  try {
+    //const user1=req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univampus.aggregate([
+      {
+        $match: { colid: colid1 }
+      },
+      {
+        $group: {
+          _id: '$level',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    // status:'Failed',
+    // message: err
+    // });
+
+  }
+};
+
+
+exports.getunivampussecond = async (req, res) => {
+  try {
+    //const user1=req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univampus.aggregate([
+      {
+        $match: { colid: colid1 }
+      },
+      {
+        $group: {
+          _id: '$type',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //   status:'Failed',
+    //   message: err
+    //   });
+
+  }
+};
+
+
+
+exports.getunivampuscountbyfac = async (req, res) => {
+  try {
+    const user1 = req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univampus.aggregate([
+      {
+        $match: { colid: colid1, user: user1 }
+      },
+      {
+        $group: {
+          _id: '$level',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    // status:'Failed',
+    // message: err
+    // });
+
+  }
+};
+
+
+exports.getunivampussecondbyfac = async (req, res) => {
+  try {
+    const user1 = req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univampus.aggregate([
+      {
+        $match: { colid: colid1, user: user1 }
+      },
+      {
+        $group: {
+          _id: '$type',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //   status:'Failed',
+    //   message: err
+    //   });
+
+  }
+};
+
+
+
+
+exports.getunivfaccount = async (req, res) => {
+  try {
+    //const user1=req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univfac.aggregate([
+      {
+        $match: { colid: colid1 }
+      },
+      {
+        $group: {
+          _id: '$level',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    // status:'Failed',
+    // message: err
+    // });
+
+  }
+};
+
+
+exports.getunivfacsecond = async (req, res) => {
+  try {
+    //const user1=req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univfac.aggregate([
+      {
+        $match: { colid: colid1 }
+      },
+      {
+        $group: {
+          _id: '$type',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //   status:'Failed',
+    //   message: err
+    //   });
+
+  }
+};
+
+
+
+exports.getunivfaccountbyfac = async (req, res) => {
+  try {
+    const user1 = req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univfac.aggregate([
+      {
+        $match: { colid: colid1, user: user1 }
+      },
+      {
+        $group: {
+          _id: '$level',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    // status:'Failed',
+    // message: err
+    // });
+
+  }
+};
+
+
+exports.getunivfacsecondbyfac = async (req, res) => {
+  try {
+    const user1 = req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univfac.aggregate([
+      {
+        $match: { colid: colid1, user: user1 }
+      },
+      {
+        $group: {
+          _id: '$type',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //   status:'Failed',
+    //   message: err
+    //   });
+
+  }
+};
+
+
+
+
+exports.getunivdepcount = async (req, res) => {
+  try {
+    //const user1=req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univdep.aggregate([
+      {
+        $match: { colid: colid1 }
+      },
+      {
+        $group: {
+          _id: '$level',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    // status:'Failed',
+    // message: err
+    // });
+
+  }
+};
+
+
+exports.getunivdepsecond = async (req, res) => {
+  try {
+    //const user1=req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univdep.aggregate([
+      {
+        $match: { colid: colid1 }
+      },
+      {
+        $group: {
+          _id: '$type',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //   status:'Failed',
+    //   message: err
+    //   });
+
+  }
+};
+
+
+
+exports.getunivdepcountbyfac = async (req, res) => {
+  try {
+    const user1 = req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univdep.aggregate([
+      {
+        $match: { colid: colid1, user: user1 }
+      },
+      {
+        $group: {
+          _id: '$level',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    // res.status(400).json({
+    // status:'Failed',
+    // message: err
+    // });
+
+  }
+};
+
+
+exports.getunivdepsecondbyfac = async (req, res) => {
+  try {
+    const user1 = req.query.user;
+    const colid1 = parseInt(req.query.colid);
+    const lcat1233 = await univdep.aggregate([
+      {
+        $match: { colid: colid1, user: user1 }
+      },
+      {
+        $group: {
+          _id: '$type',
+          total_attendance: { $sum: 1 }
+        }
+      }
+    ]);
+    //console.log(lcat1233);
+    return res.status(200).json({
+      status: 'Success',
+      data: {
+        classes: lcat1233
+      }
+    });
+  } catch (err) {
+    //   res.status(400).json({
+    //   status:'Failed',
+    //   message: err
+    //   });
+
+  }
+};
+
+
+
+
 
 
 
