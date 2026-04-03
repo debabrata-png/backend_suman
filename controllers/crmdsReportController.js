@@ -200,9 +200,13 @@ exports.crmdsCounsellorWiseTotalLeadsReport = async (req, res) => {
         }
 
         if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
             filter.createdAt = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
+                $gte: start,
+                $lte: end
             };
         }
 
@@ -262,9 +266,13 @@ exports.crmdsSourceWiseLeadsReport = async (req, res) => {
         }
 
         if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
             filter.createdAt = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
+                $gte: start,
+                $lte: end
             };
         }
 
@@ -324,9 +332,13 @@ exports.crmdsPipelineStageWiseReport = async (req, res) => {
         }
 
         if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
             match.createdAt = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
+                $gte: start,
+                $lte: end
             };
         }
 
@@ -375,14 +387,19 @@ exports.crmdsDateWiseNewLeadsReport = async (req, res) => {
         };
 
         if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
             match.createdAt = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
+                $gte: start,
+                $lte: end
             };
         } else {
             // Default 30 days if no dates provided
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            thirtyDaysAgo.setHours(0, 0, 0, 0);
             match.createdAt = { $gte: thirtyDaysAgo };
         }
 
@@ -390,7 +407,7 @@ exports.crmdsDateWiseNewLeadsReport = async (req, res) => {
             { $match: match },
             {
                 $group: {
-                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "Asia/Kolkata" } },
                     total: { $sum: 1 }
                 }
             },
@@ -429,7 +446,11 @@ exports.crmdsLeadStatusStageReportV2 = async (req, res) => {
         const { colid, startDate, endDate, counselor } = req.body;
         let match = { colid };
         if (startDate && endDate) {
-            match.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            match.createdAt = { $gte: start, $lte: end };
         }
         if (counselor && counselor !== "ALL") {
             match.assignedto = counselor;
@@ -516,7 +537,11 @@ exports.crmdsCounsellorPerformanceReportV2 = async (req, res) => {
         const { colid, startDate, endDate } = req.body;
         let match = { colid };
         if (startDate && endDate) {
-            match.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            match.createdAt = { $gte: start, $lte: end };
         }
 
         // Aggregate: group by counsellor + pipeline_stage to get counts
@@ -579,7 +604,7 @@ exports.crmdsDailyCallingReportV2 = async (req, res) => {
             {
                 $group: {
                     _id: {
-                        date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                        date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "Asia/Kolkata" } },
                         counselor: "$assignedto"
                     },
                     count: { $sum: 1 }
@@ -594,7 +619,7 @@ exports.crmdsDailyCallingReportV2 = async (req, res) => {
             {
                 $group: {
                     _id: {
-                        date: { $dateToString: { format: "%Y-%m-%d", date: "$activity_date" } },
+                        date: { $dateToString: { format: "%Y-%m-%d", date: "$activity_date", timezone: "Asia/Kolkata" } },
                         counselor: "$performed_by",
                         stage: "$outcome"
                     },
@@ -751,7 +776,11 @@ exports.crmdsSourceWiseEnhancedReportV2 = async (req, res) => {
         const { colid, startDate, endDate } = req.body;
         let match = { colid };
         if (startDate && endDate) {
-            match.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            match.createdAt = { $gte: start, $lte: end };
         }
 
         // Fetch stages marked as is_final_stage (admission stages) for this colid
@@ -813,7 +842,11 @@ exports.crmdsConversionReportV2 = async (req, res) => {
         const { colid, startDate, endDate } = req.body;
         let match = { colid };
         if (startDate && endDate) {
-            match.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            match.createdAt = { $gte: start, $lte: end };
         }
 
         // Fetch stages marked as is_final_stage (admission stages) for this colid

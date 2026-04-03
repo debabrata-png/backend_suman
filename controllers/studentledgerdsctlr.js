@@ -59,15 +59,14 @@ exports.studentLedgerDateRangeReport = async (req, res) => {
     const matchCount = await Ledgerstud.countDocuments(matchStage);
     //console.log('[LedgerReport] matching documents:', matchCount);
 
-    // ── Shared group fields ────────────────────────────────────────────────
     const paymodeGroup = {
       totalCash:       { $sum: { $ifNull: ["$cash",       0] } },
       totalUPI:        { $sum: { $ifNull: ["$upi",        0] } },
       totalNEFT:       { $sum: { $ifNull: ["$neft",       0] } },
       totalCheque:     { $sum: { $ifNull: ["$cheque",     0] } },
       totalPG:         { $sum: { $ifNull: ["$pg",         0] } },
-      totalAmount:     { $sum: { $ifNull: ["$amount",     0] } },
-      totalPaid:       { $sum: { $ifNull: ["$paid",       0] } },
+      totalDue:        { $sum: { $cond: [{ $gt: ["$amount", 0] }, "$amount", 0] } },
+      totalPaid:       { $sum: { $cond: [{ $lt: ["$amount", 0] }, { $abs: "$amount" }, 0] } },
       totalConcession: { $sum: { $ifNull: ["$concession", 0] } },
       totalBalance:    { $sum: { $ifNull: ["$balance",    0] } },
       txnCount:        { $sum: 1 },
@@ -83,7 +82,11 @@ exports.studentLedgerDateRangeReport = async (req, res) => {
       totalPaidByPaymode: {
         $add: ["$totalCash", "$totalUPI", "$totalNEFT", "$totalCheque", "$totalPG"]
       },
-      totalAmount: 1, totalPaid: 1, totalConcession: 1, totalBalance: 1, txnCount: 1,
+      totalAmount: "$totalDue",
+      totalPaid: "$totalPaid",
+      totalConcession: 1,
+      totalBalance: 1,
+      txnCount: 1,
     };
 
     let reportRows;
@@ -190,8 +193,8 @@ exports.programWiseCashbookReport = async (req, res) => {
           NEFT:       { $sum: { $ifNull: ["$neft",       0] } },
           Cheque:     { $sum: { $ifNull: ["$cheque",     0] } },
           PG:         { $sum: { $ifNull: ["$pg",         0] } },
-          totalAmount:     { $sum: { $ifNull: ["$amount",     0] } },
-          totalPaid:       { $sum: { $ifNull: ["$paid",       0] } },
+          totalDue:        { $sum: { $cond: [{ $gt: ["$amount", 0] }, "$amount", 0] } },
+          totalPaid:       { $sum: { $cond: [{ $lt: ["$amount", 0] }, { $abs: "$amount" }, 0] } },
           totalConcession: { $sum: { $ifNull: ["$concession", 0] } },
           totalBalance:    { $sum: { $ifNull: ["$balance",    0] } },
           txnCount:        { $sum: 1 },
@@ -205,7 +208,9 @@ exports.programWiseCashbookReport = async (req, res) => {
           totalPaidByPaymode: {
             $add: ["$Cash", "$UPI", "$NEFT", "$Cheque", "$PG"]
           },
-          totalAmount: 1, totalPaid: 1, totalConcession: 1, totalBalance: 1, txnCount: 1,
+          totalAmount: "$totalDue",
+          totalPaid: "$totalPaid",
+          totalConcession: 1, totalBalance: 1, txnCount: 1,
         }
       },
       { $sort: { programcode: 1 } },
