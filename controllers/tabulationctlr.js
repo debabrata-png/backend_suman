@@ -107,97 +107,97 @@ exports.getCurrentSemesterMarks = async (req, res) => {
     const uniquePaperCodes = [...new Set(studentMarks.map(m => m.papercode))];
 
     const detailedMarks = uniquePaperCodes.map(papercode => {
-  const paperStructure = allRecords.find(r => r.papercode === papercode);
-  const studentMark = studentMarks.find(m => m.papercode === papercode);
+      const paperStructure = allRecords.find(r => r.papercode === papercode);
+      const studentMark = studentMarks.find(m => m.papercode === papercode);
 
-  if (!paperStructure || !studentMark) {
-    return null;
-  }
+      if (!paperStructure || !studentMark) {
+        return null;
+      }
 
-  if (!examCode) {
-    examCode = studentMark.examcode || '';
-    month = studentMark.month || '';
-    yearValue = studentMark.year || '';
-    status = studentMark.status || '';
-  }
+      if (!examCode) {
+        examCode = studentMark.examcode || '';
+        month = studentMark.month || '';
+        yearValue = studentMark.year || '';
+        status = studentMark.status || '';
+      }
 
-  const thObtained = studentMark.thobtained || 0;
-  const prObtained = studentMark.probtained || 0;
-  const iatObtained = studentMark.iatobtained || 0;
-  const iapObtained = studentMark.iapobtained || 0;
+      const thObtained = studentMark.thobtained || 0;
+      const prObtained = studentMark.probtained || 0;
+      const iatObtained = studentMark.iatobtained || 0;
+      const iapObtained = studentMark.iapobtained || 0;
 
-  const total = thObtained + prObtained + iatObtained + iapObtained;
+      const total = thObtained + prObtained + iatObtained + iapObtained;
 
-  const thMax = paperStructure.thmax || 0;
-  const prMax = paperStructure.prmax || 0;
-  const iatMax = paperStructure.iatmax || 0;
-  const iapMax = paperStructure.iapmax || 0;
+      const thMax = paperStructure.thmax || 0;
+      const prMax = paperStructure.prmax || 0;
+      const iatMax = paperStructure.iatmax || 0;
+      const iapMax = paperStructure.iapmax || 0;
 
-  const maxTotal = thMax + prMax + iatMax + iapMax;
+      const maxTotal = thMax + prMax + iatMax + iapMax;
 
-  const credit = calculateCredit(maxTotal);
-  const percentage = maxTotal > 0 ? parseFloat(((total / maxTotal) * 100).toFixed(2)) : 0;
-  const gradeInfo = getUGCGrade(percentage);
+      const credit = calculateCredit(maxTotal);
+      const percentage = maxTotal > 0 ? parseFloat(((total / maxTotal) * 100).toFixed(2)) : 0;
+      const gradeInfo = getUGCGrade(percentage);
 
-  totalCredits += credit;
-  totalGradePoints += gradeInfo.gradePoint * credit;
-  totalObtained += total;
-  totalMax += maxTotal;
+      totalCredits += credit;
+      totalGradePoints += gradeInfo.gradePoint * credit;
+      totalObtained += total;
+      totalMax += maxTotal;
 
-  // ✅ FIX: Only add paper code if it's F grade AND not already in array
-  if (gradeInfo.grade === 'F') {
-    if (!failedPapers.includes(paperStructure.papercode)) {
-      failedPapers.push(paperStructure.papercode);
-    }
-  }
+      // ✅ FIX: Only add paper code if it's F grade AND not already in array
+      if (gradeInfo.grade === 'F') {
+        if (!failedPapers.includes(paperStructure.papercode)) {
+          failedPapers.push(paperStructure.papercode);
+        }
+      }
 
-  return {
-    paperCode: paperStructure.papercode,
-    paperName: paperStructure.papername,
-    type: prMax > 0 ? 'P' : 'T',
-    thMax,
-    thObtained,
-    prMax,
-    prObtained,
-    iatMax,
-    iatObtained,
-    iapMax,
-    iapObtained,
-    credit,
-    total,
-    maxTotal,
-    percentage,
-    grade: gradeInfo.grade,
-    gradePoint: gradeInfo.gradePoint
-  };
-}).filter(m => m !== null);
+      return {
+        paperCode: paperStructure.papercode,
+        paperName: paperStructure.papername,
+        type: prMax > 0 ? 'P' : 'T',
+        thMax,
+        thObtained,
+        prMax,
+        prObtained,
+        iatMax,
+        iatObtained,
+        iapMax,
+        iapObtained,
+        credit,
+        total,
+        maxTotal,
+        percentage,
+        grade: gradeInfo.grade,
+        gradePoint: gradeInfo.gradePoint
+      };
+    }).filter(m => m !== null);
 
-const percentage = totalMax > 0 ? parseFloat(((totalObtained / totalMax) * 100).toFixed(2)) : 0;
-const sgpa = totalCredits > 0 ? parseFloat((totalGradePoints / totalCredits).toFixed(2)) : 0;
+    const percentage = totalMax > 0 ? parseFloat(((totalObtained / totalMax) * 100).toFixed(2)) : 0;
+    const sgpa = totalCredits > 0 ? parseFloat((totalGradePoints / totalCredits).toFixed(2)) : 0;
 
-// ✅ FIX: This line now correctly determines Pass/Fail
-res.status(200).json({
-  success: true,
-  currentSemester: {
-    program: program,
-    regulation: regulation,
-    branch: branch,
-    semester: semesterNum,
-    year: yearValue,
-    examCode,
-    month,
-    status,
-    marks: detailedMarks,
-    totalObtained,
-    totalMax,
-    percentage,
-    totalCredits,
-    sgpa,
-    totalGradePoints,
-    failedPapers: failedPapers.length > 0 ? failedPapers.join(', ') : 'None',
-    result: failedPapers.length > 0 ? 'Fail' : 'Pass'  // ✅ NOW WORKS CORRECTLY
-  }
-});
+    // ✅ FIX: This line now correctly determines Pass/Fail
+    res.status(200).json({
+      success: true,
+      currentSemester: {
+        program: program,
+        regulation: regulation,
+        branch: branch,
+        semester: semesterNum,
+        year: yearValue,
+        examCode,
+        month,
+        status,
+        marks: detailedMarks,
+        totalObtained,
+        totalMax,
+        percentage,
+        totalCredits,
+        sgpa,
+        totalGradePoints,
+        failedPapers: failedPapers.length > 0 ? failedPapers.join(', ') : 'None',
+        result: failedPapers.length > 0 ? 'Fail' : 'Pass'  // ✅ NOW WORKS CORRECTLY
+      }
+    });
 
 
   } catch (err) {
@@ -611,10 +611,8 @@ exports.getBulkTabulationData = async (req, res) => {
     // Get all unique students from ExamMarks2 for this semester/year
     const allMarks = await ExamMarks2.find({
       colid: Number(colid),
-      $and: [
-        { $or: [{ program: program }, { branch: program }, { programcode: program }] },
-        { $or: [{ branch: branch }, { program: branch }] }
-      ],
+      program: program,
+      branch: branch,
       regulation: regulation,
       semester: semester,
       year: year,

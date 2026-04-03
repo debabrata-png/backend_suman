@@ -6584,6 +6584,11 @@ app.post('/api/v2/generatechallanpayment', challancontroller.generatechallanpaym
 app.get('/api/v2/getChallanTemplate', challancontroller.getChallanTemplate);
 app.post('/api/v2/saveChallanTemplate', challancontroller.saveChallanTemplate);
 
+const challanissuancecontroller = require('./controllers/challanissuancecontroller');
+app.post('/api/v2/issuechallands', challanissuancecontroller.issueChallan);
+app.get('/api/v2/getchallanhistoryds', challanissuancecontroller.getChallanHistory);
+
+
 
 app.get('/api/v2/getserbplanbyfac', aimatcontroller.getserbplanbyfac);
 app.get('/api/v2/updateserbplanbyfac', aimatcontroller.updateserbplanbyfac);
