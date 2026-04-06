@@ -20,7 +20,8 @@ const requisastiondsschema = new mongoose.Schema({
     year: { type: String },
     hoiApproverName: { type: String, default: '' },
     ahoiApproverName: { type: String, default: '' },
-    remark: { type: String }
+    remark: { type: String },
+    indentNumber: { type: String }
 });
 
 const requisationds2 = mongoose.model('requisitionds2', requisastiondsschema);

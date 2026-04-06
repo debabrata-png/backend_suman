@@ -23,7 +23,8 @@ const requisastiondsschema = new mongoose.Schema({
     ahoiApproved: { type: Boolean, default: false },
     hoiApproverName: { type: String, default: '' },
     ahoiApproverName: { type: String, default: '' },
-    remark: { type: String, default: '' }
+    remark: { type: String, default: '' },
+    indentNumber: { type: String }
 });
 
 const requisationds12 = mongoose.model('requisationds12', requisastiondsschema);
