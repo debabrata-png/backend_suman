@@ -346,3 +346,126 @@ exports.studentLedgerReportds = async (req, res) => {
     // silently swallow errors (existing behaviour)
   }
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/v2/studentledgerwisereportds
+// Filters: colid*, programcode, academicyear, feeitem
+// Logic: If 'paid' is missing, it's calculated as amount - balance.
+// ─────────────────────────────────────────────────────────────────────────────
+exports.studentLedgerWiseReportds = async (req, res) => {
+  try {
+    const { colid, programcode, academicyear, feeitem, fromdate, todate } = req.query;
+
+    if (!colid) {
+      return res.status(400).json({ success: false, message: "colid is required" });
+    }
+
+    const matchStage = { colid: Number(colid) };
+
+    if (fromdate || todate) {
+      matchStage.$expr = { $or: [] };
+      
+      const dateToStr = (field) => ({
+        $dateToString: {
+          format: "%Y-%m-%d",
+          date: { $toDate: field },
+          timezone: "+05:30"
+        }
+      });
+
+      const classDateToStr = dateToStr("$classdate");
+      const paidDateToStr = dateToStr("$paiddate");
+
+      const buildRangeMatch = (dateFieldStr) => {
+        const conditions = [];
+        if (fromdate) conditions.push({ $gte: [dateFieldStr, fromdate] });
+        if (todate)   conditions.push({ $lte: [dateFieldStr, todate]   });
+        return conditions.length > 1 ? { $and: conditions } : conditions[0];
+      };
+
+      if (fromdate || todate) {
+        matchStage.$expr.$or.push(buildRangeMatch(classDateToStr));
+        matchStage.$expr.$or.push(buildRangeMatch(paidDateToStr));
+      }
+    }
+
+    if (programcode && programcode.trim()) matchStage.programcode = String(programcode);
+    if (academicyear && academicyear.trim()) matchStage.academicyear = String(academicyear);
+    if (feeitem && feeitem.trim()) matchStage.feeitem = String(feeitem);
+
+    const reportRows = await Ledgerstud.aggregate([
+      { $match: matchStage },
+      {
+        $addFields: {
+          // If paid is null or 0, calculate from amount and balance
+          effectivePaid: {
+            $cond: [
+              { $gt: [{ $ifNull: ["$paid", 0] }, 0] },
+              "$paid",
+              { $subtract: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$balance", 0] }] }
+            ]
+          },
+          statusText: {
+            $cond: [{ $eq: [{ $ifNull: ["$balance", 0] }, 0] }, "Full Payment", "Pending"]
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          regno: 1,
+          student: 1,
+          feeitem: 1,
+          amount: { $ifNull: ["$amount", 0] },
+          paid: "$effectivePaid",
+          balance: { $ifNull: ["$balance", 0] },
+          concession: { $ifNull: ["$concession", 0] },
+          cash: { $ifNull: ["$cash", 0] },
+          upi: { $ifNull: ["$upi", 0] },
+          cheque: { $ifNull: ["$cheque", 0] },
+          card: { $ifNull: ["$card", 0] },
+          pg: { $ifNull: ["$pg", 0] },
+          neft: { $ifNull: ["$neft", 0] },
+          status: "$statusText",
+          programcode: 1,
+          academicyear: 1,
+          classdate: 1
+        }
+      },
+      { $sort: { name: 1, classdate: -1 } }
+    ]);
+
+    // Calculate Grand Totals
+    const grandTotals = reportRows.reduce((acc, row) => {
+      acc.totalAmount += row.amount;
+      acc.totalPaid += row.paid;
+      acc.totalBalance += row.balance;
+      acc.totalConcession += row.concession;
+      acc.totalCash += row.cash;
+      acc.totalUPI += row.upi;
+      acc.totalCheque += row.cheque;
+      acc.totalCard += row.card;
+      acc.totalPG += row.pg;
+      acc.totalNEFT += row.neft;
+      return acc;
+    }, {
+      totalAmount: 0, totalPaid: 0, totalBalance: 0, totalConcession: 0,
+      totalCash: 0, totalUPI: 0, totalCheque: 0, totalCard: 0, totalPG: 0, totalNEFT: 0
+    });
+
+    res.status(200).json({
+      success: true,
+      data: reportRows,
+      grandTotals,
+      filters: { colid, programcode, academicyear, feeitem }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error generating student ledger wise report",
+      error: error.message
+    });
+  }
+};

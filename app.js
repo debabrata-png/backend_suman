@@ -5748,6 +5748,7 @@ const collegerepotdsctlr = require("./controllers/collegerepotdsctlr");
 
 app.get("/api/v2/studentledgerreportds", studentledgerdsctlr.studentLedgerReportds);
 app.get("/api/v2/studentledgerdaterangereportds", studentledgerdsctlr.studentLedgerDateRangeReport);
+app.get("/api/v2/studentledgerwisereportds", studentledgerdsctlr.studentLedgerWiseReportds);
 app.get("/api/v2/programwisecashbookreportds", studentledgerdsctlr.programWiseCashbookReport);
 app.get("/api/v2/getdistinctledgervaluesds", studentledgerdsctlr.getDistinctLedgerValues);
 app.get("/api/v2/collegerepledgerreportds", collegerepotdsctlr.collegeStudentLedgerReportds);
