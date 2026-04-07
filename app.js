@@ -15416,6 +15416,39 @@ app.use('/deletecbcsprogram', rcbcsdel);
 
 
 
+// Budget Module
+const budgettypedsctlr = require('./controllers/budgettypedsctlr');
+app.post('/api/v2/addbudgettypeds', budgettypedsctlr.addbudgettypeds);
+app.get('/api/v2/getallbudgettypeds', budgettypedsctlr.getallbudgettypeds);
+app.post('/api/v2/updatebudgettypeds', budgettypedsctlr.updatebudgettypeds);
+app.get('/api/v2/deletebudgettypeds', budgettypedsctlr.deletebudgettypeds);
+app.get('/api/v2/getbudgettypedsbyid', budgettypedsctlr.getbudgettypedsbyid);
+
+const budgetapproverdsctlr = require('./controllers/budgetapproverdsctlr');
+app.post('/api/v2/addbudgetapproverds', budgetapproverdsctlr.addbudgetapproverds);
+app.get('/api/v2/getallbudgetapproverds', budgetapproverdsctlr.getallbudgetapproverds);
+app.post('/api/v2/updatebudgetapproverds', budgetapproverdsctlr.updatebudgetapproverds);
+app.get('/api/v2/deletebudgetapproverds', budgetapproverdsctlr.deletebudgetapproverds);
+app.get('/api/v2/getbudgetapproverdsbyid', budgetapproverdsctlr.getbudgetapproverdsbyid);
+
+const budgetpodsctlr = require('./controllers/budgetpodsctlr');
+app.post('/api/v2/addbudgetpods', budgetpodsctlr.addbudgetpods);
+app.get('/api/v2/getallbudgetpods', budgetpodsctlr.getallbudgetpods);
+app.post('/api/v2/updatebudgetpods', budgetpodsctlr.updatebudgetpods);
+app.get('/api/v2/deletebudgetpods', budgetpodsctlr.deletebudgetpods);
+app.get('/api/v2/getbudgetpodsbyid', budgetpodsctlr.getbudgetpodsbyid);
+app.post('/api/v2/submitbudgetforapproval', budgetpodsctlr.submitbudgetforapproval);
+app.get('/api/v2/getbudgetsforapproval', budgetpodsctlr.getbudgetsforapproval);
+app.post('/api/v2/approvebudgetpods', budgetpodsctlr.approvebudgetpods);
+
+const budgetpocatdsctlr = require('./controllers/budgetpocatdsctlr');
+app.post('/api/v2/addbudgetpocatds', budgetpocatdsctlr.addbudgetpocatds);
+app.get('/api/v2/getallbudgetpocatds', budgetpocatdsctlr.getallbudgetpocatds);
+app.post('/api/v2/updatebudgetpocatds', budgetpocatdsctlr.updatebudgetpocatds);
+app.get('/api/v2/deletebudgetpocatds', budgetpocatdsctlr.deletebudgetpocatds);
+app.get('/api/v2/getbudgetpocatdsbybudgetid', budgetpocatdsctlr.getbudgetpocatdsbybudgetid);
+app.post('/api/v2/updatebudgetpocatdsamount', budgetpocatdsctlr.updatebudgetpocatdsamount);
+
 // start express
 const port = process.env.PORT || 3000;
 // app.listen(port, () => {
