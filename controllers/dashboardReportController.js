@@ -42,11 +42,34 @@ exports.getDashboardStats = async (req, res) => {
         // 4. LMS Reports (Total Videos/Content) - Placeholder until model confirmed
         const lmsStatsPromise = LmsVideo.countDocuments({ colid: colid });
 
-        const [classesToday, activeStaff, userStats, lmsStats] = await Promise.all([
+        // 5. Student Distribution (Academic Year, Semester, Program Code)
+        const studentDistributionPromise = User.aggregate([
+            { $match: { colid: parseInt(colid), role: 'Student' } },
+            {
+                $group: {
+                    _id: {
+                        admissionyear: "$admissionyear",
+                        semester: "$semester",
+                        programcode: "$programcode"
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: {
+                    "_id.admissionyear": -1,
+                    "_id.semester": 1,
+                    "_id.programcode": 1
+                }
+            }
+        ]);
+
+        const [classesToday, activeStaff, userStats, lmsStats, studentDistribution] = await Promise.all([
             classesTodayPromise,
             activeStaffPromise,
             userStatsPromise,
-            lmsStatsPromise
+            lmsStatsPromise,
+            studentDistributionPromise
         ]);
 
         // Format User Stats
@@ -61,7 +84,8 @@ exports.getDashboardStats = async (req, res) => {
                 classesConductedToday: classesToday,
                 staffPresentToday: activeStaff,
                 userDistribution: formattedUserStats,
-                lmsStats: lmsStats
+                lmsStats: lmsStats,
+                studentDistribution: studentDistribution
             }
         });
 
