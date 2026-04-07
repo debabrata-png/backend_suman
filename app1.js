@@ -3514,6 +3514,7 @@ app.post("/api/v2/createuser", applicationreviewctlr.createuser);
 // ✅ Fees endpoints
 //app.post("/api/v2/createfees", applicationreviewctlr.createfees);
 app.get("/api/v2/filterfees", applicationreviewctlr.filterfees);
+app.get("/api/v2/getfeesfiltervalues", applicationreviewctlr.getfeesfiltervalues);
 
 const hostelmodulectlr = require('./controllers/hostelmodulectlr');
 const hostelreportctlr = require("./controllers/hostelreportctlr.js");

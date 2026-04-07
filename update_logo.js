@@ -18,7 +18,7 @@ mongoose.connect(DB, {
 async function updateLogo() {
     try {
         const colid = 9050;
-        const newLogoUrl = 'https://eequeuestorage.blob.core.windows.net/staticfiles/jguni2/ee-form-widget/form-1/loginlogo.png';
+        const newLogoUrl = 'https://jguni.in/images/logo_2.png';
 
         const updatedInstitution = await Institution.findOneAndUpdate(
             { admincolid: colid },

@@ -174,3 +174,29 @@ exports.checkregno = async (req, res) => {
         // return res.status(500).json({ success: false, message: err.message });
     }
 }
+
+exports.getfeesfiltervalues = async (req, res) => {
+    try {
+        const { colid } = req.query;
+        const filter = colid ? { colid: Number(colid) } : {};
+        
+        const [programcodes, academicyears, semesters, feecategories] = await Promise.all([
+            Fees.distinct("programcode", filter),
+            Fees.distinct("academicyear", filter),
+            Fees.distinct("semester", filter),
+            Fees.distinct("feecategory", filter)
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                programcodes,
+                academicyears,
+                semesters,
+                feecategories
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
