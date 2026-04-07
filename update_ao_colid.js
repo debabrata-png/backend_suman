@@ -6,8 +6,9 @@ dotenv.config({ path: './config.env' });
 const DB = process.env.DATABASE2;
 
 // The list of colids you provided
-const oldColids = [3098, 3091, 3092, 3094, 4000, 3098, 3096, 4004, 4008, 4010, 4012, 4014];
-const targetColid = 9050; // Target colid for JG University
+const oldColids = [9050]
+//const oldColids = [3098, 3091, 3092, 3094, 4000, 3098, 3096, 4004, 4008, 4010, 4012, 4014];
+const targetColid = 3090; // Target colid for JG University
 
 async function updateAOColids() {
     try {
