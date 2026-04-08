@@ -64,8 +64,8 @@ exports.approverequisationds12 = async (req, res) => {
                 stagingReq.hoiApproverName = approverName || 'HOI';
             }
 
-            // Check if BOTH have approved for Manual option
-            if (stagingReq.hoiApproved && stagingReq.ahoiApproved) {
+            // Check if ANY have approved for Manual option
+            if (stagingReq.hoiApproved || stagingReq.ahoiApproved) {
                 shouldGoToStore = true;
             }
         } else {
