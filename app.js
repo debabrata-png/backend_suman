@@ -15448,6 +15448,7 @@ app.post('/api/v2/updatebudgetpocatds', budgetpocatdsctlr.updatebudgetpocatds);
 app.get('/api/v2/deletebudgetpocatds', budgetpocatdsctlr.deletebudgetpocatds);
 app.get('/api/v2/getbudgetpocatdsbybudgetid', budgetpocatdsctlr.getbudgetpocatdsbybudgetid);
 app.post('/api/v2/updatebudgetpocatdsamount', budgetpocatdsctlr.updatebudgetpocatdsamount);
+app.get('/api/v2/getavailbudgetbycategoryds', budgetpocatdsctlr.getavailbudgetbycategoryds);
 
 // start express
 const port = process.env.PORT || 3000;

@@ -76,3 +76,19 @@ exports.updatebudgetpocatdsamount = async (req, res) => {
         res.status(400).json({ status: 'fail', message: err });
     }
 };
+
+exports.getavailbudgetbycategoryds = async (req, res) => {
+    try {
+        const { colid, category, year } = req.query;
+        let query = { colid };
+        if (category) query.category = category;
+        if (year) query.year = year;
+        
+        const items = await budgetpocatds.find(query);
+        const totalAmount = items.reduce((sum, c) => sum + (c.amount || 0), 0);
+        
+        res.status(200).json({ status: 'success', data: { availableAmount: totalAmount } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err });
+    }
+};

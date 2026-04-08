@@ -19,6 +19,29 @@ exports.addstorepoitemsds2 = async (req, res) => {
 
         const newItem = await storepoitemsds2.create(req.body);
 
+        // --- Budget Deduction ---
+        if (req.body.category && req.body.year && req.body.colid && req.body.total) {
+            const budgetpocatds = require("../Models/budgetpocatds");
+            const budgetpods = require("../Models/budgetpods");
+            const pocats = await budgetpocatds.find({
+                colid: req.body.colid,
+                year: req.body.year,
+                category: req.body.category
+            });
+            if (pocats.length > 0) {
+                const pocat = pocats[0];
+                pocat.amount = (pocat.amount || 0) - Number(req.body.total);
+                await pocat.save();
+
+                if (pocat.budgetid) {
+                    const siblingCats = await budgetpocatds.find({ budgetid: pocat.budgetid });
+                    const newTotal = siblingCats.reduce((sum, c) => sum + (c.amount || 0), 0);
+                    await budgetpods.findByIdAndUpdate(pocat.budgetid, { amount: newTotal });
+                }
+            }
+        }
+        // --- End Budget Deduction ---
+
         // Update Store Requisition Status if linked
         if (req.body.storereqid) {
             const currentReq = await storerequisationds2.findById(req.body.storereqid);
@@ -111,6 +134,32 @@ exports.updatestorepoitemsds2 = async (req, res) => {
 
         const updatedItem = await storepoitemsds2.findByIdAndUpdate(id, req.body, { new: true });
 
+        // --- Budget Adjustment ---
+        if (req.body.total !== undefined && existingItem.total !== undefined && updatedItem.category && updatedItem.year && updatedItem.colid) {
+            const diff = Number(req.body.total) - Number(existingItem.total);
+            if (diff !== 0) {
+                const budgetpocatds = require("../Models/budgetpocatds");
+                const budgetpods = require("../Models/budgetpods");
+                const pocats = await budgetpocatds.find({
+                    colid: updatedItem.colid,
+                    year: updatedItem.year,
+                    category: updatedItem.category
+                });
+                if (pocats.length > 0) {
+                    const pocat = pocats[0];
+                    pocat.amount = (pocat.amount || 0) - diff;
+                    await pocat.save();
+                    
+                    if (pocat.budgetid) {
+                        const siblingCats = await budgetpocatds.find({ budgetid: pocat.budgetid });
+                        const newTotal = siblingCats.reduce((sum, c) => sum + (c.amount || 0), 0);
+                        await budgetpods.findByIdAndUpdate(pocat.budgetid, { amount: newTotal });
+                    }
+                }
+            }
+        }
+        // --- End Budget Adjustment ---
+
         // Update PR tracking if quantity changed
         if (req.body.quantity && req.body.quantity !== existingItem.quantity && existingItem.storereqid) {
             const storerequisationds2 = require("../Models/storerequisationds2");
@@ -154,6 +203,29 @@ exports.deletestorepoitemsds2 = async (req, res) => {
         }
 
         await storepoitemsds2.findByIdAndDelete(id);
+
+        // --- Budget Refund ---
+        if (existingItem.category && existingItem.year && existingItem.colid && existingItem.total) {
+            const budgetpocatds = require("../Models/budgetpocatds");
+            const budgetpods = require("../Models/budgetpods");
+            const pocats = await budgetpocatds.find({
+                colid: existingItem.colid,
+                year: existingItem.year,
+                category: existingItem.category
+            });
+            if (pocats.length > 0) {
+                const pocat = pocats[0];
+                pocat.amount = (pocat.amount || 0) + Number(existingItem.total);
+                await pocat.save();
+                
+                if (pocat.budgetid) {
+                    const siblingCats = await budgetpocatds.find({ budgetid: pocat.budgetid });
+                    const newTotal = siblingCats.reduce((sum, c) => sum + (c.amount || 0), 0);
+                    await budgetpods.findByIdAndUpdate(pocat.budgetid, { amount: newTotal });
+                }
+            }
+        }
+        // --- End Budget Refund ---
 
         if (existingItem.storereqid) {
             const storerequisationds2 = require("../Models/storerequisationds2");
