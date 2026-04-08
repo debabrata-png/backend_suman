@@ -15449,6 +15449,15 @@ app.get('/api/v2/deletebudgetpocatds', budgetpocatdsctlr.deletebudgetpocatds);
 app.get('/api/v2/getbudgetpocatdsbybudgetid', budgetpocatdsctlr.getbudgetpocatdsbybudgetid);
 app.post('/api/v2/updatebudgetpocatdsamount', budgetpocatdsctlr.updatebudgetpocatdsamount);
 app.get('/api/v2/getavailbudgetbycategoryds', budgetpocatdsctlr.getavailbudgetbycategoryds);
+app.get('/api/v2/getgroupwisecategorybudget', budgetpocatdsctlr.getgroupwisecategorybudget);
+
+const budgetgroupdsctlr = require('./controllers/budgetgroupdsctlr');
+app.post('/api/v2/addbudgetgroupds', budgetgroupdsctlr.addbudgetgroupds);
+app.get('/api/v2/getallbudgetgroupds', budgetgroupdsctlr.getallbudgetgroupds);
+app.post('/api/v2/updatebudgetgroupds', budgetgroupdsctlr.updatebudgetgroupds);
+app.get('/api/v2/deletebudgetgroupds', budgetgroupdsctlr.deletebudgetgroupds);
+app.get('/api/v2/getbudgetgroupsdistinct', budgetgroupdsctlr.getbudgetgroupsdistinct);
+app.get('/api/v2/getbudgetcategoriesbygroup', budgetgroupdsctlr.getbudgetcategoriesbygroup);
 
 // start express
 const port = process.env.PORT || 3000;

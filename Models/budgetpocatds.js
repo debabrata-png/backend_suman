@@ -8,6 +8,7 @@ const budgetpocatdsschema = new mongoose.Schema({
     budgetname: { type: String },
     budgetid: { type: mongoose.Types.ObjectId, ref: "budgetpods" },
     department: { type: String },
+    groupname: { type: String },
     category: { type: String },
     amount: { type: Number },
     budgettype: { type: String },

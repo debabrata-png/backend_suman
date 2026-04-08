@@ -92,3 +92,45 @@ exports.getavailbudgetbycategoryds = async (req, res) => {
         res.status(400).json({ status: 'fail', message: err });
     }
 };
+
+exports.getgroupwisecategorybudget = async (req, res) => {
+    try {
+        const { colid, year } = req.query;
+        let query = { colid: Number(colid) };
+        if (year) query.year = year;
+
+        const results = await budgetpocatds.aggregate([
+            { $match: query },
+            {
+                $group: {
+                    _id: { groupname: "$groupname", category: "$category" },
+                    totalAmount: { $sum: "$amount" }
+                }
+            },
+            {
+                $group: {
+                    _id: "$_id.groupname",
+                    categories: {
+                        $push: {
+                            category: "$_id.category",
+                            amount: "$totalAmount"
+                        }
+                    },
+                    groupTotal: { $sum: "$totalAmount" }
+                }
+            },
+            {
+                $project: {
+                    groupname: "$_id",
+                    categories: 1,
+                    groupTotal: 1,
+                    _id: 0
+                }
+            }
+        ]);
+
+        res.status(200).json({ status: 'success', results: results.length, data: { items: results } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err });
+    }
+};
