@@ -287,19 +287,21 @@ exports.getdynamicresult = async (req, res) => {
     const allowedCollections = {
       fees: 'fees',
       courses: 'Course',
-      studalloc1: 'studalloc1'
+      studalloc1: 'studalloc1',
+      user: "User"
     };
 
     const modelMap = {
       fees,
       User,
-      studalloc1
+      studalloc1,
+      mfaccourses
     };
 
     //const model=req.query.model;
 
     const { collection, filter = {}, projection = null, sort = null, limit = 50 } = req.body;
-    console.log('Collection ' + collection);
+    //console.log('Collection ' + collection);
 
 
 
@@ -315,7 +317,7 @@ exports.getdynamicresult = async (req, res) => {
 
     const results = await query.exec();
 
-    console.log(results);
+    //console.log(results);
 
     // const lcat1233=await mtestnewm.find({"_id" : ObjectId(req.query.id)});
     //const lcat1233=await mtestnewm.find({"_id" : req.query.id});
@@ -551,7 +553,7 @@ exports.bulkdeletetblds = async (req, res) => {
     // Validate each record has id field
     const errors = [];
     const ids = [];
-    
+
     data.forEach((record, index) => {
       const id = record._id || record.id;
       if (!id) {
