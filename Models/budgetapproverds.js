@@ -7,6 +7,7 @@ const budgetapproverdsschema = new mongoose.Schema({
     approvername: { type: String },
     approveremail: { type: String },
     levelofapproval: { type: String },
+    iscreateaccess: { type: Boolean },
     iseditaccess: { type: Boolean },
     isdeleteaccess: { type: Boolean },
     status: { type: String },
