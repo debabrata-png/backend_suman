@@ -64,12 +64,29 @@ exports.getDashboardStats = async (req, res) => {
             }
         ]);
 
-        const [classesToday, activeStaff, userStats, lmsStats, studentDistribution] = await Promise.all([
+        // 6. Department Distribution
+        const departmentDistributionPromise = User.aggregate([
+            { $match: { colid: parseInt(colid), role: 'Student' } },
+            {
+                $group: {
+                    _id: "$department",
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: {
+                    "count": -1
+                }
+            }
+        ]);
+
+        const [classesToday, activeStaff, userStats, lmsStats, studentDistribution, departmentDistribution] = await Promise.all([
             classesTodayPromise,
             activeStaffPromise,
             userStatsPromise,
             lmsStatsPromise,
-            studentDistributionPromise
+            studentDistributionPromise,
+            departmentDistributionPromise
         ]);
 
         // Format User Stats
@@ -85,7 +102,8 @@ exports.getDashboardStats = async (req, res) => {
                 staffPresentToday: activeStaff,
                 userDistribution: formattedUserStats,
                 lmsStats: lmsStats,
-                studentDistribution: studentDistribution
+                studentDistribution: studentDistribution,
+                departmentDistribution: departmentDistribution
             }
         });
 
