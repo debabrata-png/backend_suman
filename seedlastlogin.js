@@ -1,8 +1,8 @@
 const User = require("./Models/user");
 const mongoose = require("mongoose");
 
-const colid = [3098, 3090, 3091, 3092, 3094, 4000, 3098, 3096, 4004, 4008, 4010, 4012, 4014];
-//const colid = [30]
+//const colid = [3098, 3090, 3091, 3092, 3094, 4000, 3098, 3096, 4004, 4008, 4010, 4012, 4014];
+const colid = [30]
 const users = [
     {
         email: "pratima.pandey@careercollegeindia.com",

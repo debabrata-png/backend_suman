@@ -5292,6 +5292,7 @@ const leadadminds = require('./controllers/leadadminds.js');
 app.get('/api/v2/getallleadsadmin', leadadminds.getallleadsdsadmin);
 app.get('/api/v2/leads/daterange', leadadminds.getLeadsByDateRange);
 app.post('/api/v2/leads/bulk-assign', leadadminds.bulkAssignCounselor);
+app.post('/api/v2/leads/bulk-transfer-subcounselor', leadadminds.bulkTransferSubCounselor);
 app.post('/api/v2/leads/bulk-stage', leadadminds.bulkChangeLeadStage);
 
 

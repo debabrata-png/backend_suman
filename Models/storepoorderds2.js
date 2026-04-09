@@ -74,7 +74,8 @@ const storepoorderdsschema = new mongoose.Schema({
     },
     localOrderType: {
         type: String // 'LPO', 'Cash Memo', 'Imprest'
-    }
+    },
+    departmentname: { type: String }
 }, { timestamps: true });
 
 const storepoorderds2 = mongoose.model('storepoorderds2', storepoorderdsschema);

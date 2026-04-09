@@ -160,7 +160,7 @@ exports.checkduplicateds = async (req, res) => {
 // Get all leads (USER-BASED ACCESS)
 exports.getallleadsds = async (req, res) => {
   try {
-    const { colid, user, pipeline_stage, lead_temperature, source, search } = req.query;
+    const { colid, user, pipeline_stage, lead_temperature, source, search, subcounselloremail, assignedto } = req.query;
 
     // Base query: Match leads where:
     // 1. Lead belongs to this organization (colid matches)
@@ -170,11 +170,20 @@ exports.getallleadsds = async (req, res) => {
       $or: [
         { user: user },        // Admin/Owner sees all their organization's leads
         { assignedto: user },   // Counsellor sees leads assigned to them
+        { subcounselloremail: user }, // Sub-counselor sees leads assigned to them
         { countercounserloeremail: user }, // Counter-counsellor sees leads for visit
         { assignedto: null },    // Unassigned leads
         { assignedto: "" }
       ]
     };
+
+    if (subcounselloremail) {
+        query.subcounselloremail = subcounselloremail;
+    }
+
+    if (assignedto) {
+        query.assignedto = assignedto;
+    }
 
     // Apply filters
     if (pipeline_stage && pipeline_stage !== 'All') {
@@ -580,7 +589,7 @@ exports.getleadanalyticsds = async (req, res) => {
 exports.deleteleadds = async (req, res) => {
   try {
     const { id } = req.params;
-    const { user } = req.query;
+    const { user, role } = req.query;
 
     const lead = await crmh1.findById(id);
 
@@ -588,9 +597,9 @@ exports.deleteleadds = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
 
-    // Check if the requesting user is the admin (owner)
-    if (lead.user !== user) {
-      return res.status(403).json({ success: false, message: 'Unauthorized. Only the admin can delete leads.' });
+    // Check if the requesting user has the right role to delete
+    if (role !== 'Admin' && role !== 'CRM' && role !== 'All') {
+      return res.status(403).json({ success: false, message: 'Unauthorized. Only Admin, CRM, or All roles can delete leads.' });
     }
 
     // Delete associated activities

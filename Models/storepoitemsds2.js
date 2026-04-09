@@ -63,6 +63,7 @@ const storepoitemsdsschema = new mongoose.Schema({
     igst: { type: Number },
     total: { type: Number },    // Line total (qty * priceWithTax or just total)
     unitPriceWithTax: { type: Number },
+    departmentname: { type: String },
     status1: {
         type: String
     },

@@ -277,6 +277,12 @@ const crmh1schema = new mongoose.Schema({
     },
     location: {
         type: String
+    },
+    subcounsellorname: {
+        type: String
+    },
+    subcounselloremail: {
+        type: String
     }
 }, {
     timestamps: true

@@ -121,3 +121,29 @@ exports.bulkChangeLeadStage = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// Bulk Transfer to Sub-Counselor
+exports.bulkTransferSubCounselor = async (req, res) => {
+  try {
+    const { leadIds, subCounselorEmail, subCounselorName } = req.body;
+
+    if (!leadIds || !Array.isArray(leadIds) || !subCounselorEmail) {
+      return res.status(400).json({ success: false, message: 'Invalid input' });
+    }
+
+    const result = await crmh1.updateMany(
+      { _id: { $in: leadIds } },
+      { 
+        $set: { 
+          subcounselloremail: subCounselorEmail,
+          subcounsellorname: subCounselorName 
+        } 
+      }
+    );
+
+    res.status(200).json({ success: true, message: 'Leads transferred to sub-counselor successfully', result });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

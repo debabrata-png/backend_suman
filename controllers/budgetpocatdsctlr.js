@@ -79,10 +79,11 @@ exports.updatebudgetpocatdsamount = async (req, res) => {
 
 exports.getavailbudgetbycategoryds = async (req, res) => {
     try {
-        const { colid, category, year } = req.query;
+        const { colid, category, year, department } = req.query;
         let query = { colid };
         if (category) query.category = category;
         if (year) query.year = year;
+        if (department) query.department = department;
         
         const items = await budgetpocatds.find(query);
         const totalAmount = items.reduce((sum, c) => sum + (c.amount || 0), 0);
@@ -124,6 +125,93 @@ exports.getgroupwisecategorybudget = async (req, res) => {
                     groupname: "$_id",
                     categories: 1,
                     groupTotal: 1,
+                    _id: 0
+                }
+            }
+        ]);
+
+        res.status(200).json({ status: 'success', results: results.length, data: { items: results } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err });
+    }
+};
+
+exports.getcategorywisebudget = async (req, res) => {
+    try {
+        const { colid, year } = req.query;
+        let query = { colid: Number(colid) };
+        if (year) query.year = year;
+
+        const results = await budgetpocatds.aggregate([
+            { $match: query },
+            {
+                $group: {
+                    _id: { category: "$category", groupname: "$groupname" },
+                    totalAmount: { $sum: "$amount" }
+                }
+            },
+            {
+                $group: {
+                    _id: "$_id.category",
+                    groups: {
+                        $push: {
+                            groupname: "$_id.groupname",
+                            amount: "$totalAmount"
+                        }
+                    },
+                    categoryTotal: { $sum: "$totalAmount" }
+                }
+            },
+            {
+                $sort: { categoryTotal: -1 }
+            },
+            {
+                $project: {
+                    category: "$_id",
+                    groups: 1,
+                    categoryTotal: 1,
+                    _id: 0
+                }
+            }
+        ]);
+
+        res.status(200).json({ status: 'success', results: results.length, data: { items: results } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err });
+    }
+};
+
+exports.getdepartmentwisebudget = async (req, res) => {
+    try {
+        const { colid, year } = req.query;
+        let query = { colid: Number(colid) };
+        if (year) query.year = year;
+
+        // Note: Grouping budgetpods by department for "Main Budget Report"
+        const results = await budgetpods.aggregate([
+            { $match: query },
+            {
+                $group: {
+                    _id: "$department",
+                    budgets: {
+                        $push: {
+                            budgetname: "$budgetname",
+                            amount: "$amount",
+                            status: "$status",
+                            budgettype: "$budgettype"
+                        }
+                    },
+                    departmentTotal: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { departmentTotal: -1 }
+            },
+            {
+                $project: {
+                    department: "$_id",
+                    budgets: 1,
+                    departmentTotal: 1,
                     _id: 0
                 }
             }

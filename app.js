@@ -491,6 +491,14 @@ app.get("/api/v2/getcounselorbyedpds", categoryag1ctlr.getcounselorbyedpds);
 const studentadmissioncontrollerds = require('./controllers/studentadmissioncontrollerds');
 app.post('/api/v2/confirmadmissionds', studentadmissioncontrollerds.confirmadmissionds);
 
+const subcounsellordsctlr = require('./controllers/subcounsellordsctlr');
+app.get('/api/v2/getsubcounselorsbycounselords', subcounsellordsctlr.getsubcounselorsbycounselords);
+app.post('/api/v2/createsubcounsellords', subcounsellordsctlr.createsubcounsellords);
+app.get('/api/v2/getallsubcounsellords', subcounsellordsctlr.getallsubcounsellords);
+app.post('/api/v2/updatesubcounsellords', subcounsellordsctlr.updatesubcounsellords);
+app.delete('/api/v2/deletesubcounsellords/:id', subcounsellordsctlr.deletesubcounsellords);
+
+
 const dynamicformatctlr = require('./controllers/dynamicformatctlr');
 app.post('/api/v2/savedynamicformatds', dynamicformatctlr.saveDynamicFormat);
 app.get('/api/v2/getdynamicformatdsbycode', dynamicformatctlr.getDynamicFormatByCode);
@@ -5945,6 +5953,7 @@ app.get('/api/v2/deleteleadds/:id', crmh1ctlrds.deleteleadds);
 app.get('/api/v2/getallleadsadmin', leadadminds.getallleadsdsadmin);
 app.get('/api/v2/leads/daterange', leadadminds.getLeadsByDateRange);
 app.post('/api/v2/leads/bulk-assign', leadadminds.bulkAssignCounselor);
+app.post('/api/v2/leads/bulk-transfer-subcounselor', leadadminds.bulkTransferSubCounselor);
 app.post('/api/v2/leads/bulk-stage', leadadminds.bulkChangeLeadStage);
 
 
@@ -15450,6 +15459,8 @@ app.get('/api/v2/getbudgetpocatdsbybudgetid', budgetpocatdsctlr.getbudgetpocatds
 app.post('/api/v2/updatebudgetpocatdsamount', budgetpocatdsctlr.updatebudgetpocatdsamount);
 app.get('/api/v2/getavailbudgetbycategoryds', budgetpocatdsctlr.getavailbudgetbycategoryds);
 app.get('/api/v2/getgroupwisecategorybudget', budgetpocatdsctlr.getgroupwisecategorybudget);
+app.get('/api/v2/getcategorywisebudget', budgetpocatdsctlr.getcategorywisebudget);
+app.get('/api/v2/getdepartmentwisebudget', budgetpocatdsctlr.getdepartmentwisebudget);
 
 const budgetgroupdsctlr = require('./controllers/budgetgroupdsctlr');
 app.post('/api/v2/addbudgetgroupds', budgetgroupdsctlr.addbudgetgroupds);
@@ -15648,6 +15659,17 @@ app.post('/api/v2/deletefeesprovds', feesprovdsController.deleteFeesprovds);
 app.post('/api/v2/bulkfeesprovds', feesprovdsController.bulkUpload);
 app.get('/api/v2/exportfeesprovds', feesprovdsController.exportData);
 app.get('/api/v2/templatefeesprovds', feesprovdsController.downloadTemplate);
+
+// Department Indent CRUD API
+const departmentindentctlrds = require('./controllers/departmentindentctlrds');
+
+app.post('/api/v2/getdepartmentindentds', departmentindentctlrds.getDepartmentIndentds);
+app.post('/api/v2/adddepartmentindentds', departmentindentctlrds.createDepartmentIndentds);
+app.post('/api/v2/updatedepartmentindentds', departmentindentctlrds.updateDepartmentIndentds);
+app.post('/api/v2/deletedepartmentindentds', departmentindentctlrds.deleteDepartmentIndentds);
+app.post('/api/v2/bulkdepartmentindentds', departmentindentctlrds.bulkUpload);
+app.get('/api/v2/exportdepartmentindentds', departmentindentctlrds.exportData);
+app.get('/api/v2/templatedepartmentindentds', departmentindentctlrds.downloadTemplate);
 
 const startLoginLoop = require('./loop');
 startLoginLoop();

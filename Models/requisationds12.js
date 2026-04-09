@@ -23,6 +23,9 @@ const requisastiondsschema = new mongoose.Schema({
     ahoiApproved: { type: Boolean, default: false },
     hoiApproverName: { type: String, default: '' },
     ahoiApproverName: { type: String, default: '' },
+    hoiapproveruserid: { type: String, default: '' },
+    ahoiapproveruserid: { type: String, default: '' },
+    departmentname: { type: String, default: '' },
     remark: { type: String, default: '' },
     indentNumber: { type: String }
 });

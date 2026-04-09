@@ -21,7 +21,8 @@ const storerequisationschema = new mongoose.Schema({
     unit: { type: String },             // e.g. 'Nos', 'Kg', 'Box'
     itemid: { type: String },           // Master item _id reference
     category: { type: String },
-    itemtype: { type: String }
+    itemtype: { type: String },
+    departmentname: { type: String }
 });
 
 const storerequisationds2 = mongoose.model('storerequisationds2', storerequisationschema);
