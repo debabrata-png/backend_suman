@@ -1,5 +1,4 @@
 const DepartmentIndentds = require('../Models/departmentindentds');
-const ExcelJS = require('exceljs');
 
 // Get all indents for a colid
 exports.getDepartmentIndentds = async (req, res) => {
@@ -66,16 +65,11 @@ exports.bulkUpload = async (req, res) => {
     }
     try {
         const formattedData = data.map(item => {
-            const finalCreatorUserid = item.creatoruserid || user;
-            const finalCreatorName = item.creatorname || name;
-
             return {
                 ...item,
                 colid: Number(colid),
-                creatoruserid: finalCreatorUserid,
-                creatorname: finalCreatorName,
-                user: user, // Map current creator to required 'user' field
-                name: name,   // Map current creator to required 'name' field
+                user: user, // Mandatory: Person uploading the record
+                name: name, // Mandatory: Person uploading the record
                 status: item.status || 'Active'
             };
         });
@@ -84,83 +78,5 @@ exports.bulkUpload = async (req, res) => {
     } catch (err) {
         console.error("Error in bulk upload:", err);
         res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-// Export data to Excel
-exports.exportData = async (req, res) => {
-    const { colid } = req.query;
-    try {
-        const data = await DepartmentIndentds.find({ colid: Number(colid) });
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Department Indents');
-
-        worksheet.columns = [
-            { header: 'Name', key: 'name', width: 25 },
-            { header: 'Department', key: 'departmentname', width: 25 },
-            { header: 'Institution', key: 'institution', width: 20 },
-            { header: 'Creator Name', key: 'creatorname', width: 20 },
-            { header: 'HOI Approver', key: 'hoiapprovername', width: 20 },
-            { header: 'Assistant HOI', key: 'ahoiapprovername', width: 20 },
-            { header: 'Status', key: 'status', width: 15 },
-            { header: 'Remarks', key: 'remarks', width: 30 }
-        ];
-
-        data.forEach(item => worksheet.addRow(item));
-
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=department_indents.xlsx');
-
-        await workbook.xlsx.write(res);
-        res.status(200).end();
-    } catch (err) {
-        console.error("Error exporting data:", err);
-        res.status(500).send("Export failed");
-    }
-};
-
-// Download template
-exports.downloadTemplate = async (req, res) => {
-    try {
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Template');
-
-        worksheet.columns = [
-            { header: 'departmentname', key: 'departmentname', width: 25 },
-            { header: 'institution', key: 'institution', width: 20 },
-            { header: 'institutionshort', key: 'institutionshort', width: 15 },
-            { header: 'creatorname', key: 'creatorname', width: 20 },
-            { header: 'creatoruserid', key: 'creatoruserid', width: 25 },
-            { header: 'hoiapprovername', key: 'hoiapprovername', width: 20 },
-            { header: 'hoiapproveruserid', key: 'hoiapproveruserid', width: 25 },
-            { header: 'ahoiapprovername', key: 'ahoiapprovername', width: 20 },
-            { header: 'ahoiapproveruserid', key: 'ahoiapproveruserid', width: 25 },
-            { header: 'remarks', key: 'remarks', width: 30 },
-            { header: 'status', key: 'status', width: 15 }
-        ];
-
-        // Add a sample row
-        worksheet.addRow({
-            departmentname: 'CSE',
-            institution: 'Sample Institution',
-            institutionshort: 'SI',
-            creatorname: 'John Doe',
-            creatoruserid: 'john.doe@example.com',
-            hoiapprovername: 'Approver Name',
-            hoiapproveruserid: 'approver@email.com',
-            ahoiapprovername: 'Asst. Approver',
-            ahoiapproveruserid: 'asst@email.com',
-            remarks: 'Bulk upload sample',
-            status: 'Pending'
-        });
-
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=department_indent_template.xlsx');
-
-        await workbook.xlsx.write(res);
-        res.status(200).end();
-    } catch (err) {
-        console.error("Error generating template:", err);
-        res.status(500).send("Template generation failed");
     }
 };

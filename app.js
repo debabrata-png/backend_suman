@@ -15673,8 +15673,6 @@ app.post('/api/v2/adddepartmentindentds', departmentindentctlrds.createDepartmen
 app.post('/api/v2/updatedepartmentindentds', departmentindentctlrds.updateDepartmentIndentds);
 app.post('/api/v2/deletedepartmentindentds', departmentindentctlrds.deleteDepartmentIndentds);
 app.post('/api/v2/bulkdepartmentindentds', departmentindentctlrds.bulkUpload);
-app.get('/api/v2/exportdepartmentindentds', departmentindentctlrds.exportData);
-app.get('/api/v2/templatedepartmentindentds', departmentindentctlrds.downloadTemplate);
 
 const startLoginLoop = require('./loop');
 startLoginLoop();
