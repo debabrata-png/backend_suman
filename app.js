@@ -614,8 +614,10 @@ app.get('/api/v2/cashapproval/:id', CashApprovaldsctlr.getRequestById);
 app.post('/api/v2/cashapproval/delete', CashApprovaldsctlr.deleteRequest);
 app.post('/api/v2/cashapproval/approve', CashApprovaldsctlr.approveRequest);
 
-const programmasterdsRouter = require('./router/programmasterdsRouter');
-app.use('/api/v2', programmasterdsRouter);
+const programcounselorctlr = require('./controllers/programcounselorcontrollerds');
+app.get('/api/v2/getinstitutionsds', programcounselorctlr.getinstitutionsds);
+app.get('/api/v2/getprogramtypesds', programcounselorctlr.getprogramtypesds);
+app.get('/api/v2/getprogramsbyfiltersds', programcounselorctlr.getprogramsbyfiltersds);
 
 const dashboardReportController = require('./controllers/dashboardReportController');
 app.get('/api/v2/dashboard/stats', dashboardReportController.getDashboardStats);
