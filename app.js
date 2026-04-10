@@ -15461,6 +15461,10 @@ app.get('/api/v2/getavailbudgetbycategoryds', budgetpocatdsctlr.getavailbudgetby
 app.get('/api/v2/getgroupwisecategorybudget', budgetpocatdsctlr.getgroupwisecategorybudget);
 app.get('/api/v2/getcategorywisebudget', budgetpocatdsctlr.getcategorywisebudget);
 app.get('/api/v2/getdepartmentwisebudget', budgetpocatdsctlr.getdepartmentwisebudget);
+app.get('/api/v2/getdistinctbudgetcategories', budgetpocatdsctlr.getdistinctbudgetcategories);
+app.get('/api/v2/getdistinctbudgetgroups', budgetpocatdsctlr.getdistinctbudgetgroups);
+app.get('/api/v2/getinstitutioncategorybudget', budgetpocatdsctlr.getinstitutioncategorybudget);
+app.get('/api/v2/getinstitutiongroupcategorybudget', budgetpocatdsctlr.getinstitutiongroupcategorybudget);
 
 const budgetgroupdsctlr = require('./controllers/budgetgroupdsctlr');
 app.post('/api/v2/addbudgetgroupds', budgetgroupdsctlr.addbudgetgroupds);

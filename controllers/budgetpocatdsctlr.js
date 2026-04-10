@@ -222,3 +222,83 @@ exports.getdepartmentwisebudget = async (req, res) => {
         res.status(400).json({ status: 'fail', message: err });
     }
 };
+
+exports.getdistinctbudgetcategories = async (req, res) => {
+    try {
+        const { colid } = req.query;
+        const items = await budgetpocatds.distinct('category', { colid: Number(colid) });
+        res.status(200).json({ status: 'success', data: { items } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err });
+    }
+};
+
+exports.getdistinctbudgetgroups = async (req, res) => {
+    try {
+        const { colid } = req.query;
+        const items = await budgetpocatds.distinct('groupname', { colid: Number(colid) });
+        res.status(200).json({ status: 'success', data: { items } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err });
+    }
+};
+
+exports.getinstitutioncategorybudget = async (req, res) => {
+    try {
+        const { colid, category, year } = req.query;
+        let query = { colid: Number(colid), category };
+        if (year) query.year = year;
+
+        const results = await budgetpocatds.aggregate([
+            { $match: query },
+            {
+                $group: {
+                    _id: "$institution",
+                    totalAmount: { $sum: "$amount" }
+                }
+            },
+            {
+                $project: {
+                    institution: { $ifNull: ["$_id", "Unspecified Institution"] },
+                    amount: "$totalAmount",
+                    _id: 0
+                }
+            },
+            { $sort: { amount: -1 } }
+        ]);
+
+        res.status(200).json({ status: 'success', results: results.length, data: { items: results } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err });
+    }
+};
+
+exports.getinstitutiongroupcategorybudget = async (req, res) => {
+    try {
+        const { colid, groupname, category, year } = req.query;
+        let query = { colid: Number(colid), groupname, category };
+        if (year) query.year = year;
+
+        const results = await budgetpocatds.aggregate([
+            { $match: query },
+            {
+                $group: {
+                    _id: "$institution",
+                    totalAmount: { $sum: "$amount" }
+                }
+            },
+            {
+                $project: {
+                    institution: { $ifNull: ["$_id", "Unspecified Institution"] },
+                    amount: "$totalAmount",
+                    _id: 0
+                }
+            },
+            { $sort: { amount: -1 } }
+        ]);
+
+        res.status(200).json({ status: 'success', results: results.length, data: { items: results } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err });
+    }
+};
