@@ -442,6 +442,7 @@ app.post('/api/v2/generatefeeforprogramds', feesgenerationctlr.generateFeeForPro
 
 const feesreportctlr = require('./controllers/feesreportctlr');
 app.get('/api/v2/feesstructurereportds', feesreportctlr.feesStructureReport);
+app.get('/api/v2/getdistinctfeesreportfilters', feesreportctlr.getDistinctFeesReportFilters);
 
 
 const attendancereportctlr = require('./controllers/attendancereportctlr');

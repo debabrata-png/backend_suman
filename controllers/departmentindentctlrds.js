@@ -65,14 +65,20 @@ exports.bulkUpload = async (req, res) => {
         return res.status(400).json({ success: false, message: "Invalid data format" });
     }
     try {
-        const formattedData = data.map(item => ({
-            ...item,
-            colid: Number(colid),
-            creatoruserid: user,
-            creatorname: name,
-            user: user,
-            status: item.status || 'Pending'
-        }));
+        const formattedData = data.map(item => {
+            const finalCreatorUserid = item.creatoruserid || user;
+            const finalCreatorName = item.creatorname || name;
+
+            return {
+                ...item,
+                colid: Number(colid),
+                creatoruserid: finalCreatorUserid,
+                creatorname: finalCreatorName,
+                user: user, // Map current creator to required 'user' field
+                name: name,   // Map current creator to required 'name' field
+                status: item.status || 'Active'
+            };
+        });
         await DepartmentIndentds.insertMany(formattedData);
         res.status(200).json({ success: true, message: "Bulk upload successful" });
     } catch (err) {
@@ -123,6 +129,8 @@ exports.downloadTemplate = async (req, res) => {
             { header: 'departmentname', key: 'departmentname', width: 25 },
             { header: 'institution', key: 'institution', width: 20 },
             { header: 'institutionshort', key: 'institutionshort', width: 15 },
+            { header: 'creatorname', key: 'creatorname', width: 20 },
+            { header: 'creatoruserid', key: 'creatoruserid', width: 25 },
             { header: 'hoiapprovername', key: 'hoiapprovername', width: 20 },
             { header: 'hoiapproveruserid', key: 'hoiapproveruserid', width: 25 },
             { header: 'ahoiapprovername', key: 'ahoiapprovername', width: 20 },
@@ -136,6 +144,8 @@ exports.downloadTemplate = async (req, res) => {
             departmentname: 'CSE',
             institution: 'Sample Institution',
             institutionshort: 'SI',
+            creatorname: 'John Doe',
+            creatoruserid: 'john.doe@example.com',
             hoiapprovername: 'Approver Name',
             hoiapproveruserid: 'approver@email.com',
             ahoiapprovername: 'Asst. Approver',

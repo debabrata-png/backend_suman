@@ -60,3 +60,37 @@ exports.feesStructureReport = async (req, res) => {
     });
   }
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Get Distinct Filters for Fees Report
+// GET /api/v2/getdistinctfeesreportfilters
+// Required : colid
+// ─────────────────────────────────────────────────────────────────────────────
+exports.getDistinctFeesReportFilters = async (req, res) => {
+  try {
+    const { colid } = req.query;
+
+    if (!colid) {
+      return res.status(400).json({ success: false, message: "colid is required" });
+    }
+
+    const academicyears = await Fees.distinct("academicyear", { colid: Number(colid) });
+    const programcodes = await Fees.distinct("programcode", { colid: Number(colid) });
+    const semesters = await Fees.distinct("semester", { colid: Number(colid) });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        academicyears: academicyears.filter(Boolean).sort(),
+        programcodes: programcodes.filter(Boolean).sort(),
+        semesters: semesters.filter(Boolean).sort(),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching distinct fee filters",
+      error: error.message,
+    });
+  }
+};
