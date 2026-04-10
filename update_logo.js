@@ -17,12 +17,12 @@ mongoose.connect(DB, {
 
 async function updateLogo() {
     try {
-        const colid = 9050;
-        const newLogoUrl = 'https://jguni.in/images/logo_2.png';
+        const colid = 3060;
+        const newLogoUrl = 'https://sfs-hackathon.netlify.app/assets/img/sfs-logo.png';
 
         const updatedInstitution = await Institution.findOneAndUpdate(
             { admincolid: colid },
-            { logo: newLogoUrl },
+            { logo: newLogoUrl, address: "Seminary Hill, Nagpur, Maharashtra, India" },
             { new: true, runValidators: true }
         );
 

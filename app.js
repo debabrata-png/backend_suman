@@ -15638,6 +15638,13 @@ app.get('/api/v2/admission-institution-wise-report', admissionInstitutionWiseRep
 const drigablereportRouter = require('./router/drigablereportrouterds.js');
 app.use('/api/v2', drigablereportRouter);
 
+// Student Analytics Reporting directly in app.js
+const studentreportctlrds = require('./controllers/studentreportctlrds.js');
+app.get('/api/v2/getstudentfiltersds', studentreportctlrds.getstudentfiltersds);
+app.post('/api/v2/getstudentreportds', studentreportctlrds.getstudentreportds);
+app.post('/api/v2/getstudentlistds', studentreportctlrds.getstudentlistds);
+app.post('/api/v2/exportstudentexcelds', studentreportctlrds.exportstudentexcelds);
+
 // DCR Report API
 const DCRReportdsctlr = require('./controllers/DCRReportdsctlr');
 app.get('/api/v2/dcr/dropdowns', DCRReportdsctlr.getDCRDropdowns);
