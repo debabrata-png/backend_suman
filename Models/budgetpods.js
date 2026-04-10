@@ -16,6 +16,7 @@ const budgetpodsschema = new mongoose.Schema({
         date: { type: Date }
     }],
     finallevel: { type: String },
+    institution: { type: String },
     status: { type: String },
     remarks: { type: String }
 })

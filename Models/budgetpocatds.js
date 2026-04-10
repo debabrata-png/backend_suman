@@ -12,6 +12,7 @@ const budgetpocatdsschema = new mongoose.Schema({
     category: { type: String },
     amount: { type: Number },
     budgettype: { type: String },
+    institution: { type: String },
     status: { type: String },
     remarks: { type: String }
 })

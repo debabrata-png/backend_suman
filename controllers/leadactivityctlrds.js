@@ -118,12 +118,9 @@ exports.logcallactivityds = async (req, res) => {
             updateData.next_followup_date = next_followup_date;
         }
         
-        // Update pipeline stage based on outcome
-        if (outcome === 'Interested') {
-            const lead = await crmh1.findById(lead_id);
-            if (lead && lead.pipeline_stage === 'New Lead') {
-                updateData.pipeline_stage = 'Contacted';
-            }
+        // Update pipeline stage to the selected outcome (which now represents the stage)
+        if (outcome) {
+            updateData.pipeline_stage = outcome;
         }
         
         await crmh1.findByIdAndUpdate(lead_id, updateData);
@@ -164,10 +161,9 @@ exports.logmeetingactivityds = async (req, res) => {
             updateData.next_followup_date = next_followup_date;
         }
         
-        // Update pipeline stage
-        const lead = await crmh1.findById(lead_id);
-        if (lead && lead.pipeline_stage === 'Counselling Scheduled') {
-            updateData.pipeline_stage = 'Campus Visited';
+        // Update pipeline stage to the selected outcome
+        if (outcome) {
+            updateData.pipeline_stage = outcome;
         }
         
         // Update lead score for campus visit

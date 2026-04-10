@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const programmasterdsctlr = require('../controllers/programmasterctlrds');
+const programcounselorctlr = require('../controllers/programcounselorcontrollerds');
 
 // Standard CRUD
-router.post('/createprogrammasterds', programmasterdsctlr.createprogrammasterds);
-// router.get('/getallprogramsds', programmasterdsctlr.getallprogramsds); // Likely exists elsewhere or can be here
+// router.post('/createprogrammasterds', programmasterdsctlr.createprogrammasterds);
+// router.get('/getallprogramsds', programmasterdsctlr.getallprogramsds); 
 // router.get('/getprogrambyidds/:id', programmasterdsctlr.getprogrambyidds);
 // router.post('/updateprogrammasterds', programmasterdsctlr.updateprogrammasterds);
 // router.delete('/deleteprogrammasterds/:id', programmasterdsctlr.deleteprogrammasterds);
 
 // New Filter Routes
-router.get('/getinstitutionsds', programmasterdsctlr.getinstitutionsds);
-router.get('/getprogramtypesds', programmasterdsctlr.getprogramtypesds);
-router.get('/getprogramsbyfiltersds', programmasterdsctlr.getprogramsbyfiltersds);
+router.get('/getinstitutionsds', programcounselorctlr.getinstitutionsds);
+router.get('/getprogramtypesds', programcounselorctlr.getprogramtypesds);
+router.get('/getprogramsbyfiltersds', programcounselorctlr.getprogramsbyfiltersds);
 
 module.exports = router;

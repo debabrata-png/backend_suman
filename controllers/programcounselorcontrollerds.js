@@ -74,3 +74,50 @@ exports.deleteprogramcounselords = async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 };
+// Get distinct institutions
+exports.getinstitutionsds = async (req, res) => {
+    try {
+        const { colid } = req.query;
+        const institutions = await ProgramCounselords.distinct('institution', {
+            colid: Number(colid),
+            is_active: 'Yes'
+        });
+        const cleanInstitutions = institutions.filter(inst => inst);
+        res.status(200).json({ success: true, data: cleanInstitutions.sort() });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// Get program types by institution
+exports.getprogramtypesds = async (req, res) => {
+    try {
+        const { colid, institution } = req.query;
+        const programTypes = await ProgramCounselords.distinct('program_type', {
+            colid: Number(colid),
+            institution: institution,
+            is_active: 'Yes'
+        });
+        const cleanTypes = programTypes.filter(type => type);
+        res.status(200).json({ success: true, data: cleanTypes.sort() });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// Get programs by institution and type
+exports.getprogramsbyfiltersds = async (req, res) => {
+    try {
+        const { colid, institution, program_type } = req.query;
+        let query = {
+            colid: Number(colid),
+            is_active: 'Yes'
+        };
+        if (institution) query.institution = institution;
+        if (program_type) query.program_type = program_type;
+        const programs = await ProgramCounselords.find(query).select('course_name _id').sort({ course_name: 1 });
+        res.status(200).json({ success: true, data: programs });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};

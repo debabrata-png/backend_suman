@@ -167,6 +167,9 @@ const userschema = new mongoose.Schema({
     },
     ews: {
         type: String
+    },
+    institution: {
+        type: String
     }
 })
 
