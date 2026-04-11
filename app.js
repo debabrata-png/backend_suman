@@ -827,6 +827,7 @@ app.post('/api/v2/updatestoreuserds2', storeuserdsctlr2.updatestoreuserds2);
 app.get('/api/v2/deletestoreuserds2', storeuserdsctlr2.deletestoreuserds2);
 app.get('/api/v2/getallstoreuserds2', storeuserdsctlr2.getallstoreuserds2);
 app.get('/api/v2/getstoreuserdsbyid2', storeuserdsctlr2.getstoreuserdsbyid2);
+app.get('/api/v2/getmystoresds2', storeuserdsctlr2.getmystoresds2);
 const addusercontroller2 = require('./controllers/addusercontroller2');
 app.post('/api/v2/getallusers2', addusercontroller2.getallusersapi2);
 

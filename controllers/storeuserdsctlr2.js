@@ -87,3 +87,23 @@ exports.getstoreuserdsbyid2 = async (req, res) => {
         });
     }
 };
+
+exports.getmystoresds2 = async (req, res) => {
+    try {
+        const { colid, user } = req.query;
+        const query = { colid: Number(colid), user: user };
+        const storeUsers = await storeuserds2.find(query);
+        res.status(200).json({
+            status: 'success',
+            results: storeUsers.length,
+            data: {
+                stores: storeUsers
+            }
+        });
+    } catch (err) {
+        res.status(400).json({
+            status: 'fail',
+            message: err.message
+        });
+    }
+};
