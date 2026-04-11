@@ -15485,6 +15485,26 @@ app.get('/api/v2/deletebudgetgroupds', budgetgroupdsctlr.deletebudgetgroupds);
 app.get('/api/v2/getbudgetgroupsdistinct', budgetgroupdsctlr.getbudgetgroupsdistinct);
 app.get('/api/v2/getbudgetcategoriesbygroup', budgetgroupdsctlr.getbudgetcategoriesbygroup);
 
+// Payment Gateway Module
+const pgmasterdsctlr = require('./controllers/pgmasterdsctlr');
+app.post('/api/v2/pgmasterds/create', pgmasterdsctlr.createPGMaster);
+app.post('/api/v2/pgmasterds/getall', pgmasterdsctlr.getAllPGMaster);
+app.post('/api/v2/pgmasterds/update', pgmasterdsctlr.updatePGMaster);
+app.get('/api/v2/pgmasterds/delete', pgmasterdsctlr.deletePGMaster);
+
+const easebuzzgatewaydsctlr = require('./controllers/easebuzzgatewaydsctlr');
+app.post('/api/v2/easebuzzgatewayds/create', easebuzzgatewaydsctlr.createEasebuzzConfig);
+app.post('/api/v2/easebuzzgatewayds/get', easebuzzgatewaydsctlr.getEasebuzzConfig);
+app.post('/api/v2/easebuzzgatewayds/update', easebuzzgatewaydsctlr.updateEasebuzzConfig);
+app.post('/api/v2/easebuzz/initiate', easebuzzgatewaydsctlr.initiateEasebuzzPayment);
+app.post('/api/v2/easebuzz/callback', easebuzzgatewaydsctlr.handleEasebuzzCallback);
+
+const universalpaymentgatewaydsctlr = require('./controllers/universalpaymentgatewaydsctlr');
+app.post('/api/v2/universalpaymentgatewayds/gethistory', universalpaymentgatewaydsctlr.getHistory);
+app.post('/api/v2/universalpaymentgatewayds/getallhistory', universalpaymentgatewaydsctlr.getAllHistory);
+
+
+
 // start express
 const port = process.env.PORT || 3000;
 // app.listen(port, () => {
@@ -15681,6 +15701,16 @@ app.post('/api/v2/deletefeesprovds', feesprovdsController.deleteFeesprovds);
 app.post('/api/v2/bulkfeesprovds', feesprovdsController.bulkUpload);
 app.get('/api/v2/exportfeesprovds', feesprovdsController.exportData);
 app.get('/api/v2/templatefeesprovds', feesprovdsController.downloadTemplate);
+
+// Feeapplicationds CRUD API
+const feeapplicationdsController = require('./controllers/feeapplicationdsController');
+app.post('/api/v2/getfeeapplicationds', feeapplicationdsController.getFeeapplicationds);
+app.post('/api/v2/createfeeapplicationds', feeapplicationdsController.createFeeapplicationds);
+app.post('/api/v2/updatefeeapplicationds', feeapplicationdsController.updateFeeapplicationds);
+app.post('/api/v2/deletefeeapplicationds', feeapplicationdsController.deleteFeeapplicationds);
+app.post('/api/v2/bulkfeeapplicationds', feeapplicationdsController.bulkUpload);
+app.get('/api/v2/exportfeeapplicationds', feeapplicationdsController.exportData);
+app.get('/api/v2/templatefeeapplicationds', feeapplicationdsController.downloadTemplate);
 
 // Department Indent CRUD API
 const departmentindentctlrds = require('./controllers/departmentindentctlrds');

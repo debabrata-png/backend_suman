@@ -22,6 +22,7 @@ const StandardAdmissionSchema = new mongoose.Schema({
     aadharNumber: { type: String },
     isMinority: { type: String, default: 'No' },
     isPhysicallyChallenged: { type: String, default: 'No' },
+    religion: { type: String },
     whatsAppNumber: { type: String },
     isHostelRequired: { type: String, default: 'No' },
     
@@ -45,6 +46,7 @@ const StandardAdmissionSchema = new mongoose.Schema({
     
     familyIncome: { type: String, enum: ['Below 5L', '5L - 10L', 'Above 10L'] },
     applyForScholarship: { type: String, default: 'No' },
+    entranceExamDetails: { type: String },
     
     // Address Details
     permanentAddress: {
@@ -125,6 +127,10 @@ const StandardAdmissionSchema = new mongoose.Schema({
     // Metadata
     currentStep: { type: Number, default: 0 },
     status: { type: String, enum: ['Draft', 'Submitted', 'Pending', 'Approved', 'Rejected', 'Hold'], default: 'Draft' },
+    applicationFeeStatus: { type: String, enum: ['Unpaid', 'Paid', 'Pending'], default: 'Unpaid' },
+    provisionalFeeStatus: { type: String, enum: ['Unpaid', 'Paid', 'Pending'], default: 'Unpaid' },
+    applicationFeeTxnId: { type: String },
+    provisionalFeeTxnId: { type: String },
     adminComments: { type: String },
     applicationDate: { type: Date, default: Date.now },
     decisionDate: { type: Date }
