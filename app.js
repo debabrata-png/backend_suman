@@ -622,6 +622,10 @@ app.get('/api/v2/getprogramsbyfiltersds', programcounselorctlr.getprogramsbyfilt
 const studentwiseledgerpendingreportctlr = require('./controllers/studentwiseledgerpendingreportctlr');
 app.get('/api/v2/studentwiseledgerpendingreport', studentwiseledgerpendingreportctlr.getStudentWisePendingReport);
 
+const programwiseledgerpendingreportctlr = require('./controllers/programwiseledgerpendingreportctlr');
+app.get('/api/v2/programwisependingfilters', programwiseledgerpendingreportctlr.getProgramWisePendingFilters);
+app.get('/api/v2/programwiseledgerpendingreport', programwiseledgerpendingreportctlr.getProgramWisePendingReport);
+
 const dashboardReportController = require('./controllers/dashboardReportController');
 app.get('/api/v2/dashboard/stats', dashboardReportController.getDashboardStats);
 
