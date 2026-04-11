@@ -619,6 +619,9 @@ app.get('/api/v2/getinstitutionsds', programcounselorctlr.getinstitutionsds);
 app.get('/api/v2/getprogramtypesds', programcounselorctlr.getprogramtypesds);
 app.get('/api/v2/getprogramsbyfiltersds', programcounselorctlr.getprogramsbyfiltersds);
 
+const studentwiseledgerpendingreportctlr = require('./controllers/studentwiseledgerpendingreportctlr');
+app.get('/api/v2/studentwiseledgerpendingreport', studentwiseledgerpendingreportctlr.getStudentWisePendingReport);
+
 const dashboardReportController = require('./controllers/dashboardReportController');
 app.get('/api/v2/dashboard/stats', dashboardReportController.getDashboardStats);
 
