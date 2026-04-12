@@ -1042,6 +1042,98 @@ app.get('/api/v2/getallgrnds2', grndsctlr2.getallgrnds2);
 app.get('/api/v2/getpendinggrnds2', grndsctlr2.getpendinggrnds2);
 app.post('/api/v2/markgrnqcdone2', grndsctlr2.markgrnqcdone2);
 
+// Import Controllers
+const alumnidsctlr = require("./controllers/alumnidsctlr");
+const alumnieventsdsctlr = require("./controllers/alumnieventsdsctlr");
+const alumnijobsdsctlr = require("./controllers/alumnijobsdsctlr");
+const alumnimaterialsdsctlr = require("./controllers/alumnimaterialsdsctlr");
+const alumnidonationsdsctlr = require("./controllers/alumnidonationsdsctlr");
+const alumnidocumentsdsctlr = require("./controllers/alumnidocumentsdsctlr");
+const alumniapplicationctlr = require("./controllers/alumniapplicationctlr");
+
+// ========================================
+// 1. ALUMNI MANAGEMENT - /api/v2/alumnids
+// ========================================
+app.post("/api/v2/alumnids/create", alumnidsctlr.createalumnids);
+app.post("/api/v2/alumnids/login", alumnidsctlr.loginalumnids);
+app.post("/api/v2/alumnids/list", alumnidsctlr.getalumnids); // POST for consistency
+app.post("/api/v2/alumnids/profile", alumnidsctlr.getalumniprofilds);
+app.post("/api/v2/alumnids/updateprofile", alumnidsctlr.updatealumniprofilds);
+app.get("/api/v2/alumnids/search", alumnidsctlr.searchalumnids);
+app.get("/api/v2/alumnids/delete", alumnidsctlr.deletealumnids);
+app.post("/api/v2/alumnids/bulkcreate", alumnidsctlr.bulkcreatealumnids);
+
+// ========================================
+// 2. EVENT MANAGEMENT - /api/v2/alumnieventsds
+// ========================================
+app.post("/api/v2/alumnieventsds/create", alumnieventsdsctlr.createalumnieventsds);
+app.get("/api/v2/alumnieventsds/list", alumnieventsdsctlr.getallalumnieventsds); // GET with query params
+app.post("/api/v2/alumnieventsds/upcoming", alumnieventsdsctlr.getupcomingeventsds);
+app.post("/api/v2/alumnieventsds/past", alumnieventsdsctlr.getpasteventds);
+app.get("/api/v2/alumnieventsds/single", alumnieventsdsctlr.getsingleeventds);
+app.post("/api/v2/alumnieventsds/update", alumnieventsdsctlr.updatealumnieventsds);
+app.get("/api/v2/alumnieventsds/delete", alumnieventsdsctlr.deletealumnieventsds);
+app.post("/api/v2/alumnieventsds/register", alumnieventsdsctlr.registerforeventds);
+app.get("/api/v2/alumnieventsds/registrations", alumnieventsdsctlr.geteventregistrationsds);
+app.post("/api/v2/alumnieventsds/myregistrations", alumnieventsdsctlr.getmyeventregistrationsds);
+app.post("/api/v2/alumnieventsds/attendance", alumnieventsdsctlr.markattendanceds);
+
+// ========================================
+// 3. JOBS MANAGEMENT - /api/v2/alumnijobsds
+// ========================================
+app.post("/api/v2/alumnijobsds/create", alumnijobsdsctlr.createalumnijobsds);
+app.post("/api/v2/alumnijobsds/list", alumnijobsdsctlr.getallalumnijobsds);
+app.post("/api/v2/alumnijobsds/myjobs", alumnijobsdsctlr.getmyjobsds);
+app.get("/api/v2/alumnijobsds/filter", alumnijobsdsctlr.filteralumnijobsds);
+app.get("/api/v2/alumnijobsds/single", alumnijobsdsctlr.getsinglejobds);
+app.post("/api/v2/alumnijobsds/update", alumnijobsdsctlr.updatealumnijobsds);
+app.post("/api/v2/alumnijobsds/close", alumnijobsdsctlr.closealumnijobsds);
+app.get("/api/v2/alumnijobsds/delete", alumnijobsdsctlr.deletealumnijobsds);
+app.post("/api/v2/alumnijobsds/stats", alumnijobsdsctlr.getjobstatsds);
+
+// ========================================
+// 4. MATERIALS MANAGEMENT - /api/v2/alumnimaterialsds
+// ========================================
+app.post("/api/v2/alumnimaterialsds/upload", alumnimaterialsdsctlr.uploadalumnimaterialsds);
+app.post("/api/v2/alumnimaterialsds/list", alumnimaterialsdsctlr.getallalumnimaterialsds);
+app.post("/api/v2/alumnimaterialsds/mymaterials", alumnimaterialsdsctlr.getmymaterialsds);
+app.get("/api/v2/alumnimaterialsds/filter", alumnimaterialsdsctlr.filteralumnimaterialsds);
+app.post("/api/v2/alumnimaterialsds/download", alumnimaterialsdsctlr.downloadmaterialds);
+app.get("/api/v2/alumnimaterialsds/delete", alumnimaterialsdsctlr.deletealumnimaterialsds);
+
+// ========================================
+// 5. DONATIONS MANAGEMENT - /api/v2/alumnidonationsds
+// ========================================
+app.post("/api/v2/alumnidonationsds/create", alumnidonationsdsctlr.createalumnidonationsds);
+app.post("/api/v2/alumnidonationsds/list", alumnidonationsdsctlr.getallalumnidonationsds);
+app.post("/api/v2/alumnidonationsds/mydonations", alumnidonationsdsctlr.getmydonationsds);
+app.post("/api/v2/alumnidonationsds/pending", alumnidonationsdsctlr.getpendingdonationsds);
+app.post("/api/v2/alumnidonationsds/approve", alumnidonationsdsctlr.approvedonationds);
+app.post("/api/v2/alumnidonationsds/reject", alumnidonationsdsctlr.rejectdonationds);
+app.post("/api/v2/alumnidonationsds/updatepayment", alumnidonationsdsctlr.updatepaymentstatusds);
+app.post("/api/v2/alumnidonationsds/updatedelivery", alumnidonationsdsctlr.updatedeliverystatusds);
+app.post("/api/v2/alumnidonationsds/stats", alumnidonationsdsctlr.getdonationstatsds);
+app.get("/api/v2/alumnidonationsds/receipt", alumnidonationsdsctlr.generatereceiptds);
+
+// ========================================
+// 6. DOCUMENTS MANAGEMENT - /api/v2/alumnidocumentsds
+// ========================================
+app.post("/api/v2/alumnidocumentsds/upload", alumnidocumentsdsctlr.uploadalumnidocumentsds);
+app.post("/api/v2/alumnidocumentsds/mydocuments", alumnidocumentsdsctlr.getmydocumentsds);
+app.get("/api/v2/alumnidocumentsds/single", alumnidocumentsdsctlr.getsinglealumnidocds);
+app.get("/api/v2/alumnidocumentsds/delete", alumnidocumentsdsctlr.deletealumnidocumentsds);
+
+// ========================================
+// 7. ALUMNI APPLICATIONS - /api/v2/alumniapplicationds
+// ========================================
+// Public route - no auth required
+app.post("/api/v2/alumniapplicationds/submit", alumniapplicationctlr.submitAlumniApplication);
+// Admin routes
+app.post("/api/v2/alumniapplicationds/list", alumniapplicationctlr.getAllApplications);
+app.post("/api/v2/alumniapplicationds/approve", alumniapplicationctlr.approveApplication);
+app.post("/api/v2/alumniapplicationds/reject", alumniapplicationctlr.rejectApplication);
+
+
 
 app.use(passport.initialize());
 app.use(passport.session());

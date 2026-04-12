@@ -20,7 +20,7 @@ async function updateRoles() {
         await mongoose.connect(DB_URL);
         console.log('MongoDB successfully connected.');
 
-        const fileName = 'update_role.xlsx';
+        const fileName = 'HOI.xlsx';
         const workbook = xlsx.readFile(fileName);
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
@@ -44,16 +44,11 @@ async function updateRoles() {
             }
 
             const email = row.email ? row.email.toString().trim().toLowerCase() : null;
-            const newRole = row.role ? row.role.toString().trim() : null;
+            const newRole = 'HOI';
+            const newColid = 3090;
 
             if (!email) {
                 console.log(`Row ${i + 2}: Skipped (Empty Email)`);
-                notFoundCount++;
-                continue;
-            }
-
-            if (!newRole) {
-                console.log(`Row ${i + 2}: Skipped (Empty Role for ${email})`);
                 notFoundCount++;
                 continue;
             }
@@ -62,16 +57,16 @@ async function updateRoles() {
                 // Update the user's role
                 const result = await User.updateOne(
                     { email: email },
-                    { $set: { role: newRole } },
+                    { $set: { role: newRole, colid: newColid } },
                     { runValidators: true }
                 );
 
                 if (result.matchedCount > 0) {
                     successCount++;
                     if (result.modifiedCount > 0) {
-                        console.log(`Row ${i + 2}: UPDATED [${email}] -> [${newRole}]`);
+                        console.log(`Row ${i + 2}: UPDATED [${email}] -> [Role: ${newRole}, Colid: ${newColid}]`);
                     } else {
-                        console.log(`Row ${i + 2}: NO CHANGE [${email}] (Role already was ${newRole})`);
+                        console.log(`Row ${i + 2}: NO CHANGE [${email}] (Values already set)`);
                     }
                 } else {
                     console.warn(`Row ${i + 2}: NOT FOUND [${email}]`);
