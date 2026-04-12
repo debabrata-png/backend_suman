@@ -766,6 +766,7 @@ app.post('/api/v2/submitrfp', rfpdsctlr.submitrfp);
 app.get('/api/v2/getallrfpsubmissions', rfpdsctlr.getallrfpsubmissions);
 app.post('/api/v2/approverfpsubmission', rfpdsctlr.approverfpsubmission);
 app.post('/api/v2/rejectrfpsubmission', rfpdsctlr.rejectrfpsubmission);
+app.post('/api/v2/analyze-rfp-ai', rfpdsctlr.analyzeRfpAi);
 
 
 // Purchasing Module Controllers
