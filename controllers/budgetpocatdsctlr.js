@@ -86,9 +86,20 @@ exports.getavailbudgetbycategoryds = async (req, res) => {
         if (department) query.department = department;
         
         const items = await budgetpocatds.find(query);
-        const totalAmount = items.reduce((sum, c) => sum + (c.amount || 0), 0);
         
-        res.status(200).json({ status: 'success', data: { availableAmount: totalAmount } });
+        // Return detailed summary for the dashboard
+        const summary = items.map(item => ({
+            category: item.category,
+            department: item.department || 'General',
+            availableAmount: item.amount || 0
+        }));
+
+        res.status(200).json({ 
+            success: true, 
+            status: 'success', 
+            budgetInfo: summary, // Frontend expects budgetInfo
+            data: { availableAmount: items.reduce((sum, c) => sum + (c.amount || 0), 0) } 
+        });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
     }

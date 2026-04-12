@@ -74,7 +74,6 @@ const universalpaymentgatewaydsschema = new mongoose.Schema({
 
 
 universalpaymentgatewaydsschema.index({ colid: 1, regno: 1 });
-universalpaymentgatewaydsschema.index({ orderid: 1 });
 universalpaymentgatewaydsschema.index({ gatewayname: 1 });
 
 const universalpaymentgatewayds = mongoose.models.universalpaymentgatewayds || mongoose.model('universalpaymentgatewayds', universalpaymentgatewaydsschema);

@@ -600,6 +600,13 @@ app.get('/api/v2/getallpimprestds', pimprestdsctlr.getallpimprestds);
 app.post('/api/v2/updatepimprestds', pimprestdsctlr.updatepimprestds);
 app.get('/api/v2/deletepimprestds', pimprestdsctlr.deletepimprestds);
 
+const vendorpayschdsctlr = require('./controllers/vendorpayschdsctlr');
+app.post('/api/v2/addvendorpayschds', vendorpayschdsctlr.addvendorpayschds);
+app.get('/api/v2/getallvendorpayschds', vendorpayschdsctlr.getallvendorpayschds);
+app.post('/api/v2/updatevendorpayschds', vendorpayschdsctlr.updatevendorpayschds);
+app.get('/api/v2/deletevendorpayschds', vendorpayschdsctlr.deletevendorpayschds);
+app.get('/api/v2/getvendorpayschdsbyid', vendorpayschdsctlr.getvendorpayschdsbyid);
+
 
 const poconfigdsctlr = require('./controllers/poconfigdsctlr');
 app.post('/api/v2/addpoconfigds', poconfigdsctlr.addpoconfigds);

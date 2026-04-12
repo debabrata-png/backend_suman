@@ -4,14 +4,12 @@ const challantemplatedsSchema = new mongoose.Schema(
     {
         colid: {
             type: Number,
-            required: true,
-            index: true
+            required: true
         },
 
         configName: {
             type: String,
-            required: true,
-            index: true
+            required: true
         },
 
         templateHtml: {
@@ -24,7 +22,7 @@ const challantemplatedsSchema = new mongoose.Schema(
             enum: ["portrait", "landscape"],
             default: "landscape"
         },
-        
+
         copies: {
             type: Number,
             default: 3

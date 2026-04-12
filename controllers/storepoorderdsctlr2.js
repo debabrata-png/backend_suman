@@ -33,8 +33,14 @@ exports.addstorepoorderds2 = async (req, res) => {
 
 exports.getallstorepoorderds2 = async (req, res) => {
     try {
-        const { colid, page, limit } = req.query;
+        const { colid, page, limit, poType, excludeLocal } = req.query;
         const query = { colid };
+
+        if (poType) {
+            query.poType = poType;
+        } else if (excludeLocal === 'true') {
+            query.poType = { $ne: 'Local' };
+        }
 
         if (page && limit) {
             const pageNum = parseInt(page);
@@ -43,7 +49,7 @@ exports.getallstorepoorderds2 = async (req, res) => {
 
             const total = await storepoorderds2.countDocuments(query);
             const poOrders = await storepoorderds2.find(query)
-                .sort({ _id: -1 })
+                .sort({ updatedAt: -1 })
                 .skip(skip)
                 .limit(limitNum);
 
@@ -60,7 +66,7 @@ exports.getallstorepoorderds2 = async (req, res) => {
                 }
             });
         } else {
-            const poOrders = await storepoorderds2.find(query).sort({ _id: -1 });
+            const poOrders = await storepoorderds2.find(query).sort({ createdAt: -1 });
             res.status(200).json({
                 success: true,
                 count: poOrders.length,
