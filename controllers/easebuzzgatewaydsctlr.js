@@ -99,20 +99,20 @@ exports.initiateEasebuzzPayment = async (req, res) => {
     // 3. Prepare Easebuzz Params
     // Sanitize phone: ensure it is 10 digits
     const sanitizedPhone = (phone || '').toString().replace(/\D/g, '').slice(-10);
-    
+
     const easebuzzParams = {
-      key: handler.key, 
+      key: handler.key,
       txnid: txnid,
       amount: parseFloat(amount).toFixed(2),
       productinfo: paymentpurpose || 'General Payment',
-      firstname: studentname || 'Student',
+      firstname: studentname,
       email: email,
       phone: sanitizedPhone,
       surl: `${process.env.BACKEND_URL || req.protocol + '://' + req.get('host')}/api/v2/easebuzz/callback`,
       furl: `${process.env.BACKEND_URL || req.protocol + '://' + req.get('host')}/api/v2/easebuzz/callback`,
       udf1: 'Easebuzz',
       udf2: accountno,
-      udf3: '' // CLEARED: Avoiding validation errors with URLs in UDF fields
+      udf3: ''
     };
 
     const hash = handler.generateHash(easebuzzParams);

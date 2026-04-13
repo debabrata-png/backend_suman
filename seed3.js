@@ -2,13 +2,37 @@ const User = require("./Models/user");
 const mongoose = require("mongoose");
 
 const users = [
+    // {
+    //     name: "Campus",
+    //     password: "Password@123",
+    //     role: "All",
+    //     colid: 1,
+    //     user: "localdemo@campus.technology",
+    //     email: "localdemo@campus.technology",
+    //     phone: "9993020624",
+    //     regno: "12/0153",
+    //     programcode: "NA",
+    //     admissionyear: "2025",
+    //     semester: "8809-2161-5959",
+    //     section: "NA",
+    //     department: "Administration",
+    //     designation: "Assisatant Professor",
+    //     gender: "Male",
+    //     dob: new Date('1997-11-26'),
+    //     address: "",
+    //     joiningdate: new Date('2025-10-13'),
+    //     rollno: "34057",
+    //     status: 1,
+    //     lastlogin: new Date('2027-06-01T10:00:00Z')
+    // },
+
     {
-        name: "Campus",
+        name: "Dr. D. Y. Patil Unitech Society",
         password: "Password@123",
-        role: "All",
-        colid: 1,
-        user: "localdemo@campus.technology",
-        email: "localdemo@campus.technology",
+        role: "Admin",
+        colid: 100100,
+        user: "admin@dypvp.edu.in",
+        email: "admin@dypvp.edu.in",
         phone: "9993020624",
         regno: "12/0153",
         programcode: "NA",
@@ -25,11 +49,247 @@ const users = [
         status: 1,
         lastlogin: new Date('2027-06-01T10:00:00Z')
     },
+    {
+        name: "Civil HOD",
+        password: "Password@123",
+        role: "All",
+        colid: 100100,
+        user: "hodcivil.dit@dypvp.edu.in",
+        email: "hodcivil.dit@dypvp.edu.in",
+        phone: "9993020624",
+        regno: "12/0153",
+        programcode: "NA",
+        admissionyear: "2025",
+        semester: "8809-2161-5959",
+        section: "NA",
+        department: "Civil",
+        designation: "Assisatant Professor",
+        gender: "Male",
+        dob: new Date('1997-11-26'),
+        address: "",
+        joiningdate: new Date('2025-10-13'),
+        rollno: "34057",
+        status: 1,
+        lastlogin: new Date('2027-06-01T10:00:00Z'),
+        institution: "Institution 1"
+    },
+    {
+        name: "Mechanical HOD",
+        password: "Password@123",
+        role: "All",
+        colid: 100100,
+        user: "hodmechanical@dypvp.edu.in",
+        email: "hodmechanical@dypvp.edu.in",
+        phone: "9993020624",
+        regno: "12/0153",
+        programcode: "NA",
+        admissionyear: "2025",
+        semester: "8809-2161-5959",
+        section: "NA",
+        department: "Mechanical",
+        designation: "Assisatant Professor",
+        gender: "Male",
+        dob: new Date('1997-11-26'),
+        address: "",
+        joiningdate: new Date('2025-10-13'),
+        rollno: "34057",
+        status: 1,
+        lastlogin: new Date('2027-06-01T10:00:00Z'),
+        institution: "Institution 1"
+    },
+    {
+        name: "Accounts",
+        password: "Password@123",
+        role: "All",
+        colid: 100100,
+        user: "accounts.engg@dypvp.edu.in",
+        email: "accounts.engg@dypvp.edu.in",
+        phone: "9993020624",
+        regno: "12/0153",
+        programcode: "NA",
+        admissionyear: "2025",
+        semester: "8809-2161-5959",
+        section: "NA",
+        department: "Accounts",
+        designation: "Assisatant Professor",
+        gender: "Male",
+        dob: new Date('1997-11-26'),
+        address: "",
+        joiningdate: new Date('2025-10-13'),
+        rollno: "34057",
+        status: 1,
+        lastlogin: new Date('2027-06-01T10:00:00Z')
+    },
+    {
+        name: "Mr. Babasaheb Pawar",
+        password: "Password@123",
+        role: "All",
+        colid: 100100,
+        user: "registrar.dit@dypvp.edu.i",
+        email: "registrar.dit@dypvp.edu.i",
+        phone: "9993020624",
+        regno: "12/0153",
+        programcode: "NA",
+        admissionyear: "2025",
+        semester: "8809-2161-5959",
+        section: "NA",
+        department: "Administration",
+        designation: "Assisatant Professor",
+        gender: "Male",
+        dob: new Date('1997-11-26'),
+        address: "",
+        joiningdate: new Date('2025-10-13'),
+        rollno: "34057",
+        status: 1,
+        lastlogin: new Date('2027-06-01T10:00:00Z')
+    },
+    {
+        name: "Principal DYPIET",
+        password: "Password@123",
+        role: "All",
+        colid: 100100,
+        user: "principal.engg@dypvp.edu.in",
+        email: "principal.engg@dypvp.edu.in",
+        phone: "9993020624",
+        regno: "12/0153",
+        programcode: "NA",
+        admissionyear: "2025",
+        semester: "8809-2161-5959",
+        section: "NA",
+        department: "Administration",
+        designation: "Assisatant Professor",
+        gender: "Male",
+        dob: new Date('1997-11-26'),
+        address: "",
+        joiningdate: new Date('2025-10-13'),
+        rollno: "34057",
+        status: 1,
+        lastlogin: new Date('2027-06-01T10:00:00Z')
+    },
+    {
+        name: "Management",
+        password: "Password@123",
+        role: "All",
+        colid: 100100,
+        user: "management@dypvp.edu.in",
+        email: "management@dypvp.edu.in",
+        phone: "9993020624",
+        regno: "12/0153",
+        programcode: "NA",
+        admissionyear: "2025",
+        semester: "8809-2161-5959",
+        section: "NA",
+        department: "Administration",
+        designation: "Assisatant Professor",
+        gender: "Male",
+        dob: new Date('1997-11-26'),
+        address: "",
+        joiningdate: new Date('2025-10-13'),
+        rollno: "34057",
+        status: 1,
+        lastlogin: new Date('2027-06-01T10:00:00Z')
+    },
+    {
+        name: "Civil Budget Creator",
+        password: "Password@123",
+        role: "All",
+        colid: 100100,
+        user: "budgetcivil@dypvp.edu.in",
+        email: "budgetcivil@dypvp.edu.in",
+        phone: "9993020624",
+        regno: "12/0153",
+        programcode: "NA",
+        admissionyear: "2025",
+        semester: "8809-2161-5959",
+        section: "NA",
+        department: "Civil",
+        designation: "Assisatant Professor",
+        gender: "Male",
+        dob: new Date('1997-11-26'),
+        address: "",
+        joiningdate: new Date('2025-10-13'),
+        rollno: "34057",
+        status: 1,
+        lastlogin: new Date('2027-06-01T10:00:00Z'),
+        institution: "Institution 1"
+    },
+    {
+        name: "Mechanicial Budget",
+        password: "Password@123",
+        role: "All",
+        colid: 100100,
+        user: "mechanicalbudget@dypvp.edu.in",
+        email: "mechanicalbudget@dypvp.edu.in",
+        phone: "9993020624",
+        regno: "12/0153",
+        programcode: "NA",
+        admissionyear: "2025",
+        semester: "8809-2161-5959",
+        section: "NA",
+        department: "Mechanical",
+        designation: "Assisatant Professor",
+        gender: "Male",
+        dob: new Date('1997-11-26'),
+        address: "",
+        joiningdate: new Date('2025-10-13'),
+        rollno: "34057",
+        status: 1,
+        lastlogin: new Date('2027-06-01T10:00:00Z'),
+        institution: "Institution 1"
+    },
+    {
+        name: "Physics Budget",
+        password: "Password@123",
+        role: "All",
+        colid: 100100,
+        user: "physicsbudget@dypvp.edu.in",
+        email: "physicsbudget@dypvp.edu.in",
+        phone: "9993020624",
+        regno: "12/0153",
+        programcode: "NA",
+        admissionyear: "2025",
+        semester: "8809-2161-5959",
+        section: "NA",
+        department: "Physics",
+        designation: "Assisatant Professor",
+        gender: "Male",
+        dob: new Date('1997-11-26'),
+        address: "",
+        joiningdate: new Date('2025-10-13'),
+        rollno: "34057",
+        status: 1,
+        lastlogin: new Date('2027-06-01T10:00:00Z'),
+        institution: "Institution 2"
+    },
+    {
+        name: "English Budget",
+        password: "Password@123",
+        role: "All",
+        colid: 100100,
+        user: "englishbudget@dypvp.edu.in",
+        email: "englishbudget@dypvp.edu.in",
+        phone: "9993020624",
+        regno: "12/0153",
+        programcode: "NA",
+        admissionyear: "2025",
+        semester: "8809-2161-5959",
+        section: "NA",
+        department: "English",
+        designation: "Assisatant Professor",
+        gender: "Male",
+        dob: new Date('1997-11-26'),
+        address: "",
+        joiningdate: new Date('2025-10-13'),
+        rollno: "34057",
+        status: 1,
+        lastlogin: new Date('2027-06-01T10:00:00Z'),
+        institution: "Institution 2"
+    },
 ];
 
 const connectDB = async () => {
     try {
-        await mongoose.connect("mongodb+srv://debabrata:8aY0vJbwO0FPrbpT@cluster0.5htb0js.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
+        await mongoose.connect("mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
@@ -43,11 +303,25 @@ const connectDB = async () => {
 const seeduser = async () => {
     await connectDB();
     try {
-        const user = await User.insertMany(users);
-        console.log("Users seeded:", user);
-        mongoose.connection.close();
+        let insertedCount = 0;
+        let skippedCount = 0;
+
+        for (const u of users) {
+            const existing = await User.findOne({ email: u.email });
+            if (existing) {
+                console.log(`Skipped existing user: ${u.email}`);
+                skippedCount++;
+            } else {
+                await User.create(u);
+                console.log(`Inserted new user: ${u.email}`);
+                insertedCount++;
+            }
+        }
+        console.log(`Seeding complete. Inserted: ${insertedCount}, Skipped: ${skippedCount}`);
     } catch (err) {
-        console.error(err);
+        console.error("Error during seeding:", err);
+    } finally {
+        mongoose.connection.close();
     }
 }
 
