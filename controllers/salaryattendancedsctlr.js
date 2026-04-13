@@ -78,14 +78,10 @@ const calculateDailySalary = async (email, colid) => {
       return { dailySalary: 0, halfDaySalary: 0 };
     }
 
-    const basicSalary = parseFloat(salarySettings.basicSalary);
-    const hra = (basicSalary * parseFloat(salarySettings.hraPercent || '10')) / 100;
-    const transportAllowance = parseFloat(salarySettings.transportAllowance || '0');
-    const medicalAllowance = parseFloat(salarySettings.medicalAllowance || '0');
-    const specialAllowance = parseFloat(salarySettings.specialAllowance || '0');
+    const attendanceSettings = await AttendanceSettingds.findOne({ colid: parseInt(colid) });
+    const workingDaysInMonth = attendanceSettings?.workingDaysPerMonth ? parseInt(attendanceSettings.workingDaysPerMonth) : 22;
 
-    const grossSalary = basicSalary + hra + transportAllowance + medicalAllowance + specialAllowance;
-    const workingDaysInMonth = 22;
+    const grossSalary = parseFloat(salarySettings.grossSalary || '0');
     const dailySalary = grossSalary / workingDaysInMonth;
     const halfDaySalary = dailySalary / 2;
 
@@ -797,19 +793,19 @@ exports.calculatesalaryds = async (req, res) => {
       stats.totalHours += parseFloat(record.workingHours || '0');
 
       if (record.deductionType === 'half_day_salary') {
-        stats.halfDaySalaryDeducted += parseFloat(record.salaryDeducted || '0');
+        stats.halfDayPenaltiesCount = (stats.halfDayPenaltiesCount || 0) + 1;
       } else if (record.deductionType === 'full_day_salary') {
-        stats.fullDaySalaryDeducted += parseFloat(record.salaryDeducted || '0');
+        stats.fullDayPenaltiesCount = (stats.fullDayPenaltiesCount || 0) + 1;
       }
     });
 
-    const basicSalary = parseFloat(salarySettings.basicSalary);
-    const hra = (basicSalary * parseFloat(salarySettings.hraPercent || '10')) / 100;
-    const transportAllowance = parseFloat(salarySettings.transportAllowance || '0');
-    const medicalAllowance = parseFloat(salarySettings.medicalAllowance || '0');
-    const specialAllowance = parseFloat(salarySettings.specialAllowance || '0');
+    const basicSalary = parseFloat(salarySettings.fixedComponents?.basicSalary || '0');
+    const hra = parseFloat(salarySettings.fixedComponents?.hra || '0');
+    const transportAllowance = parseFloat(salarySettings.fixedComponents?.conveyanceAllowance || '0');
+    const medicalAllowance = parseFloat(salarySettings.fixedComponents?.medicalAllowance || '0');
+    const specialAllowance = parseFloat(salarySettings.fixedComponents?.specialAllowance || '0');
 
-    const grossSalary = basicSalary + hra + transportAllowance + medicalAllowance + specialAllowance;
+    const grossSalary = parseFloat(salarySettings.grossSalary || '0');
 
     // FETCH APPROVED LEAVES
     const yearMonth = month.split('-');
@@ -825,11 +821,14 @@ exports.calculatesalaryds = async (req, res) => {
       to: { $gte: new Date(yearNum, monthNum, 1) }
     });
 
-    const workingDaysInMonth = attendanceSettings?.workingDaysPerMonth || 22;
+    const workingDaysInMonth = attendanceSettings?.workingDaysPerMonth ? parseInt(attendanceSettings.workingDaysPerMonth) : 22;
     const dailySalary = grossSalary / workingDaysInMonth;
     const halfDaySalary = dailySalary / 2;
+    
+    stats.halfDaySalaryDeducted = (stats.halfDayPenaltiesCount || 0) * halfDaySalary;
+    stats.fullDaySalaryDeducted = (stats.fullDayPenaltiesCount || 0) * dailySalary;
 
-    const configuredFullDayDeduction = attendanceSettings?.fullDayDeductionAmount ? parseFloat(attendanceSettings.fullDayDeductionAmount) : dailySalary;
+    const configuredFullDayDeduction = dailySalary;
 
     // CHECK FOR UNEXCUSED ABSENCES (No Records + No Leave)
     const weeklyOffDays = attendanceSettings?.weeklyOffDays || ['Sunday'];
@@ -870,9 +869,9 @@ exports.calculatesalaryds = async (req, res) => {
     stats.totalAbsent += missingRecordsCount;
     stats.fullDaySalaryDeducted += (missingRecordsCount * configuredFullDayDeduction);
 
-    const pf = (basicSalary * parseFloat(salarySettings.pfPercent || '12')) / 100;
-    const esi = (grossSalary * parseFloat(salarySettings.esiPercent || '0.75')) / 100;
-    const professionalTax = parseFloat(salarySettings.professionalTax || '200');
+    const pf = parseFloat(salarySettings.deductionComponents?.pf || '0');
+    const esi = parseFloat(salarySettings.deductionComponents?.esi || '0');
+    const professionalTax = parseFloat(salarySettings.deductionComponents?.incomeTax || '0');
 
     const totalDeductions = pf + esi + professionalTax + stats.halfDaySalaryDeducted + stats.fullDaySalaryDeducted;
     const netSalary = grossSalary - totalDeductions;
@@ -1529,20 +1528,24 @@ exports.generateSalarySlip = async (req, res) => {
       else if (record.status === 'Absent') stats.totalAbsent++;
 
       if (record.deductionType === 'half_day_salary') {
-        stats.halfDaySalaryDeducted += parseFloat(record.salaryDeducted || '0');
+        stats.halfDayPenaltiesCount = (stats.halfDayPenaltiesCount || 0) + 1;
       } else if (record.deductionType === 'full_day_salary') {
-        stats.fullDaySalaryDeducted += parseFloat(record.salaryDeducted || '0');
+        stats.fullDayPenaltiesCount = (stats.fullDayPenaltiesCount || 0) + 1;
       }
     });
 
     // Calculate Gross Salary
     const calcBasicSalary = parseFloat(salarySettings.fixedComponents?.basicSalary || '0');
-    const calcGrossSalary = Object.values(salarySettings.fixedComponents || {}).reduce((sum, val) => sum + parseFloat(val || 0), 0) +
-      (salarySettings.variableComponents || []).reduce((sum, comp) => sum + parseFloat(comp.amount || 0), 0);
+    const calcGrossSalary = parseFloat(salarySettings.grossSalary || '0');
 
-    const workingDaysInMonth = attendanceSettings?.workingDaysPerMonth || 22;
+    const workingDaysInMonth = attendanceSettings?.workingDaysPerMonth ? parseInt(attendanceSettings.workingDaysPerMonth) : 22;
     const dailySalary = calcGrossSalary / workingDaysInMonth;
-    const configuredFullDayDeduction = attendanceSettings?.fullDayDeductionAmount ? parseFloat(attendanceSettings.fullDayDeductionAmount) : dailySalary;
+    const halfDaySalary = dailySalary / 2;
+    
+    stats.halfDaySalaryDeducted = (stats.halfDayPenaltiesCount || 0) * halfDaySalary;
+    stats.fullDaySalaryDeducted = (stats.fullDayPenaltiesCount || 0) * dailySalary;
+    
+    const configuredFullDayDeduction = dailySalary;
 
     // FETCH APPROVED LEAVES
     const yearNum = parseInt(year);
