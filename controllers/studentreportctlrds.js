@@ -2,29 +2,32 @@ const User = require('../Models/user');
 const excel = require('exceljs');
 const tempfile = require('tempfile');
 
+// Unified Role Regex (Relaxed match for robustness)
+const STUDENT_ROLE = /Student/i;
+
 // Utility to build the match query from filters
 const buildMatchQuery = (params) => {
     const { colid1, programcode, admissionyear, semester, department, gender, category } = params;
-    
+
     if (!colid1) return null;
 
     const colidNum = parseInt(colid1);
     const colidStr = String(colid1);
 
-    const matchQuery = { 
+    const matchQuery = {
         $and: [
             { $or: [{ colid: colidNum }, { colid: colidStr }] },
-            { role: { $regex: /^student$/i } }
+            { role: { $regex: STUDENT_ROLE } }
         ]
     };
-    
+
     // Using loose matching for strings to handle potential whitespace (trimmed in regex)
-    if (programcode) matchQuery.$and.push({ programcode: { $regex: new RegExp(`^${programcode.trim()}$`, 'i') } });
-    if (admissionyear) matchQuery.$and.push({ admissionyear: { $regex: new RegExp(`^${admissionyear.trim()}$`, 'i') } });
-    if (semester) matchQuery.$and.push({ semester: { $regex: new RegExp(`^${semester.trim()}$`, 'i') } });
-    if (department) matchQuery.$and.push({ department: { $regex: new RegExp(`^${department.trim()}$`, 'i') } });
-    if (gender) matchQuery.$and.push({ gender: { $regex: new RegExp(`^${gender.trim()}$`, 'i') } });
-    if (category) matchQuery.$and.push({ category: { $regex: new RegExp(`^${category.trim()}$`, 'i') } });
+    if (programcode && programcode.trim()) matchQuery.$and.push({ programcode: { $regex: new RegExp(`^${programcode.trim()}$`, 'i') } });
+    if (admissionyear && admissionyear.trim()) matchQuery.$and.push({ admissionyear: { $regex: new RegExp(`^${admissionyear.trim()}$`, 'i') } });
+    if (semester && semester.trim()) matchQuery.$and.push({ semester: { $regex: new RegExp(`^${semester.trim()}$`, 'i') } });
+    if (department && department.trim()) matchQuery.$and.push({ department: { $regex: new RegExp(`^${department.trim()}$`, 'i') } });
+    if (gender && gender.trim()) matchQuery.$and.push({ gender: { $regex: new RegExp(`^${gender.trim()}$`, 'i') } });
+    if (category && category.trim()) matchQuery.$and.push({ category: { $regex: new RegExp(`^${category.trim()}$`, 'i') } });
 
     return matchQuery;
 };
@@ -32,70 +35,62 @@ const buildMatchQuery = (params) => {
 // 1. Get Distinct Filter Values for Students
 exports.getstudentfiltersds = async (req, res) => {
     try {
-        const colidStr = req.query.colid1;
-        const colidNum = parseInt(colidStr);
-        const colidMatch = { $or: [{ colid: colidNum }, { colid: colidStr }] };
+        const { colid1, admissionyear, department, programcode } = req.query;
+        if (!colid1) return res.status(400).json({ status: 'error', message: 'colid1 is required' });
 
-        const matchQuery = buildMatchQuery(req.query);
-        if (!matchQuery) return res.status(400).json({ status: 'error', message: 'colid1 is required' });
+        const baseMatch = buildMatchQuery({ colid1 }); // Only institution + role filter
 
-        const filters = await User.aggregate([
-            { $match: matchQuery },
+        const result = await User.aggregate([
+            { $match: baseMatch }, // Apply base filter to all facets for performance and consistency
             {
-                $group: {
-                    _id: null,
-                    programcodes: { $addToSet: "$programcode" },
-                    admissionyears: { $addToSet: "$admissionyear" },
-                    semesters: { $addToSet: "$semester" },
-                    departments: { $addToSet: "$department" },
-                    genders: { $addToSet: "$gender" },
-                    categories: { $addToSet: "$category" }
-                }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    programcodes: { $filter: { input: "$programcodes", as: "d", cond: { $ne: ["$$d", null] } } },
-                    admissionyears: { $filter: { input: "$admissionyears", as: "d", cond: { $ne: ["$$d", null] } } },
-                    semesters: { $filter: { input: "$semesters", as: "d", cond: { $ne: ["$$d", null] } } },
-                    departments: { $filter: { input: "$departments", as: "d", cond: { $ne: ["$$d", null] } } },
-                    genders: { $filter: { input: "$genders", as: "d", cond: { $ne: ["$$d", null] } } },
-                    categories: { $filter: { input: "$categories", as: "d", cond: { $ne: ["$$d", null] } } }
+                $facet: {
+                    admissionyears: [
+                        { $group: { _id: "$admissionyear" } },
+                        { $match: { _id: { $ne: null } } }
+                    ],
+                    departments: [
+                        // For cascading options, we filter by the selected parents
+                        { $match: buildMatchQuery({ colid1, admissionyear }) }, 
+                        { $group: { _id: "$department" } },
+                        { $match: { _id: { $ne: null } } }
+                    ],
+                    programcodes: [
+                        { $match: buildMatchQuery({ colid1, admissionyear, department }) },
+                        { $group: { _id: "$programcode" } },
+                        { $match: { _id: { $ne: null } } }
+                    ],
+                    semesters: [
+                        { $match: buildMatchQuery({ colid1, admissionyear, department, programcode }) },
+                        { $group: { _id: "$semester" } },
+                        { $match: { _id: { $ne: null } } }
+                    ],
+                    genders: [
+                        { $match: buildMatchQuery({ colid1, admissionyear, department, programcode }) },
+                        { $group: { _id: "$gender" } },
+                        { $match: { _id: { $ne: null } } }
+                    ],
+                    categories: [
+                        { $match: buildMatchQuery({ colid1, admissionyear, department, programcode }) },
+                        { $group: { _id: "$category" } },
+                        { $match: { _id: { $ne: null } } }
+                    ]
                 }
             }
         ]);
 
-        const result = filters[0] || {
-            programcodes: [],
-            admissionyears: [],
-            semesters: [],
-            departments: [],
-            genders: [],
-            categories: []
-        };
-
-        Object.keys(result).forEach(key => {
-            if (Array.isArray(result[key])) {
-                result[key].sort();
+        const data = result[0] || {};
+        const formatted = {};
+        Object.keys(data).forEach(key => {
+            if (Array.isArray(data[key])) {
+                formatted[key] = data[key].map(item => item._id).filter(id => id !== null).sort();
+            } else {
+                formatted[key] = [];
             }
         });
 
-        // Debug info
-        const sampleUser = await User.findOne(colidMatch);
-        const roleBreakdown = await User.aggregate([
-            { $match: colidMatch },
-            { $group: { _id: "$role", count: { $sum: 1 } } }
-        ]);
-
         res.status(200).json({
             status: 'success',
-            data: result,
-            debug: { 
-                colidRequested: colidStr,
-                studentCount: await User.countDocuments(matchQuery), 
-                sampleUser: sampleUser ? { colid: sampleUser.colid, role: sampleUser.role, programcode: sampleUser.programcode } : null,
-                availableRoles: roleBreakdown
-            }
+            data: formatted
         });
     } catch (error) {
         console.error("Error in getstudentfiltersds:", error);
@@ -251,7 +246,7 @@ exports.exportstudentexcelds = async (req, res) => {
 
         const tempFilePath = tempfile('.xlsx');
         await workbook.xlsx.writeFile(tempFilePath);
-        
+
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader("Content-Disposition", `attachment; filename=Student_Report_${new Date().getTime()}.xlsx`);
         res.sendFile(tempFilePath);
