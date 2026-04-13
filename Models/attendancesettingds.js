@@ -45,6 +45,62 @@ const attendanceSettingSchema = new mongoose.Schema({
   halfDayDeductionAmount: {
     type: String,
     default: '833.33'
+  },
+  fullDayDeductionAmount: {
+    type: String,
+    default: '1666.67'
+  },
+  lunchBreakMinutes: {
+    type: Number,
+    default: 60
+  },
+  workingDaysPerMonth: {
+    type: Number,
+    default: 22
+  },
+  minimumWorkingHours: {
+    type: Number,
+    default: 8
+  },
+  enableLateMarkingAfterMinutes: {
+    type: Number,
+    default: 30
+  },
+  autoMarkAbsentAfterHours: {
+    type: Number,
+    default: 2
+  },
+  overtimeRatePerHour: {
+    type: Number,
+    default: 100
+  },
+  enableOvertimeCalculation: {
+    type: Boolean,
+    default: false
+  },
+  enableAutomaticAbsent: {
+    type: Boolean,
+    default: false
+  },
+  weeklyOffDays: {
+    type: [String],
+    default: ['Sunday']
+  },
+  requireLocationTracking: {
+    type: Boolean,
+    default: true
+  },
+  enableBreakTime: {
+    type: Boolean,
+    default: false
+  },
+  enableHalfDayPolicy: {
+    type: Boolean,
+    default: true
+  },
+  enableFullDayPolicy: {
+    type: Boolean,
+    default: true
   }
 }, { timestamps: true });
 

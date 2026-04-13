@@ -5,6 +5,7 @@ const SalarySlipds = require('../Models/salaryslipds');
 const AttendanceSettingds = require('../Models/attendancesettingds');
 const leavebalanceds1 = require('../Models/leavebalanceds1');
 const User = require('../Models/user'); // Using the existing User model
+const Leave = require('../Models/leaveds1');
 const os = require('os');
 
 // =============================================================================
@@ -12,24 +13,22 @@ const os = require('os');
 // =============================================================================
 
 const getClientIP = (req) => {
-  if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
-    return '127.0.0.1';
-  }
-  
-  let ip = req.headers['x-forwarded-for'] || 
-           req.headers['x-real-ip'] || 
-           req.connection.remoteAddress || 
-           req.socket.remoteAddress ||
-           req.ip ||
-           '127.0.0.1';
+  let ip = req.headers['x-forwarded-for'] ||
+    req.headers['x-real-ip'] ||
+    req.connection?.remoteAddress ||
+    req.socket?.remoteAddress ||
+    req.ip ||
+    '127.0.0.1';
 
-  if (ip.includes(',')) ip = ip.split(',')[0].trim();
-  if (ip.includes('::ffff:')) ip = ip.replace('::ffff:', '');
-  
+  // If there are multiple IPs in x-forwarded-for, take the first one (client IP)
+  if (typeof ip === 'string' && ip.includes(',')) ip = ip.split(',')[0].trim();
+  // Remove IPv6 mapping prefix if present
+  if (typeof ip === 'string' && ip.includes('::ffff:')) ip = ip.replace('::ffff:', '');
+
   if ((ip === '::1' || ip === '127.0.0.1' || ip === 'localhost') && process.env.NODE_ENV === 'production') {
     const networkInterfaces = os.networkInterfaces();
     const preferredInterfaces = ['eth0', 'ens33', 'ens160', 'en0', 'wlan0', 'wifi0'];
-    
+
     for (const interfaceName of preferredInterfaces) {
       const networkInterface = networkInterfaces[interfaceName];
       if (networkInterface) {
@@ -40,7 +39,7 @@ const getClientIP = (req) => {
         }
       }
     }
-    
+
     for (const interfaceName in networkInterfaces) {
       const networkInterface = networkInterfaces[interfaceName];
       for (const network of networkInterface) {
@@ -50,7 +49,7 @@ const getClientIP = (req) => {
       }
     }
   }
-  
+
   return ip;
 };
 
@@ -70,26 +69,26 @@ const isLateArrival = (checkInTime, officeStartTime, gracePeriodMinutes) => {
 
 const calculateDailySalary = async (email, colid) => {
   try {
-    const salarySettings = await SalarySettingds.findOne({ 
-      empemail: email, 
-      colid: parseInt(colid) 
+    const salarySettings = await SalarySettingds.findOne({
+      empemail: email,
+      colid: parseInt(colid)
     });
-    
+
     if (!salarySettings) {
       return { dailySalary: 0, halfDaySalary: 0 };
     }
-    
+
     const basicSalary = parseFloat(salarySettings.basicSalary);
     const hra = (basicSalary * parseFloat(salarySettings.hraPercent || '10')) / 100;
     const transportAllowance = parseFloat(salarySettings.transportAllowance || '0');
     const medicalAllowance = parseFloat(salarySettings.medicalAllowance || '0');
     const specialAllowance = parseFloat(salarySettings.specialAllowance || '0');
-    
+
     const grossSalary = basicSalary + hra + transportAllowance + medicalAllowance + specialAllowance;
     const workingDaysInMonth = 22;
     const dailySalary = grossSalary / workingDaysInMonth;
     const halfDaySalary = dailySalary / 2;
-    
+
     return { dailySalary, halfDaySalary };
   } catch (error) {
     console.error('Error calculating daily salary:', error);
@@ -105,10 +104,10 @@ exports.getuserip = (req, res) => {
   try {
     const ip = getClientIP(req);
     const environment = process.env.NODE_ENV || 'development';
-    
-    console.log(`Environment: ${environment}, Client IP: ${ip}`);
-    
-    res.json({ 
+
+    // console.log(`Environment: ${environment}, Client IP: ${ip}`);
+
+    res.json({
       ip,
       environment,
       debug: {
@@ -131,7 +130,7 @@ exports.getallowedipsds = async (req, res) => {
     if (!colid) {
       return res.status(400).json({ error: "colid is required" });
     }
-    const ips = await AllowedIPds.find({ 
+    const ips = await AllowedIPds.find({
       colid: parseInt(colid)
     }).sort({ createdAt: -1 });
     res.json(ips);
@@ -144,10 +143,10 @@ exports.getallowedipsds = async (req, res) => {
 exports.createallowedipsds = async (req, res) => {
   try {
     const { empname, empemail, ipAddress, location, description, colid } = req.body;
-    
+
     if (!empname || !empemail || !ipAddress || !colid) {
-      return res.status(400).json({ 
-        error: "Employee name, email, IP address, and colid are required" 
+      return res.status(400).json({
+        error: "Employee name, email, IP address, and colid are required"
       });
     }
 
@@ -159,8 +158,8 @@ exports.createallowedipsds = async (req, res) => {
     });
 
     if (existingIP) {
-      return res.status(400).json({ 
-        error: `IP address ${ipAddress} is already assigned to ${empname}` 
+      return res.status(400).json({
+        error: `IP address ${ipAddress} is already assigned to ${empname}`
       });
     }
 
@@ -189,7 +188,7 @@ exports.createallowedipsds = async (req, res) => {
 exports.updateallowedipsds = async (req, res) => {
   try {
     const { id, empname, empemail, ipAddress, location, description, isActive } = req.body;
-    
+
     if (!id) {
       return res.status(400).json({ error: "ID is required" });
     }
@@ -228,10 +227,10 @@ exports.removeallowedipsds = async (req, res) => {
     if (!id) {
       return res.status(400).json({ error: "ID is required" });
     }
-    
+
     const deletedIP = await AllowedIPds.findByIdAndDelete(id);
     if (deletedIP) {
-      res.json({ 
+      res.json({
         message: "IP address removed successfully",
         deletedIP: {
           empname: deletedIP.empname,
@@ -252,19 +251,19 @@ exports.checkipallowedds = async (req, res) => {
   try {
     const { ipAddress, empemail, colid } = req.query;
     if (!ipAddress || !empemail || !colid) {
-      return res.status(400).json({ 
-        error: "IP address, employee email, and colid are required" 
+      return res.status(400).json({
+        error: "IP address, employee email, and colid are required"
       });
     }
-    
-    const allowedIP = await AllowedIPds.findOne({ 
-      ipAddress, 
+
+    const allowedIP = await AllowedIPds.findOne({
+      ipAddress,
       empemail,
-      colid: parseInt(colid), 
-      isActive: true 
+      colid: parseInt(colid),
+      isActive: true
     });
-    
-    res.json({ 
+
+    res.json({
       isAllowed: !!allowedIP,
       assignedTo: allowedIP ? allowedIP.empname : null
     });
@@ -278,7 +277,7 @@ exports.checkipallowedds = async (req, res) => {
 exports.getemployeeipsds = async (req, res) => {
   try {
     const { empemail, colid } = req.query;
-    
+
     if (!empemail || !colid) {
       return res.status(400).json({ error: "Employee email and colid are required" });
     }
@@ -302,16 +301,16 @@ exports.getemployeeipsds = async (req, res) => {
 exports.getallemployeesds = async (req, res) => {
   try {
     const { colid, search } = req.query;
-    
+
     if (!colid) {
       return res.status(400).json({ error: "colid is required" });
     }
 
-    let query = { 
+    let query = {
       colid: parseInt(colid),
       status: 1 // Only active users
     };
-    
+
     // Add search filter if provided
     if (search && search.length >= 1) {
       const searchRegex = new RegExp(search, 'i');
@@ -349,13 +348,13 @@ exports.getallemployeesds = async (req, res) => {
 exports.searchsalaryemployeesds = async (req, res) => {
   try {
     const { colid, search } = req.query;
-    
+
     if (!colid) {
       return res.status(400).json({ error: "colid is required" });
     }
 
     let query = { colid: parseInt(colid) };
-    
+
     if (search && search.length >= 1) {
       const searchRegex = new RegExp(search, 'i');
       query.$or = [
@@ -389,19 +388,24 @@ exports.checkinds = async (req, res) => {
     }
 
     const clientIP = getClientIP(req);
-    
-    // Check if this IP is allowed for this specific employee
-    const isAllowed = await AllowedIPds.findOne({ 
-      ipAddress: clientIP, 
-      empemail: email,
-      colid: parseInt(colid), 
-      isActive: true 
-    });
-    
-    if (!isAllowed) {
-      return res.status(403).json({ 
-        error: `IP address ${clientIP} is not authorized for ${name}. Please contact admin to add your IP address.` 
+
+    const settings = await AttendanceSettingds.findOne({ colid: parseInt(colid) });
+    const requireLocationTracking = settings ? settings.requireLocationTracking !== false : true; // Default to true if not set
+
+    if (requireLocationTracking) {
+      // Check if this IP is allowed for this specific employee
+      const isAllowed = await AllowedIPds.findOne({
+        ipAddress: clientIP,
+        empemail: email,
+        colid: parseInt(colid),
+        isActive: true
       });
+
+      if (!isAllowed) {
+        return res.status(403).json({
+          error: `IP address ${clientIP} is not authorized for ${name}. Please contact admin to add your IP address.`
+        });
+      }
     }
 
     const today = new Date().toISOString().split('T')[0];
@@ -410,19 +414,18 @@ exports.checkinds = async (req, res) => {
       colid: parseInt(colid),
       date: today
     });
-    
+
     if (existingRecord) {
       return res.status(400).json({ error: "Already checked in today" });
     }
 
     const checkInTime = new Date();
-    const settings = await AttendanceSettingds.findOne({ colid: parseInt(colid) });
     const officeStartTime = settings?.officeStartTime || '09:00';
     const gracePeriodMinutes = settings?.gracePeriodMinutes || 15;
-    
+
     const isLate = isLateArrival(checkInTime, officeStartTime, gracePeriodMinutes);
     const gracePeriodMissed = isLate && isLateArrival(checkInTime, officeStartTime, 0);
-    
+
     const recordData = {
       email,
       name,
@@ -442,7 +445,7 @@ exports.checkinds = async (req, res) => {
 
     if (gracePeriodMissed) {
       const currentYear = new Date().getFullYear().toString();
-      
+
       const leaveBalance = await leavebalanceds1.findOne({
         email,
         colid: parseInt(colid),
@@ -454,7 +457,7 @@ exports.checkinds = async (req, res) => {
         leaveBalance.used += 0.5;
         leaveBalance.remaining -= 0.5;
         await leaveBalance.save();
-        
+
         recordData.leaveDeducted = '0.5';
         recordData.deductionType = 'half_day_leave';
       } else {
@@ -485,7 +488,7 @@ exports.checkoutds = async (req, res) => {
       colid: parseInt(colid),
       date: today
     });
-    
+
     if (!existingRecord) {
       return res.status(400).json({ error: "No check-in record found for today" });
     }
@@ -516,7 +519,7 @@ exports.checkoutds = async (req, res) => {
 exports.gettodayattendanceds = async (req, res) => {
   try {
     const { email, colid } = req.query;
-    
+
     if (!email || !colid) {
       return res.status(400).json({ error: "Email and colid are required" });
     }
@@ -537,7 +540,7 @@ exports.gettodayattendanceds = async (req, res) => {
 exports.getattendancerecordsds = async (req, res) => {
   try {
     const { email, colid, fromDate, toDate } = req.query;
-    
+
     if (!colid) {
       return res.status(400).json({ error: "colid is required" });
     }
@@ -566,7 +569,7 @@ exports.getattendancestatsds = async (req, res) => {
   try {
     const { email, colid, month } = req.query;
     const monthToUse = month || new Date().toISOString().substr(0, 7);
-    
+
     if (!email || !colid) {
       return res.status(400).json({ error: "Email and colid are required" });
     }
@@ -591,9 +594,9 @@ exports.getattendancestatsds = async (req, res) => {
       if (record.status === 'Present') stats.totalPresent++;
       else if (record.status === 'Late') stats.totalLate++;
       else if (record.status === 'Absent') stats.totalAbsent++;
-      
+
       stats.totalHours += parseFloat(record.workingHours || '0');
-      
+
       if (record.deductionType === 'half_day_leave') {
         stats.halfDayLeaveDeducted += parseFloat(record.leaveDeducted || '0');
       } else if (record.deductionType === 'half_day_salary') {
@@ -613,7 +616,7 @@ exports.getattendancestatsds = async (req, res) => {
 exports.markabsentds = async (req, res) => {
   try {
     const { email, colid, date, reason } = req.body;
-    
+
     if (!email || !colid || !date) {
       return res.status(400).json({ error: "Email, colid, and date are required" });
     }
@@ -623,7 +626,7 @@ exports.markabsentds = async (req, res) => {
       colid: parseInt(colid),
       date
     });
-    
+
     if (existingRecord) {
       return res.status(400).json({ error: "Attendance record already exists for this date" });
     }
@@ -663,7 +666,7 @@ exports.getattendancesummaryds = async (req, res) => {
   try {
     const { colid, date } = req.query;
     const dateToUse = date || new Date().toISOString().split('T')[0];
-    
+
     if (!colid) {
       return res.status(400).json({ error: "colid is required" });
     }
@@ -695,14 +698,14 @@ exports.getattendancesummaryds = async (req, res) => {
 exports.getsalarysettingsds = async (req, res) => {
   try {
     const { empemail, colid } = req.query;
-    
+
     if (!empemail || !colid) {
       return res.status(400).json({ error: "Employee email and colid are required" });
     }
 
-    const settings = await SalarySettingds.findOne({ 
-      empemail, 
-      colid: parseInt(colid) 
+    const settings = await SalarySettingds.findOne({
+      empemail,
+      colid: parseInt(colid)
     });
 
     res.json(settings || null);
@@ -715,21 +718,21 @@ exports.getsalarysettingsds = async (req, res) => {
 exports.createsalarysettingsds = async (req, res) => {
   try {
     const { empemail, colid } = req.body;
-    
+
     if (!empemail || !colid) {
       return res.status(400).json({ error: "Employee email and colid are required" });
     }
-    
-    const existingSettings = await SalarySettingds.findOne({ 
-      empemail, 
-      colid: parseInt(colid) 
+
+    const existingSettings = await SalarySettingds.findOne({
+      empemail,
+      colid: parseInt(colid)
     });
 
     if (existingSettings) {
       const updatedSettings = await SalarySettingds.findOneAndUpdate(
         { empemail, colid: parseInt(colid) },
-        { 
-          ...req.body, 
+        {
+          ...req.body,
           colid: parseInt(req.body.colid)
         },
         { new: true }
@@ -753,22 +756,22 @@ exports.createsalarysettingsds = async (req, res) => {
 exports.calculatesalaryds = async (req, res) => {
   try {
     const { empemail, colid, month } = req.body;
-    
+
     if (!empemail || !colid || !month) {
       return res.status(400).json({ error: "Employee email, colid, and month are required" });
     }
 
-    const salarySettings = await SalarySettingds.findOne({ 
-      empemail, 
-      colid: parseInt(colid) 
+    const salarySettings = await SalarySettingds.findOne({
+      empemail,
+      colid: parseInt(colid)
     });
 
     if (!salarySettings) {
       return res.status(404).json({ error: "Salary settings not found for this employee" });
     }
 
-    const attendanceSettings = await AttendanceSettingds.findOne({ 
-      colid: parseInt(colid) 
+    const attendanceSettings = await AttendanceSettingds.findOne({
+      colid: parseInt(colid)
     });
 
     const records = await AttendanceRecordds.find({
@@ -790,9 +793,9 @@ exports.calculatesalaryds = async (req, res) => {
       if (record.status === 'Present') stats.totalPresent++;
       else if (record.status === 'Late') stats.totalLate++;
       else if (record.status === 'Absent') stats.totalAbsent++;
-      
+
       stats.totalHours += parseFloat(record.workingHours || '0');
-      
+
       if (record.deductionType === 'half_day_salary') {
         stats.halfDaySalaryDeducted += parseFloat(record.salaryDeducted || '0');
       } else if (record.deductionType === 'full_day_salary') {
@@ -805,17 +808,72 @@ exports.calculatesalaryds = async (req, res) => {
     const transportAllowance = parseFloat(salarySettings.transportAllowance || '0');
     const medicalAllowance = parseFloat(salarySettings.medicalAllowance || '0');
     const specialAllowance = parseFloat(salarySettings.specialAllowance || '0');
-    
+
     const grossSalary = basicSalary + hra + transportAllowance + medicalAllowance + specialAllowance;
-    
-    const pf = (basicSalary * parseFloat(salarySettings.pfPercent || '12')) / 100;
-    const esi = (grossSalary * parseFloat(salarySettings.esiPercent || '0.75')) / 100;
-    const professionalTax = parseFloat(salarySettings.professionalTax || '200');
-    
+
+    // FETCH APPROVED LEAVES
+    const yearMonth = month.split('-');
+    const yearNum = parseInt(yearMonth[0]);
+    const monthNum = parseInt(yearMonth[1]) - 1; // 0-indexed month
+    const numDays = new Date(yearNum, monthNum + 1, 0).getDate();
+
+    const approvedLeaves = await Leave.find({
+      email: empemail,
+      colid: parseInt(colid),
+      leavestatus: 'Approved',
+      from: { $lte: new Date(yearNum, monthNum + 1, 0, 23, 59, 59) },
+      to: { $gte: new Date(yearNum, monthNum, 1) }
+    });
+
     const workingDaysInMonth = attendanceSettings?.workingDaysPerMonth || 22;
     const dailySalary = grossSalary / workingDaysInMonth;
     const halfDaySalary = dailySalary / 2;
-    
+
+    const configuredFullDayDeduction = attendanceSettings?.fullDayDeductionAmount ? parseFloat(attendanceSettings.fullDayDeductionAmount) : dailySalary;
+
+    // CHECK FOR UNEXCUSED ABSENCES (No Records + No Leave)
+    const weeklyOffDays = attendanceSettings?.weeklyOffDays || ['Sunday'];
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    let missingRecordsCount = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let day = 1; day <= numDays; day++) {
+      const dateStr = `${yearMonth[0]}-${yearMonth[1]}-${day.toString().padStart(2, '0')}`;
+      const currentDate = new Date(yearNum, monthNum, day);
+      const dayName = dayNames[currentDate.getDay()];
+
+      // Skip weekly off days
+      if (weeklyOffDays.includes(dayName)) continue;
+
+      // Only verify up to today (can't be absent for future days)
+      if (currentDate <= today) {
+        const hasRecord = records.find(r => r.date === dateStr);
+        if (!hasRecord) {
+          // Check if there is an approved leave
+          const hasApprovedLeave = approvedLeaves.find(l => {
+            const lFrom = new Date(l.from);
+            lFrom.setHours(0, 0, 0, 0);
+            const lTo = new Date(l.to);
+            lTo.setHours(23, 59, 59, 999);
+            return currentDate >= lFrom && currentDate <= lTo;
+          });
+
+          if (!hasApprovedLeave) {
+            missingRecordsCount++;
+          }
+        }
+      }
+    }
+
+    // Apply deductions for missing records
+    stats.totalAbsent += missingRecordsCount;
+    stats.fullDaySalaryDeducted += (missingRecordsCount * configuredFullDayDeduction);
+
+    const pf = (basicSalary * parseFloat(salarySettings.pfPercent || '12')) / 100;
+    const esi = (grossSalary * parseFloat(salarySettings.esiPercent || '0.75')) / 100;
+    const professionalTax = parseFloat(salarySettings.professionalTax || '200');
+
     const totalDeductions = pf + esi + professionalTax + stats.halfDaySalaryDeducted + stats.fullDaySalaryDeducted;
     const netSalary = grossSalary - totalDeductions;
 
@@ -856,31 +914,31 @@ exports.calculatesalaryds = async (req, res) => {
 exports.createsalaryslipds = async (req, res) => {
   try {
     const { empemail, colid, month, year } = req.body;
-    
+
     if (!empemail || !colid || !month || !year) {
       return res.status(400).json({ error: "Employee email, colid, month, and year are required" });
     }
-    
-    const salarySettings = await SalarySettingds.findOne({ 
-      empemail, 
-      colid: parseInt(colid) 
+
+    const salarySettings = await SalarySettingds.findOne({
+      empemail,
+      colid: parseInt(colid)
     });
-    
+
     if (!salarySettings) {
       return res.status(404).json({ error: "Salary settings not found for this employee" });
     }
-    
+
     const existingSlip = await SalarySlipds.findOne({
       empemail,
       colid: parseInt(colid),
       month,
       year
     });
-    
+
     if (existingSlip) {
       return res.status(400).json({ error: "Salary slip already exists for this month and year" });
     }
-    
+
     const slipData = {
       ...req.body,
       colid: parseInt(req.body.colid),
@@ -901,14 +959,14 @@ exports.createsalaryslipds = async (req, res) => {
 exports.getsalaryslipsds = async (req, res) => {
   try {
     const { empemail, colid } = req.query;
-    
+
     if (!empemail || !colid) {
       return res.status(400).json({ error: "Employee email and colid are required" });
     }
 
-    const slips = await SalarySlipds.find({ 
-      empemail, 
-      colid: parseInt(colid) 
+    const slips = await SalarySlipds.find({
+      empemail,
+      colid: parseInt(colid)
     }).sort({ year: -1, month: -1, createdAt: -1 });
 
     res.json(slips);
@@ -921,13 +979,13 @@ exports.getsalaryslipsds = async (req, res) => {
 exports.getallsalaryslipsds = async (req, res) => {
   try {
     const { colid } = req.query;
-    
+
     if (!colid) {
       return res.status(400).json({ error: "colid is required" });
     }
 
-    const slips = await SalarySlipds.find({ 
-      colid: parseInt(colid) 
+    const slips = await SalarySlipds.find({
+      colid: parseInt(colid)
     }).sort({ year: -1, month: -1, createdAt: -1 });
 
     res.json(slips);
@@ -940,17 +998,17 @@ exports.getallsalaryslipsds = async (req, res) => {
 exports.getsalaryslipds = async (req, res) => {
   try {
     const { id } = req.query;
-    
+
     if (!id) {
       return res.status(400).json({ error: "id is required" });
     }
 
     const slip = await SalarySlipds.findById(id);
-    
+
     if (!slip) {
       return res.status(404).json({ error: "Salary slip not found" });
     }
-    
+
     res.json(slip);
   } catch (error) {
     console.error('Get salary slip error:', error);
@@ -965,8 +1023,8 @@ exports.getsalaryemployeesds = async (req, res) => {
       return res.status(400).json({ error: "colid is required" });
     }
 
-    const employees = await SalarySettingds.find({ 
-      colid: parseInt(colid) 
+    const employees = await SalarySettingds.find({
+      colid: parseInt(colid)
     }).select('empname empemail designation basicSalary createdAt').sort({ empname: 1 });
 
     res.json(employees);
@@ -987,8 +1045,8 @@ exports.getattendancesettingsds = async (req, res) => {
       return res.status(400).json({ error: "colid is required" });
     }
 
-    const settings = await AttendanceSettingds.findOne({ 
-      colid: parseInt(colid) 
+    const settings = await AttendanceSettingds.findOne({
+      colid: parseInt(colid)
     });
 
     res.json(settings || null);
@@ -1001,16 +1059,16 @@ exports.getattendancesettingsds = async (req, res) => {
 exports.createattendancesettingsds = async (req, res) => {
   try {
     const { colid } = req.body;
-    
-    const existingSettings = await AttendanceSettingds.findOne({ 
-      colid: parseInt(colid) 
+
+    const existingSettings = await AttendanceSettingds.findOne({
+      colid: parseInt(colid)
     });
 
     if (existingSettings) {
       const updatedSettings = await AttendanceSettingds.findOneAndUpdate(
         { colid: parseInt(colid) },
-        { 
-          ...req.body, 
+        {
+          ...req.body,
           colid: parseInt(colid)
         },
         { new: true }
@@ -1037,22 +1095,22 @@ exports.createattendancesettingsds = async (req, res) => {
 exports.updatesalarysettingsds = async (req, res) => {
   try {
     const { id, empemail, colid } = req.body;
-    
+
     if (!id && (!empemail || !colid)) {
       return res.status(400).json({ error: "ID or (Employee email and colid) are required" });
     }
-    
+
     let query = {};
     if (id) {
       query._id = id;
     } else {
       query = { empemail, colid: parseInt(colid) };
     }
-    
+
     const updatedSettings = await SalarySettingds.findOneAndUpdate(
       query,
-      { 
-        ...req.body, 
+      {
+        ...req.body,
         colid: parseInt(req.body.colid),
         updatedAt: new Date(),
         updatedBy: req.body.user || req.body.name
@@ -1075,25 +1133,25 @@ exports.updatesalarysettingsds = async (req, res) => {
 exports.deletesalarysettingsds = async (req, res) => {
   try {
     const { id, empemail, colid } = req.body;
-    
+
     if (!id && (!empemail || !colid)) {
       return res.status(400).json({ error: "ID or (Employee email and colid) are required" });
     }
-    
+
     let query = {};
     if (id) {
       query._id = id;
     } else {
       query = { empemail, colid: parseInt(colid) };
     }
-    
+
     const deletedSettings = await SalarySettingds.findOneAndDelete(query);
 
     if (!deletedSettings) {
       return res.status(404).json({ error: "Salary settings not found" });
     }
 
-    res.json({ 
+    res.json({
       message: "Salary settings deleted successfully",
       deletedEmployee: {
         name: deletedSettings.empname,
@@ -1110,7 +1168,7 @@ exports.deletesalarysettingsds = async (req, res) => {
 exports.getsalarysettingbyidds = async (req, res) => {
   try {
     const { id } = req.query;
-    
+
     if (!id) {
       return res.status(400).json({ error: "ID is required" });
     }
@@ -1131,9 +1189,9 @@ exports.getsalarysettingbyidds = async (req, res) => {
 // Create or update salary settings with new structure
 exports.createsalarysettingds = async (req, res) => {
   try {
-    const { 
-      empname, 
-      empemail, 
+    const {
+      empname,
+      empemail,
       designation,
       fixedComponents = {},
       deductionComponents = {},
@@ -1151,9 +1209,9 @@ exports.createsalarysettingds = async (req, res) => {
     }
 
     // Check if salary setting already exists for this employee
-    const existingSetting = await SalarySettingds.findOne({ 
-      empemail, 
-      colid 
+    const existingSetting = await SalarySettingds.findOne({
+      empemail,
+      colid
     });
 
     if (existingSetting) {
@@ -1210,7 +1268,7 @@ exports.createsalarysettingds = async (req, res) => {
 exports.updatesalarysettingds = async (req, res) => {
   try {
     const { id } = req.query;
-    const { 
+    const {
       fixedComponents,
       deductionComponents,
       variableComponents,
@@ -1254,7 +1312,7 @@ exports.updatesalarysettingds = async (req, res) => {
 // Get salary calculation preview
 exports.getSalaryCalculation = async (req, res) => {
   try {
-    const { 
+    const {
       fixedComponents = {},
       deductionComponents = {},
       variableComponents = []
@@ -1366,7 +1424,7 @@ exports.getsalaryslips = async (req, res) => {
     }
 
     let query = { colid: parseInt(colid) };
-    
+
     if (month) query.month = month;
     if (year) query.year = year;
     if (empemail) query.empemail = empemail;
@@ -1422,20 +1480,18 @@ exports.deletesalarysettingds = async (req, res) => {
 // Generate salary slip with upsert functionality
 exports.generateSalarySlip = async (req, res) => {
   try {
-    const { 
-      empname, 
-      empemail, 
-      month, 
-      year, 
-      workingDays, 
-      presentDays 
+    const {
+      empname,
+      empemail,
+      month,
+      year
     } = req.body;
-    
+
     const { name, user, colid } = req.body;
 
-    const salarySettings = await SalarySettingds.findOne({ 
-      empemail, 
-      colid 
+    const salarySettings = await SalarySettingds.findOne({
+      empemail,
+      colid: parseInt(colid)
     });
 
     if (!salarySettings) {
@@ -1445,39 +1501,116 @@ exports.generateSalarySlip = async (req, res) => {
       });
     }
 
-    const absentDays = workingDays - presentDays;
-    const dailySalary = parseFloat(salarySettings.grossSalary) / workingDays;
-    const absentDeduction = absentDays * dailySalary;
+    const attendanceSettings = await AttendanceSettingds.findOne({
+      colid: parseInt(colid)
+    });
 
+    const monthStr = `${year}-${month.padStart(2, '0')}`;
     const attendanceRecords = await AttendanceRecordds.find({
       email: empemail,
-      colid,
-      date: {
-        $regex: `${year}-${month.padStart(2, '0')}`
+      colid: parseInt(colid),
+      date: { $regex: `^${monthStr}` }
+    });
+
+    const stats = {
+      totalPresent: 0,
+      totalLate: 0,
+      totalAbsent: 0,
+      halfDaySalaryDeducted: 0,
+      fullDaySalaryDeducted: 0
+    };
+
+    attendanceRecords.forEach(record => {
+      if (record.status === 'Present') stats.totalPresent++;
+      else if (record.status === 'Late') {
+        stats.totalPresent++; // Assuming late is technically present
+        stats.totalLate++;
+      }
+      else if (record.status === 'Absent') stats.totalAbsent++;
+
+      if (record.deductionType === 'half_day_salary') {
+        stats.halfDaySalaryDeducted += parseFloat(record.salaryDeducted || '0');
+      } else if (record.deductionType === 'full_day_salary') {
+        stats.fullDaySalaryDeducted += parseFloat(record.salaryDeducted || '0');
       }
     });
 
-    const lateDays = attendanceRecords.filter(record => record.isLate).length;
-    const lateDeduction = lateDays * (dailySalary * 0.1);
+    // Calculate Gross Salary
+    const calcBasicSalary = parseFloat(salarySettings.fixedComponents?.basicSalary || '0');
+    const calcGrossSalary = Object.values(salarySettings.fixedComponents || {}).reduce((sum, val) => sum + parseFloat(val || 0), 0) +
+      (salarySettings.variableComponents || []).reduce((sum, comp) => sum + parseFloat(comp.amount || 0), 0);
 
-    const attendanceRatio = presentDays / workingDays;
-    
-    const proRatedFixed = {};
-    Object.keys(salarySettings.fixedComponents).forEach(key => {
-      proRatedFixed[key] = (parseFloat(salarySettings.fixedComponents[key]) * attendanceRatio).toFixed(2);
+    const workingDaysInMonth = attendanceSettings?.workingDaysPerMonth || 22;
+    const dailySalary = calcGrossSalary / workingDaysInMonth;
+    const configuredFullDayDeduction = attendanceSettings?.fullDayDeductionAmount ? parseFloat(attendanceSettings.fullDayDeductionAmount) : dailySalary;
+
+    // FETCH APPROVED LEAVES
+    const yearNum = parseInt(year);
+    const monthNum = parseInt(month) - 1; // 0-indexed
+    const numDays = new Date(yearNum, monthNum + 1, 0).getDate();
+
+    const approvedLeaves = await Leave.find({
+      email: empemail,
+      colid: parseInt(colid),
+      leavestatus: 'Approved',
+      from: { $lte: new Date(yearNum, monthNum + 1, 0, 23, 59, 59) },
+      to: { $gte: new Date(yearNum, monthNum, 1) }
     });
 
-    const proRatedVariable = salarySettings.variableComponents.map(component => ({
+    // CHECK FOR UNEXCUSED ABSENCES (No Records + No Leave)
+    const weeklyOffDays = attendanceSettings?.weeklyOffDays || ['Sunday'];
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    let missingRecordsCount = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let day = 1; day <= numDays; day++) {
+      const dateStr = `${year}-${month.padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      const currentDate = new Date(yearNum, monthNum, day);
+      const dayName = dayNames[currentDate.getDay()];
+
+      if (weeklyOffDays.includes(dayName)) continue;
+
+      if (currentDate <= today) {
+        const hasRecord = attendanceRecords.find(r => r.date === dateStr);
+        if (!hasRecord) {
+          const hasApprovedLeave = approvedLeaves.find(l => {
+            const lFrom = new Date(l.from);
+            lFrom.setHours(0, 0, 0, 0);
+            const lTo = new Date(l.to);
+            lTo.setHours(23, 59, 59, 999);
+            return currentDate >= lFrom && currentDate <= lTo;
+          });
+
+          if (!hasApprovedLeave) {
+            missingRecordsCount++;
+          }
+        }
+      }
+    }
+
+    stats.totalAbsent += missingRecordsCount;
+    stats.fullDaySalaryDeducted += (missingRecordsCount * configuredFullDayDeduction);
+
+    const actualPresentDays = Math.max(0, workingDaysInMonth - stats.totalAbsent);
+    const attendanceRatio = actualPresentDays / workingDaysInMonth;
+
+    const proRatedFixed = {};
+    Object.keys(salarySettings.fixedComponents || {}).forEach(key => {
+      proRatedFixed[key] = (parseFloat(salarySettings.fixedComponents[key] || 0) * attendanceRatio).toFixed(2);
+    });
+
+    const proRatedVariable = (salarySettings.variableComponents || []).map(component => ({
       componentName: component.componentName,
-      amount: (parseFloat(component.amount) * attendanceRatio).toFixed(2)
+      amount: (parseFloat(component.amount || 0) * attendanceRatio).toFixed(2)
     }));
 
     const totalFixedEarnings = Object.values(proRatedFixed).reduce((sum, val) => sum + parseFloat(val), 0);
     const totalVariableEarnings = proRatedVariable.reduce((sum, comp) => sum + parseFloat(comp.amount), 0);
     const grossEarnings = totalFixedEarnings + totalVariableEarnings;
 
-    const totalStatutoryDeductions = Object.values(salarySettings.deductionComponents).reduce((sum, val) => sum + parseFloat(val), 0);
-    const totalAttendanceDeductions = absentDeduction + lateDeduction;
+    const totalStatutoryDeductions = Object.values(salarySettings.deductionComponents || {}).reduce((sum, val) => sum + parseFloat(val || 0), 0);
+    const totalAttendanceDeductions = stats.halfDaySalaryDeducted + stats.fullDaySalaryDeducted;
     const totalDeductions = totalStatutoryDeductions + totalAttendanceDeductions;
 
     const netSalary = grossEarnings - totalDeductions;
@@ -1491,26 +1624,26 @@ exports.generateSalarySlip = async (req, res) => {
       designation: salarySettings.designation,
       month,
       year,
-      workingDays,
-      presentDays,
-      absentDays,
-      lateDays,
-      
+      workingDays: workingDaysInMonth,
+      presentDays: actualPresentDays,
+      absentDays: stats.totalAbsent,
+      lateDays: stats.totalLate,
+
       fixedComponents: proRatedFixed,
       variableComponents: proRatedVariable,
-      
+
       deductionComponents: salarySettings.deductionComponents,
       attendanceDeductions: {
-        absentDeduction: absentDeduction.toFixed(2),
-        lateDeduction: lateDeduction.toFixed(2),
+        absentDeduction: stats.fullDaySalaryDeducted.toFixed(2),
+        lateDeduction: stats.halfDaySalaryDeducted.toFixed(2),
         leaveDeduction: '0.00'
       },
-      
+
       grossSalary: grossEarnings.toFixed(2),
       totalDeductions: totalDeductions.toFixed(2),
       netSalary: netSalary.toFixed(2),
       ctc: salarySettings.ctc,
-      
+
       status: 'processed'
     };
 
