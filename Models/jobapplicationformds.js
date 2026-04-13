@@ -19,7 +19,7 @@ const jobapplicationformschema = new mongoose.Schema({
     colid: { type: Number },
     status: {
         type: String,
-         enum: ['Applied', 'Shortlisted', 'Interviewed', 'Selected', 'Rejected'],
+        enum: ['Applied', 'Shortlisted', 'Interviewed', 'Selected', 'Rejected', 'Hired'],
         default: 'Applied'
     }
 }, {

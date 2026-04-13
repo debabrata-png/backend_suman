@@ -25,14 +25,13 @@ async function updateProgramCode() {
         console.log("✅ Successfully connected to MongoDB.");
 
         console.log("Loading Excel file: updateprogramcode1.xlsx...");
-        const filePath = path.join(__dirname, '../updateprogramcode1.xlsx'); // Relative to scripts folder
+        const filePath = path.join(__dirname, '../updateprogramcode1.xlsx');
         const workbook = new excel.Workbook();
         await workbook.xlsx.readFile(filePath);
 
         const worksheet = workbook.worksheets[0];
 
         // Find column indices from headers
-        // Expected headers: 'Programme Name', 'Department', 'Department code', 'Programme Code'
         let colIdxProgramName = -1;
         let colIdxDepartment = -1;
         let colIdxDepartmentCode = -1;
@@ -52,7 +51,6 @@ async function updateProgramCode() {
         });
 
         // Fallback to positional columns if headers not detected
-        // Column A=1: Programme Name, B=2: Department, C=3: Department code, D=4: Programme Code
         if (colIdxProgramName === -1) colIdxProgramName = 1;
         if (colIdxDepartment === -1) colIdxDepartment = 2;
         if (colIdxDepartmentCode === -1) colIdxDepartmentCode = 3;
@@ -65,6 +63,7 @@ async function updateProgramCode() {
         console.log(`  Col ${colIdxProgramCode}    -> Programme Code`);
 
         let updatedCount = 0;
+        let alreadyUpToDate = 0;
         let notFoundCount = 0;
         let skippedCount = 0;
         let errorsCount = 0;
@@ -84,30 +83,51 @@ async function updateProgramCode() {
                 continue;
             }
 
-            // Build the $set payload — only include fields that have values
+            // Build the $set payload
             const setPayload = {};
             if (programmeName) setPayload.programcode = programmeName;
-            if (department) setPayload.department = department;
-            // programcode is always set to itself (normalises any casing differences)
-            setPayload.programcode = programCode;
+            if (department) setPayload.department = department; // always normalise to Excel value (string)
+
+            // ---------------------------------------------------------------
+            // KEY FIX: Match programcode stored as EITHER a string OR a number.
+            //
+            // Problem: Excel stores "0205" as a string, but MongoDB may have
+            // stored it as the number 205 (no leading zero) or the string "205".
+            // The old regex ^0205$ would never match the number 205.
+            //
+            // Solution: use $in with all possible variants so we hit regardless
+            // of how the value was originally stored.
+            // ---------------------------------------------------------------
+            const numericCode = parseInt(programCode, 10); // strips leading zero: "0205" -> 205
+            const programCodeVariants = [
+                programCode,         // "0205" — original string from Excel
+                String(numericCode), // "205"  — string without leading zero
+                numericCode,         // 205    — actual number type in DB
+            ];
 
             try {
                 const result = await User.updateMany(
                     {
                         $or: [{ colid: COLID }, { colid: String(COLID) }],
                         role: { $regex: /^Student$/i },
-                        programcode: { $regex: new RegExp(`^${programCode}$`, 'i') } // case-insensitive match
+                        programcode: { $in: programCodeVariants } // covers all stored forms
                     },
                     { $set: setPayload }
                 );
 
-                if (result.matchedCount > 0) {
+                if (result.matchedCount > 0 && result.modifiedCount > 0) {
                     console.log(
                         `✅ [SUCCESS] ProgramCode '${programCode}' | Dept '${department}' | DeptCode '${departmentCode}' | ProgName '${programmeName}' — updated ${result.modifiedCount} student(s).`
                     );
                     updatedCount += result.modifiedCount;
+                } else if (result.matchedCount > 0 && result.modifiedCount === 0) {
+                    // Matched but nothing changed — fields already had the correct values
+                    console.log(
+                        `ℹ️  [ALREADY UP-TO-DATE] ProgramCode '${programCode}' — ${result.matchedCount} student(s) already have the correct values. No change needed.`
+                    );
+                    alreadyUpToDate += result.matchedCount;
                 } else {
-                    console.log(`⚠️  [NO MATCH] No students found for programcode '${programCode}'.`);
+                    console.log(`⚠️  [NO MATCH] No students found for programcode '${programCode}' (tried: ${programCodeVariants.join(', ')}).`);
                     notFoundCount++;
                 }
 
@@ -120,10 +140,11 @@ async function updateProgramCode() {
         console.log("\n=================================");
         console.log("UPDATE COMPLETED");
         console.log("=================================");
-        console.log(`Total students updated  : ${updatedCount}`);
-        console.log(`Programme codes skipped : ${skippedCount}`);
-        console.log(`Codes not found in DB   : ${notFoundCount}`);
-        console.log(`Total errors            : ${errorsCount}`);
+        console.log(`Total students updated        : ${updatedCount}`);
+        console.log(`Already up-to-date (no change): ${alreadyUpToDate}`);
+        console.log(`Programme codes skipped       : ${skippedCount}`);
+        console.log(`Codes not found in DB         : ${notFoundCount}`);
+        console.log(`Total errors                  : ${errorsCount}`);
 
     } catch (err) {
         console.error("❌ Fatal Error:", err);

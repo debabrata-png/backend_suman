@@ -4,6 +4,7 @@ const salaryledger = require('../Models/salaryledgerj.js');
 const Deduction = require('../Models/deductionsj');
 const ipaddress = require('../Models/ipaddressj');
 const Salary = require('../Models/salaryj.js');
+const EmployeeLedger = require('../Models/employeeledger');
 /*---------------------register------------------------------*/
 exports.register = async (req, res) => {
   try {
@@ -581,6 +582,20 @@ exports.calculatesalaryandslipj = async (req, res) => {
       totalDeductions,
       netSalary,
       deductionReasons,
+    });
+
+    // Save in EmployeeLedger for Final Settlement tracking
+    await EmployeeLedger.create({
+      empemail: email,
+      name: user.name,
+      colid: user.colid || 0,
+      month,
+      year,
+      amount: netSalary,
+      transactionType: 'Salary',
+      direction: 'Credit', // Company pays employee
+      paymentStatus: 'Paid',
+      description: `Monthly Salary for ${month}/${year}`
     });
 
     // Return JSON only (no PDF here)
