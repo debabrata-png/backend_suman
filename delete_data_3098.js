@@ -28,7 +28,7 @@ const storerequisationds2 = require("./Models/storerequisationds2");
 const storerequisationds = require("./Models/storerequisationds");
 
 const crmh1 = require("./Models/crmh1")
-
+const departmentindentds = require("./Models/departmentindentds");
 
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -54,14 +54,14 @@ const deleteData = async () => {
         console.log(`\n🗑️  Deleting data for colid: ${TARGET_COLID} ...\n`);
 
         // ── Existing deletions (kept for reference) ────────────────────────
-        const res1 = await Classenr1.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${res1.deletedCount} records from Classenr1.`);
+        // const res1 = await Classenr1.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${res1.deletedCount} records from Classenr1.`);
 
         // const re2 = await Institution.deleteMany({ admincolid: 3090 });
         // console.log(`Deleted ${re2.deletedCount} records from Institution.`);
 
-        const res2 = await MfacCourses.deleteMany({ colid: TARGET_COLID });
-        console.log(`Deleted ${res2.deletedCount} records from MfacCourses.`);
+        // const res2 = await MfacCourses.deleteMany({ colid: TARGET_COLID });
+        // console.log(`Deleted ${res2.deletedCount} records from MfacCourses.`);
 
         // const res3 = await User.deleteMany({ colid: TARGET_COLID, role: 'Student' });
         // console.log(`Deleted ${res3.deletedCount} records from User (Students).`);
@@ -149,6 +149,10 @@ const deleteData = async () => {
 
         // const r8 = await categoryag1.deleteMany({ colid: 6050 })
         // console.log(`Deleted ${r8.deletedCount}`);
+
+
+        const r19 = await departmentindentds.deleteMany({ colid: 3090 });
+        console.log(`Deleted Leads in ${r19.deletedCount} records from crmh1`)
         console.log("\n✅ All selected deletions complete.");
 
     } catch (err) {

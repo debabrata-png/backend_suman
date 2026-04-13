@@ -4,10 +4,25 @@ const requisationds2 = require("../Models/requisationds2");
 // Add to Staging (Level 0)
 exports.addrequisationds12 = async (req, res) => {
     try {
-        const newReq = await requisationds12.create({ ...req.body, reqstatus: 'Pending Approval' });
+        let reqstatus = 'Pending Approval';
+        if (req.body.approvalOption === 'Manual') {
+            reqstatus = 'Approved';
+        }
+
+        const newReq = await requisationds12.create({ ...req.body, reqstatus });
+
+        if (req.body.approvalOption === 'Manual') {
+            // Directly create in Main Store Request table
+            const mainReqPayload = newReq.toObject();
+            delete mainReqPayload._id;
+            delete mainReqPayload.__v;
+            mainReqPayload.reqstatus = 'Pending'; // Pending for Store Manager now
+            await requisationds2.create(mainReqPayload);
+        }
+
         res.status(201).json({
             success: true,
-            message: "Requisition sent for approval",
+            message: req.body.approvalOption === 'Manual' ? "Requisition approved and sent to store" : "Requisition sent for approval",
             data: newReq
         });
     } catch (error) {
