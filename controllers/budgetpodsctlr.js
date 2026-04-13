@@ -156,11 +156,13 @@ exports.approvebudgetpods = async (req, res) => {
         const budget = await budgetpods.findById(id);
         if (!budget) return res.status(404).json({ status: 'fail', message: 'Budget not found' });
 
-        const approvalEntry = budget.approvedby.find(a => a.levelofapproval === levelofapproval);
-        if (!approvalEntry) return res.status(400).json({ status: 'fail', message: 'Approval level not found' });
+        const entriesAtLevel = budget.approvedby.filter(a => a.levelofapproval === levelofapproval);
+        if (entriesAtLevel.length === 0) return res.status(400).json({ status: 'fail', message: 'Approval level not found' });
 
-        approvalEntry.status = status;
-        approvalEntry.date = new Date();
+        entriesAtLevel.forEach(entry => {
+            entry.status = status;
+            entry.date = new Date();
+        });
 
         if (status === 'Rejected') {
             budget.status = 'Rejected';
