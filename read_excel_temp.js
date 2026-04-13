@@ -1,9 +1,23 @@
-const XLSX = require('xlsx');
+const excel = require('exceljs');
 const path = require('path');
 
-const workbook = XLSX.readFile(path.join(__dirname, 'newcategory.xlsx'));
-const sheetName = workbook.SheetNames[0];
-const worksheet = workbook.Sheets[sheetName];
-const data = XLSX.utils.sheet_to_json(worksheet);
+async function readHeaders() {
+    const filePath = path.join(__dirname, 'updateprogramcode.xlsx');
+    const workbook = new excel.Workbook();
+    await workbook.xlsx.readFile(filePath);
+    const worksheet = workbook.worksheets[0];
+    
+    const headers = [];
+    worksheet.getRow(1).eachCell((cell, colNumber) => {
+        headers.push(cell.value);
+    });
+    console.log("Headers:", headers);
 
-console.log(JSON.stringify(data, null, 2));
+    const firstRowValues = [];
+    worksheet.getRow(2).eachCell((cell, colNumber) => {
+        firstRowValues.push(cell.value);
+    });
+    console.log("First row values:", firstRowValues);
+}
+
+readHeaders().catch(console.error);
