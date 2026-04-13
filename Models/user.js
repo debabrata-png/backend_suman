@@ -26,6 +26,9 @@ const userschema = new mongoose.Schema({
         type: String,
         required: [true, 'Please enter regno']
     },
+    program: {
+        type: String
+    },
     programcode: {
         type: String,
         required: [true, 'Please enter program code']

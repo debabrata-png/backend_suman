@@ -824,7 +824,7 @@ exports.calculatesalaryds = async (req, res) => {
     const workingDaysInMonth = attendanceSettings?.workingDaysPerMonth ? parseInt(attendanceSettings.workingDaysPerMonth) : 22;
     const dailySalary = grossSalary / workingDaysInMonth;
     const halfDaySalary = dailySalary / 2;
-    
+
     stats.halfDaySalaryDeducted = (stats.halfDayPenaltiesCount || 0) * halfDaySalary;
     stats.fullDaySalaryDeducted = (stats.fullDayPenaltiesCount || 0) * dailySalary;
 
@@ -1541,10 +1541,10 @@ exports.generateSalarySlip = async (req, res) => {
     const workingDaysInMonth = attendanceSettings?.workingDaysPerMonth ? parseInt(attendanceSettings.workingDaysPerMonth) : 22;
     const dailySalary = calcGrossSalary / workingDaysInMonth;
     const halfDaySalary = dailySalary / 2;
-    
+
     stats.halfDaySalaryDeducted = (stats.halfDayPenaltiesCount || 0) * halfDaySalary;
     stats.fullDaySalaryDeducted = (stats.fullDayPenaltiesCount || 0) * dailySalary;
-    
+
     const configuredFullDayDeduction = dailySalary;
 
     // FETCH APPROVED LEAVES

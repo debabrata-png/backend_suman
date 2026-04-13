@@ -33,17 +33,11 @@ const buildMatchQuery = (params) => {
 exports.getstudentfiltersds = async (req, res) => {
     try {
         const colidStr = req.query.colid1;
-        if (!colidStr) return res.status(400).json({ status: 'error', message: 'colid1 is required' });
-
         const colidNum = parseInt(colidStr);
         const colidMatch = { $or: [{ colid: colidNum }, { colid: colidStr }] };
-        
-        const matchQuery = { 
-            $and: [
-                colidMatch,
-                { role: { $regex: /^student$/i } }
-            ]
-        };
+
+        const matchQuery = buildMatchQuery(req.query);
+        if (!matchQuery) return res.status(400).json({ status: 'error', message: 'colid1 is required' });
 
         const filters = await User.aggregate([
             { $match: matchQuery },
