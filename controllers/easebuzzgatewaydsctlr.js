@@ -108,8 +108,8 @@ exports.initiateEasebuzzPayment = async (req, res) => {
       firstname: studentname,
       email: email,
       phone: sanitizedPhone,
-      surl: `${process.env.BACKEND_URL || req.protocol + '://' + req.get('host')}/api/v2/easebuzz/callback`,
-      furl: `${process.env.BACKEND_URL || req.protocol + '://' + req.get('host')}/api/v2/easebuzz/callback`,
+      surl: `https://backend-suman.onrender.com/api/v2/easebuzz/callback`,
+      furl: `https://backend-suman.onrender.com/api/v2/easebuzz/callback`,
       udf1: 'Easebuzz',
       udf2: accountno,
       udf3: ''
