@@ -509,6 +509,17 @@ app.delete('/api/v2/cms/pages/:id', webcmsdsctlr.deleteWebPage);
 app.get('/api/v2/cms/settings', webcmsdsctlr.getWebSettings);
 app.post('/api/v2/cms/settings', webcmsdsctlr.updateWebSettings);
 
+// --- CMS FORM ROUTES ---
+const formmodulectlr = require('./controllers/formmodulectlr');
+app.get('/api/v2/cms/forms', formmodulectlr.getallforms);
+app.get('/api/v2/cms/forms/single', formmodulectlr.getsingleform);
+app.post('/api/v2/cms/forms', formmodulectlr.createform);
+app.post('/api/v2/cms/forms/update', formmodulectlr.updateform);
+app.delete('/api/v2/cms/forms', formmodulectlr.deleteform);
+app.get('/api/v2/cms/responses', formmodulectlr.getresponses);
+app.post('/api/v2/cms/responses', formmodulectlr.createresponse);
+app.delete('/api/v2/cms/responses', formmodulectlr.deleteresponse);
+
 
 const dynamicformatctlr = require('./controllers/dynamicformatctlr');
 app.post('/api/v2/savedynamicformatds', dynamicformatctlr.saveDynamicFormat);
@@ -4353,7 +4364,7 @@ app.post("/api/v2/books/bulk-upload", librarymodelctlr.bulkCreateBooks);
 // app.post("/api/v2/createledgerstud", librarymodelctlr.createledgerstud);
 
 
-const formmodulectlr = require('./controllers/formmodulectlr');
+
 
 app.get("/api/v2/getallforms", formmodulectlr.getallforms);
 app.get("/api/v2/getsingleform", formmodulectlr.getsingleform);
