@@ -568,6 +568,28 @@ app.get('/api/v2/getkommunosettingsds', kommunocalldsctlr.getkommunosettingsds);
 app.post('/api/v2/initiatekommunocallds', kommunocalldsctlr.initiatekommunocallds);
 app.post('/api/v2/kommunoevtcallbackds', kommunocalldsctlr.kommunoevtcallbackds);
 
+// Import controller
+const ctrl = require('./controllers/ttController');
+
+// Direct route mapping (NO router)
+app.post('/ttAddFaculty', ctrl.ttAddFaculty);
+app.get('/ttGetFaculties', ctrl.ttGetFaculties);
+app.post('/ttUpdateFaculty', ctrl.ttUpdateFaculty);
+app.get('/ttDeleteFaculty', ctrl.ttDeleteFaculty);
+
+app.post('/ttAddSubjectLoad', ctrl.ttAddSubjectLoad);
+app.get('/ttGetSubjectLoads', ctrl.ttGetSubjectLoads);
+app.post('/ttUpdateSubjectLoad', ctrl.ttUpdateSubjectLoad);
+app.get('/ttDeleteSubjectLoad', ctrl.ttDeleteSubjectLoad);
+
+app.post('/ttAddTimeSlot', ctrl.ttAddTimeSlot);
+app.get('/ttGetTimeSlots', ctrl.ttGetTimeSlots);
+app.post('/ttUpdateTimeSlot', ctrl.ttUpdateTimeSlot);
+app.get('/ttDeleteTimeSlot', ctrl.ttDeleteTimeSlot);
+
+app.get('/ttGenerateTimetable', ctrl.ttGenerateTimetable);
+app.get('/ttGetTimetable', ctrl.ttGetTimetable);
+
 const rviewiamarkssummary = require('./router/viewiamarkssummaryrouter.js');
 const rfilteriamarkssummary = require('./router/filteriamarkssummaryrouter.js');
 

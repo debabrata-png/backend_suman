@@ -14,7 +14,9 @@ const webpageBlockSchema = new mongoose.Schema({
             'feature_grid', 
             'contact_form',
             'latest_courses',
-            'html_raw'
+            'html_raw',
+            'sidebar_content',
+            'rich_text'
         ]
     },
     data: {
