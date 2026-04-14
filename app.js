@@ -499,6 +499,16 @@ app.get('/api/v2/getallsubcounsellords', subcounsellordsctlr.getallsubcounsellor
 app.post('/api/v2/updatesubcounsellords', subcounsellordsctlr.updatesubcounsellords);
 app.delete('/api/v2/deletesubcounsellords/:id', subcounsellordsctlr.deletesubcounsellords);
 
+// --- WISER CMS ROUTES ---
+const webcmsdsctlr = require('./controllers/webcmsdsctlr');
+app.post('/api/v2/cms/pages', webcmsdsctlr.createWebPage);
+app.get('/api/v2/cms/pages', webcmsdsctlr.getWebPages);
+app.get('/api/v2/cms/pages/byslug', webcmsdsctlr.getWebPageBySlug);
+app.post('/api/v2/cms/pages/:id', webcmsdsctlr.updateWebPage);
+app.delete('/api/v2/cms/pages/:id', webcmsdsctlr.deleteWebPage);
+app.get('/api/v2/cms/settings', webcmsdsctlr.getWebSettings);
+app.post('/api/v2/cms/settings', webcmsdsctlr.updateWebSettings);
+
 
 const dynamicformatctlr = require('./controllers/dynamicformatctlr');
 app.post('/api/v2/savedynamicformatds', dynamicformatctlr.saveDynamicFormat);
@@ -1041,6 +1051,16 @@ app.post('/api/v2/addgrnds2', grndsctlr2.addgrnds2);
 app.get('/api/v2/getallgrnds2', grndsctlr2.getallgrnds2);
 app.get('/api/v2/getpendinggrnds2', grndsctlr2.getpendinggrnds2);
 app.post('/api/v2/markgrnqcdone2', grndsctlr2.markgrnqcdone2);
+
+const swapController = require('./controllers/swapcontroller');
+
+app.get('/swapGetUsers', swapController.swapGetUsers);
+
+// Get classes
+app.get('/swapGetClasses', swapController.swapGetClasses);
+
+// Swap classes
+app.post('/swapClasses', swapController.swapClasses);
 
 // Import Controllers
 const alumnidsctlr = require("./controllers/alumnidsctlr");
