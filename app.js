@@ -541,6 +541,17 @@ const admissionDocUploadCtlr = require('./controllers/admissionDocUploadControll
 app.post('/api/v2/admission/upload-document', admissionDocUploadCtlr.uploadMiddleware, admissionDocUploadCtlr.uploadAdmissionDocument);
 app.post('/api/v2/admission/delete-document/:appId/:docType', admissionDocUploadCtlr.deleteAdmissionDocument);
 
+const meritListCtlr = require('./controllers/meritListController');
+app.post('/api/v2/admission/generate-merit-list', meritListCtlr.generateMeritList);
+app.get('/api/v2/admission/merit-lists', meritListCtlr.getMeritLists);
+app.get('/api/v2/admission/merit-list/:id', meritListCtlr.getMeritListById);
+app.post('/api/v2/admission/merit-allot-seat', meritListCtlr.allotSeat);
+app.post('/api/v2/admission/merit-decline-seat', meritListCtlr.declineSeat);
+app.post('/api/v2/admission/merit-publish', meritListCtlr.publishMeritList);
+app.get('/api/v2/admission/merit-delete/:id', meritListCtlr.deleteMeritList);
+
+
+
 const filemasterdsctlr = require('./controllers/filemasterdsctlr');
 app.post('/api/v2/filemasterdsctlr/create', filemasterdsctlr.createfilemasterds);
 app.post('/api/v2/filemasterdsctlr/get', filemasterdsctlr.getfilemasterds);
