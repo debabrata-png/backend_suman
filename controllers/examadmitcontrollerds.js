@@ -272,3 +272,36 @@ exports.postStudentsToExamAdmit = async (req, res) => {
         res.status(500).json({ status: "error", message: "Internal server error" });
     }
 };
+
+exports.getDistinctExamAdmitFilters = async (req, res) => {
+    try {
+        const { colid } = req.query;
+        if (!colid) return res.status(400).json({ status: "error", message: "colid is required" });
+
+        const _colid = parseInt(colid) || colid;
+
+        // Fetch distinct combinations of year, examcode, exam
+        const aggregateResult = await ExamAdmit.aggregate([
+            { $match: { colid: _colid, year: { $exists: true, $ne: "" }, examcode: { $exists: true, $ne: "" } } },
+            { 
+                $group: { 
+                    _id: { year: "$year", examcode: "$examcode", exam: "$exam" } 
+                } 
+            },
+            {
+                $project: {
+                    _id: 0,
+                    year: "$_id.year",
+                    examcode: "$_id.examcode",
+                    exam: "$_id.exam"
+                }
+            },
+            { $sort: { year: -1, examcode: 1 } }
+        ]);
+
+        res.json({ status: "success", data: aggregateResult });
+    } catch (err) {
+        console.error("Error fetching distinct exam admit filters:", err);
+        res.status(500).json({ status: "error", message: "Internal server error" });
+    }
+};
