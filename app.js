@@ -537,6 +537,10 @@ app.get('/api/v2/admission/application/:id', standardAdmissionController.getAppl
 app.post('/api/v2/admission/status/:id', standardAdmissionController.updateApplicationStatus);
 app.post('/api/v2/admission/approve/:id', standardAdmissionController.approveApplication);
 
+const admissionDocUploadCtlr = require('./controllers/admissionDocUploadController');
+app.post('/api/v2/admission/upload-document', admissionDocUploadCtlr.uploadMiddleware, admissionDocUploadCtlr.uploadAdmissionDocument);
+app.post('/api/v2/admission/delete-document/:appId/:docType', admissionDocUploadCtlr.deleteAdmissionDocument);
+
 const filemasterdsctlr = require('./controllers/filemasterdsctlr');
 app.post('/api/v2/filemasterdsctlr/create', filemasterdsctlr.createfilemasterds);
 app.post('/api/v2/filemasterdsctlr/get', filemasterdsctlr.getfilemasterds);

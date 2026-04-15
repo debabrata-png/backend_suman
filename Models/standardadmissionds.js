@@ -118,6 +118,20 @@ const StandardAdmissionSchema = new mongoose.Schema({
         ddcetCertificate: { type: String }
     },
 
+    // Document Verification (OCR results)
+    documentVerification: {
+        studentPhoto: { verified: { type: Boolean, default: false }, confidence: { type: Number, default: 0 }, matchDetails: [String], verifiedAt: Date },
+        marksheet10: { verified: { type: Boolean, default: false }, confidence: { type: Number, default: 0 }, matchDetails: [String], verifiedAt: Date },
+        marksheet12: { verified: { type: Boolean, default: false }, confidence: { type: Number, default: 0 }, matchDetails: [String], verifiedAt: Date },
+        leavingCertificate: { verified: { type: Boolean, default: false }, confidence: { type: Number, default: 0 }, matchDetails: [String], verifiedAt: Date },
+        migrationCertificate: { verified: { type: Boolean, default: false }, confidence: { type: Number, default: 0 }, matchDetails: [String], verifiedAt: Date },
+        casteCertificate: { verified: { type: Boolean, default: false }, confidence: { type: Number, default: 0 }, matchDetails: [String], verifiedAt: Date },
+        aadharFront: { verified: { type: Boolean, default: false }, confidence: { type: Number, default: 0 }, matchDetails: [String], verifiedAt: Date },
+        aadharBack: { verified: { type: Boolean, default: false }, confidence: { type: Number, default: 0 }, matchDetails: [String], verifiedAt: Date },
+        entranceExamResult: { verified: { type: Boolean, default: false }, confidence: { type: Number, default: 0 }, matchDetails: [String], verifiedAt: Date },
+        ddcetCertificate: { verified: { type: Boolean, default: false }, confidence: { type: Number, default: 0 }, matchDetails: [String], verifiedAt: Date }
+    },
+
     // Step 5: SOP
     sop: { type: String },
     
