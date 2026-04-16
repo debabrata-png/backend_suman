@@ -78,19 +78,30 @@ exports.submitbudgetforapproval = async (req, res) => {
         const budget = await budgetpods.findById(id);
         if (!budget) return res.status(404).json({ status: 'fail', message: 'Budget not found' });
 
-        // Get all configured approvers for this colid, sorted by levelofapproval
-        const approvers = await budgetapproverds.find({ colid }).sort({ levelofapproval: 1 });
-        if (approvers.length === 0) return res.status(400).json({ status: 'fail', message: 'No approvers configured' });
+        const dept = budget.department;
 
-        const approvedby = approvers.map(a => ({
+        // Fetch department-specific approvers and global approvers
+        const deptApprovers = await budgetapproverds.find({ colid, approvaltype: 'Department', department: dept }).sort({ levelofapproval: 1 });
+        const globalApprovers = await budgetapproverds.find({ colid, approvaltype: 'Global' }).sort({ levelofapproval: 1 });
+
+        // Merge logic: Department approvers first, then Global approvers
+        // We need to re-assign levels or ensure they don't overlap if they are meant to be sequential
+        // For simplicity, we'll just chain them as they are configured. 
+        // A better way is to treat them as independent levels.
+        const combinedApprovers = [...deptApprovers, ...globalApprovers];
+
+        if (combinedApprovers.length === 0) return res.status(400).json({ status: 'fail', message: 'No approvers configured' });
+
+        const approvedby = combinedApprovers.map((a, index) => ({
             approvername: a.approvername,
-            levelofapproval: a.levelofapproval,
+            approveremail: a.approveremail,
+            levelofapproval: index + 1, // Sequential level
             status: 'Pending',
             date: null
         }));
 
-        // Final level is the highest level
-        const finallevel = approvers[approvers.length - 1].levelofapproval;
+        // Final level is the last one in the combined list
+        const finallevel = approvedby.length;
 
         budget.approvedby = approvedby;
         budget.finallevel = finallevel;
@@ -103,42 +114,45 @@ exports.submitbudgetforapproval = async (req, res) => {
     }
 };
 
+
 // Get budgets that the current user needs to approve
 exports.getbudgetsforapproval = async (req, res) => {
     try {
         const { colid, useremail } = req.query;
         if (!useremail) return res.status(400).json({ status: 'fail', message: 'useremail is required' });
 
-        // Find which approval level this user is at
-        const approverConfig = await budgetapproverds.findOne({ colid, approveremail: useremail });
-        if (!approverConfig) return res.status(200).json({ status: 'success', results: 0, count: 0, data: { items: [] } });
-
-        const userLevel = approverConfig.levelofapproval;
-
         // Get all pending budgets for this colid
         const pendingBudgets = await budgetpods.find({ colid, status: 'Pending' });
 
-        // Filter: only show budgets where this user's level is the next to approve
-        // Sequential: all lower levels must be Approved, and this level must be Pending
-        const filtered = pendingBudgets.filter(b => {
-            const myApproval = b.approvedby.find(a => a.levelofapproval === userLevel);
-            if (!myApproval || myApproval.status !== 'Pending') return false;
+        // Filter: budgets where this user is one of the approvers and it's their turn
+        const filtered = [];
+        for (const b of pendingBudgets) {
+            // Find user's entry in approvedby
+            const myEntry = b.approvedby.find(a => a.approveremail === useremail && a.status === 'Pending');
+            if (!myEntry) continue;
 
-            // Check that all levels below are Approved
-            const lowerLevels = b.approvedby.filter(a => a.levelofapproval < userLevel);
-            return lowerLevels.every(a => a.status === 'Approved');
-        });
+            // My level
+            const myLevel = myEntry.levelofapproval;
+
+            // Check if all previous levels are Approved
+            const lowerLevels = b.approvedby.filter(a => a.levelofapproval < myLevel);
+            if (lowerLevels.every(a => a.status === 'Approved')) {
+                // Attach approver config for editing permissions
+                const conf = await budgetapproverds.findOne({ colid, approveremail: useremail });
+                const budgetObj = b.toObject();
+                budgetObj.approverConfig = conf ? conf.toObject() : {};
+                filtered.push(budgetObj);
+            }
+        }
 
         // Attach category info
         const result = [];
         for (const budget of filtered) {
             const cats = await budgetpocatds.find({ budgetid: budget._id });
             const total = cats.reduce((sum, c) => sum + (c.amount || 0), 0);
-            const b = budget.toObject();
-            b.amount = total;
-            b.categories = cats;
-            b.approverConfig = approverConfig.toObject();
-            result.push(b);
+            budget.amount = total;
+            budget.categories = cats;
+            result.push(budget);
         }
 
         res.status(200).json({ status: 'success', results: result.length, count: result.length, data: { items: result } });
@@ -146,6 +160,7 @@ exports.getbudgetsforapproval = async (req, res) => {
         res.status(400).json({ status: 'fail', message: err });
     }
 };
+
 
 // Approve or reject a budget at a specific level
 exports.approvebudgetpods = async (req, res) => {

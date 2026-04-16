@@ -283,6 +283,17 @@ const crmh1schema = new mongoose.Schema({
     },
     subcounselloremail: {
         type: String
+    },
+    // Attendance Tracking
+    attendentstatus: {
+        type: String,
+        default: 'No'
+    },
+    attendername: {
+        type: String
+    },
+    attenderemail: {
+        type: String
     }
 }, {
     timestamps: true

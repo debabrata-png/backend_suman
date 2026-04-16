@@ -160,7 +160,7 @@ exports.checkduplicateds = async (req, res) => {
 // Get all leads (USER-BASED ACCESS)
 exports.getallleadsds = async (req, res) => {
   try {
-    const { colid, user, pipeline_stage, lead_temperature, source, search, subcounselloremail, assignedto } = req.query;
+    const { colid, user, pipeline_stage, lead_temperature, source, search, subcounselloremail, assignedto, attendentstatus } = req.query;
 
     // Base query: Match leads where:
     // 1. Lead belongs to this organization (colid matches)
@@ -196,6 +196,12 @@ exports.getallleadsds = async (req, res) => {
 
     if (source) {
       query.source = source;
+    }
+
+    if (attendentstatus === 'No') {
+      query.attendentstatus = { $ne: 'Yes' };
+    } else if (attendentstatus) {
+      query.attendentstatus = attendentstatus;
     }
 
     if (search) {
@@ -658,4 +664,43 @@ exports.getProvisionalFeeLeadsds = async (req, res) => {
       message: "Internal server error"
     });
   }
+};
+
+exports.markleadasattendedds = async (req, res) => {
+    try {
+        const { id, attendername, attenderemail } = req.body;
+        
+        if (!id) {
+            return res.status(400).json({ success: false, message: 'Lead ID is required' });
+        }
+
+        const lead = await crmh1.findByIdAndUpdate(
+            id,
+            {
+                attendentstatus: 'Yes',
+                attendername: attendername,
+                attenderemail: attenderemail
+            },
+            { new: true }
+        );
+
+        if (!lead) {
+            return res.status(404).json({ success: false, message: 'Lead not found' });
+        }
+
+        // Add an activity log
+        await leadactivityds.create({
+            lead_id: id,
+            colid: lead.colid,
+            activity_type: 'note',
+            performed_by: attenderemail,
+            notes: `Lead marked as attended by ${attendername}`,
+            activity_date: new Date()
+        });
+
+        res.status(200).json({ success: true, data: lead });
+    } catch (err) {
+        console.error("Error marking lead as attended:", err);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
 };

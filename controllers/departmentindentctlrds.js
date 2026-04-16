@@ -80,3 +80,21 @@ exports.bulkUpload = async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 };
+
+// Toggle freeze status for a department
+exports.toggleDepartmentFrozen = async (req, res) => {
+    const { id, isfrozen } = req.body;
+    try {
+        const updated = await DepartmentIndentds.findByIdAndUpdate(
+            id,
+            { isfrozen: isfrozen },
+            { new: true }
+        );
+        if (!updated) return res.status(404).json({ success: false, message: "Record not found" });
+        res.status(200).json({ success: true, message: `Department ${isfrozen ? 'frozen' : 'unfrozen'} successfully`, data: updated });
+    } catch (err) {
+        console.error("Error toggling freeze status:", err);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+

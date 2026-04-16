@@ -1,5 +1,4 @@
-const budgetpocatds = require('../Models/budgetpocatds');
-const budgetpods = require('../Models/budgetpods');
+const Institution = require('../Models/institutions');
 
 // Helper: recalculate parent budget amount
 async function recalcBudgetAmount(budgetId) {
@@ -7,6 +6,13 @@ async function recalcBudgetAmount(budgetId) {
     const total = cats.reduce((sum, c) => sum + (c.amount || 0), 0);
     await budgetpods.findByIdAndUpdate(budgetId, { amount: total });
     return total;
+}
+
+// Helper: Get list of colids under an admincolid
+async function getColidList(colid, isAdmin = false) {
+    if (!isAdmin) return [Number(colid)];
+    const institutions = await Institution.find({ admincolid: Number(colid) });
+    return institutions.map(i => i.colid);
 }
 
 exports.addbudgetpocatds = async (req, res) => {
@@ -46,8 +52,9 @@ exports.deletebudgetpocatds = async (req, res) => {
 
 exports.getallbudgetpocatds = async (req, res) => {
     try {
-        const { colid } = req.query;
-        const items = await budgetpocatds.find({ colid });
+        const { colid, ismanagement } = req.query;
+        const colidList = await getColidList(colid, ismanagement === 'true');
+        const items = await budgetpocatds.find({ colid: { $in: colidList } });
         res.status(200).json({ status: 'success', results: items.length, count: items.length, data: { items } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
@@ -79,8 +86,9 @@ exports.updatebudgetpocatdsamount = async (req, res) => {
 
 exports.getavailbudgetbycategoryds = async (req, res) => {
     try {
-        const { colid, category, year, department } = req.query;
-        let query = { colid };
+        const { colid, category, year, department, ismanagement } = req.query;
+        const colidList = await getColidList(colid, ismanagement === 'true');
+        let query = { colid: { $in: colidList } };
         if (category) query.category = category;
         if (year) query.year = year;
         if (department) query.department = department;
@@ -107,8 +115,9 @@ exports.getavailbudgetbycategoryds = async (req, res) => {
 
 exports.getgroupwisecategorybudget = async (req, res) => {
     try {
-        const { colid, year } = req.query;
-        let query = { colid: Number(colid) };
+        const { colid, year, ismanagement, searchcolid } = req.query;
+        const colidList = searchcolid ? [Number(searchcolid)] : await getColidList(colid, ismanagement === 'true');
+        let query = { colid: { $in: colidList } };
         if (year) query.year = year;
 
         const results = await budgetpocatds.aggregate([
@@ -149,8 +158,9 @@ exports.getgroupwisecategorybudget = async (req, res) => {
 
 exports.getcategorywisebudget = async (req, res) => {
     try {
-        const { colid, year } = req.query;
-        let query = { colid: Number(colid) };
+        const { colid, year, ismanagement, searchcolid } = req.query;
+        const colidList = searchcolid ? [Number(searchcolid)] : await getColidList(colid, ismanagement === 'true');
+        let query = { colid: { $in: colidList } };
         if (year) query.year = year;
 
         const results = await budgetpocatds.aggregate([
@@ -194,8 +204,9 @@ exports.getcategorywisebudget = async (req, res) => {
 
 exports.getdepartmentwisebudget = async (req, res) => {
     try {
-        const { colid, year } = req.query;
-        let query = { colid: Number(colid) };
+        const { colid, year, ismanagement, searchcolid } = req.query;
+        const colidList = searchcolid ? [Number(searchcolid)] : await getColidList(colid, ismanagement === 'true');
+        let query = { colid: { $in: colidList } };
         if (year) query.year = year;
 
         // Note: Grouping budgetpods by department for "Main Budget Report"
@@ -236,8 +247,9 @@ exports.getdepartmentwisebudget = async (req, res) => {
 
 exports.getdistinctbudgetcategories = async (req, res) => {
     try {
-        const { colid } = req.query;
-        const items = await budgetpocatds.distinct('category', { colid: Number(colid) });
+        const { colid, ismanagement } = req.query;
+        const colidList = await getColidList(colid, ismanagement === 'true');
+        const items = await budgetpocatds.distinct('category', { colid: { $in: colidList } });
         res.status(200).json({ status: 'success', data: { items } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
@@ -246,13 +258,15 @@ exports.getdistinctbudgetcategories = async (req, res) => {
 
 exports.getdistinctbudgetgroups = async (req, res) => {
     try {
-        const { colid } = req.query;
-        const items = await budgetpocatds.distinct('groupname', { colid: Number(colid) });
+        const { colid, ismanagement } = req.query;
+        const colidList = await getColidList(colid, ismanagement === 'true');
+        const items = await budgetpocatds.distinct('groupname', { colid: { $in: colidList } });
         res.status(200).json({ status: 'success', data: { items } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
     }
 };
+
 
 exports.getinstitutioncategorybudget = async (req, res) => {
     try {
@@ -286,8 +300,9 @@ exports.getinstitutioncategorybudget = async (req, res) => {
 
 exports.getinstitutiongroupcategorybudget = async (req, res) => {
     try {
-        const { colid, groupname, category, year } = req.query;
-        let query = { colid: Number(colid), groupname, category };
+        const { colid, groupname, category, year, ismanagement, searchcolid } = req.query;
+        const colidList = searchcolid ? [Number(searchcolid)] : await getColidList(colid, ismanagement === 'true');
+        let query = { colid: { $in: colidList }, groupname, category };
         if (year) query.year = year;
 
         const results = await budgetpocatds.aggregate([
@@ -313,3 +328,14 @@ exports.getinstitutiongroupcategorybudget = async (req, res) => {
         res.status(400).json({ status: 'fail', message: err });
     }
 };
+
+exports.getinstitutionsforbudget = async (req, res) => {
+    try {
+        const { colid } = req.query;
+        const institutions = await Institution.find({ admincolid: Number(colid) });
+        res.status(200).json({ status: 'success', data: { items: institutions } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err });
+    }
+};
+

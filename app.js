@@ -6125,6 +6125,7 @@ app.get('/api/v2/gettodayfollowupsds', crmh1ctlrds.gettodayfollowupsds);
 app.get('/api/v2/getoverduefollowupsds', crmh1ctlrds.getoverduefollowupsds);
 app.get('/api/v2/getleadanalyticsds', crmh1ctlrds.getleadanalyticsds);
 app.get('/api/v2/checkduplicateds', crmh1ctlrds.checkduplicateds);
+app.post('/api/v2/markleadasattendedds', crmh1ctlrds.markleadasattendedds);
 // Add this with your other lead routes
 app.get('/api/v2/deleteleadds/:id', crmh1ctlrds.deleteleadds);
 
@@ -15644,6 +15645,8 @@ app.get('/api/v2/getdistinctbudgetcategories', budgetpocatdsctlr.getdistinctbudg
 app.get('/api/v2/getdistinctbudgetgroups', budgetpocatdsctlr.getdistinctbudgetgroups);
 app.get('/api/v2/getinstitutioncategorybudget', budgetpocatdsctlr.getinstitutioncategorybudget);
 app.get('/api/v2/getinstitutiongroupcategorybudget', budgetpocatdsctlr.getinstitutiongroupcategorybudget);
+app.get('/api/v2/getinstitutionsforbudget', budgetpocatdsctlr.getinstitutionsforbudget);
+
 
 const budgetgroupdsctlr = require('./controllers/budgetgroupdsctlr');
 app.post('/api/v2/addbudgetgroupds', budgetgroupdsctlr.addbudgetgroupds);
@@ -15888,9 +15891,10 @@ app.post('/api/v2/adddepartmentindentds', departmentindentctlrds.createDepartmen
 app.post('/api/v2/updatedepartmentindentds', departmentindentctlrds.updateDepartmentIndentds);
 app.post('/api/v2/deletedepartmentindentds', departmentindentctlrds.deleteDepartmentIndentds);
 app.post('/api/v2/bulkdepartmentindentds', departmentindentctlrds.bulkUpload);
+app.post('/api/v2/toggledepartmentfrozen', departmentindentctlrds.toggleDepartmentFrozen);
 
 // Exam Room DS CRUD API
-const examroomdsctlr = require('./Controllers/examroomdsctlr');
+const examroomdsctlr = require('./controllers/examroomdsctlr');
 app.get('/api/v2/createexamroomdsrecord', examroomdsctlr.createexamroomdsrecord);
 app.get('/api/v2/getexamroomdsrecords', examroomdsctlr.getexamroomdsrecords);
 app.post('/api/v2/updateexamroomdsrecord', examroomdsctlr.updateexamroomdsrecord);
@@ -15899,7 +15903,7 @@ app.get('/api/v2/getexamroomdscountbyyear', examroomdsctlr.getexamroomdscountbyy
 app.get('/api/v2/getexamroomdscountbybuilding', examroomdsctlr.getexamroomdscountbybuilding);
 
 // Exam Student DS CRUD API
-const examstudentdsctlr = require('./Controllers/examstudentdsctlr');
+const examstudentdsctlr = require('./controllers/examstudentdsctlr');
 app.get('/api/v2/createexamstudentdsrecord', examstudentdsctlr.createexamstudentdsrecord);
 app.get('/api/v2/getexamstudentdsrecords', examstudentdsctlr.getexamstudentdsrecords);
 app.post('/api/v2/updateexamstudentdsrecord', examstudentdsctlr.updateexamstudentdsrecord);
@@ -15909,9 +15913,17 @@ app.get('/api/v2/getexamstudentdscountbyyear', examstudentdsctlr.getexamstudentd
 app.get('/api/v2/getexamstudentdscountbyprogram', examstudentdsctlr.getexamstudentdscountbyprogram);
 
 // Exam Attendance DS CRUD API
-const examattendancedsctlr = require('./Controllers/examattendancedsctlr');
-app.get('/api/v2/getexamadmitfilters', require('./Controllers/examadmitcontrollerds').getDistinctExamAdmitFilters);
+const examattendancedsctlr = require('./controllers/examattendancedsctlr');
+
+app.get('/api/v2/getexamadmitfilters', examadmitcontrollerds.getDistinctExamAdmitFilters);
+app.get('/api/v2/getexamadmitcard/:regno', examadmitcontrollerds.getAdmitCard);
+app.post('/api/v2/releaseexamadmitcard', examadmitcontrollerds.releaseAdmitCard);
+app.get('/api/v2/getclassenrstudentsexamadmit', examadmitcontrollerds.getClassenrStudentsForExamAdmit);
+app.get('/api/v2/getclassenrdistinctexamadmit', examadmitcontrollerds.getClassenrDistinctValuesForExamAdmit);
+app.post('/api/v2/poststudentsexamadmit', examadmitcontrollerds.postStudentsToExamAdmit);
 app.get('/api/v2/getexamroomattendancelist', examattendancedsctlr.getexamroomattendancelist);
+
+
 app.post('/api/v2/upsertattendance', examattendancedsctlr.upsertattendance);
 app.get('/api/v2/createexamattendancedsrecord', examattendancedsctlr.createexamattendancedsrecord);
 app.get('/api/v2/getexamattendancedsrecords', examattendancedsctlr.getexamattendancedsrecords);
@@ -15921,13 +15933,19 @@ app.get('/api/v2/getexamattendancedscountbyyear', examattendancedsctlr.getexamat
 app.get('/api/v2/getexamattendancedscountbyprogram', examattendancedsctlr.getexamattendancedscountbyprogram);
 
 // Exam Invigilator DS CRUD API
-const examinvigilatordsctlr = require('./Controllers/examinvigilatordsctlr');
+const examinvigilatordsctlr = require('./controllers/examinvigilatordsctlr');
 app.get('/api/v2/createexaminvigilatordsrecord', examinvigilatordsctlr.createexaminvigilatordsrecord);
 app.get('/api/v2/getexaminvigilatordsrecords', examinvigilatordsctlr.getexaminvigilatordsrecords);
 app.post('/api/v2/updateexaminvigilatordsrecord', examinvigilatordsctlr.updateexaminvigilatordsrecord);
 app.get('/api/v2/deleteexaminvigilatordsrecord', examinvigilatordsctlr.deleteexaminvigilatordsrecord);
 app.get('/api/v2/getexaminvigilatordscountbyyear', examinvigilatordsctlr.getexaminvigilatordscountbyyear);
 app.get('/api/v2/getexaminvigilatordscountbybuilding', examinvigilatordsctlr.getexaminvigilatordscountbybuilding);
+
+// Marks Entry Synced CRUD API
+const marksentryctlrds = require('./controllers/marksentryctlrds');
+app.get('/api/v2/getmarksentrysheet', marksentryctlrds.getmarksentrysheet);
+app.post('/api/v2/savemarksentrysheet', marksentryctlrds.savemarksentrysheet);
+app.get('/api/v2/getcoursefiltersformarks', marksentryctlrds.getcoursefiltersformarks);
 
 const startLoginLoop = require('./loop');
 startLoginLoop();

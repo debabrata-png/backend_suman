@@ -13,6 +13,7 @@ const departmentindentdsschema = new mongoose.Schema({
     ahoiapproveruserid: { type: String },
     institution: { type: String },
     institutionshort: { type: String },
+    isfrozen: { type: Boolean, default: false },
     status: { type: String },
     remarks: { type: String }
 }, { timestamps: true });

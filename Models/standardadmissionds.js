@@ -46,7 +46,9 @@ const StandardAdmissionSchema = new mongoose.Schema({
     
     familyIncome: { type: String, enum: ['Below 5L', '5L - 10L', 'Above 10L'] },
     applyForScholarship: { type: String, default: 'No' },
-    entranceExamDetails: { type: String },
+    entranceExamDetails: { type: String }, // Legacy field
+    entranceExamName: { type: String },
+    entranceExamScore: { type: String },
     
     // Address Details
     permanentAddress: {
@@ -92,7 +94,20 @@ const StandardAdmissionSchema = new mongoose.Schema({
         specialisation: { type: String },
         university: { type: String },
         college: { type: String },
-        resultStatus: { type: String, enum: ['Declared', 'Awaited'] }
+        resultStatus: { type: String, enum: ['Declared', 'Awaited'] },
+        passingYear: { type: String },
+        scoreType: { type: String },
+        scoreValue: { type: String }
+    },
+    postGraduationDetails: {
+        programme: { type: String },
+        specialisation: { type: String },
+        university: { type: String },
+        college: { type: String },
+        resultStatus: { type: String, enum: ['Declared', 'Awaited'] },
+        passingYear: { type: String },
+        scoreType: { type: String },
+        scoreValue: { type: String }
     },
     
     // Accolades
