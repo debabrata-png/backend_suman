@@ -1,10 +1,11 @@
 const requisationds12 = require("../Models/requisationds12");
 const requisationds2 = require("../Models/requisationds2");
+const { purchaseRecordLog } = require('./purchaseauditutils');
 
 // Add to Staging (Level 0)
 exports.addrequisationds12 = async (req, res) => {
+    let reqstatus = 'Pending Approval';
     try {
-        let reqstatus = 'Pending Approval';
         if (req.body.approvalOption === 'Manual') {
             reqstatus = 'Approved';
         }
@@ -31,6 +32,17 @@ exports.addrequisationds12 = async (req, res) => {
             message: "Error adding requisition",
             error: error.message
         });
+    } finally {
+        if (req.body.colid) {
+            purchaseRecordLog({
+                username: req.body.username || req.body.faculty,
+                useremail: req.body.useremail || req.body.facultyid,
+                action: 'SUBMIT',
+                module: 'REQUISITION',
+                colid: req.body.colid,
+                details: { item: req.body.itemname, quantity: req.body.quantity, status: reqstatus }
+            });
+        }
     }
 };
 
@@ -56,9 +68,11 @@ exports.getallrequisationds12 = async (req, res) => {
 
 // Approve: Move from ds1 to ds
 exports.approverequisationds12 = async (req, res) => {
+    const { id, approverRole, approverName } = req.body;
+    let stagingReq;
+    let shouldGoToStore = false;
     try {
-        const { id, approverRole, approverName } = req.body;
-        const stagingReq = await requisationds12.findById(id);
+        stagingReq = await requisationds12.findById(id);
 
         if (!stagingReq) {
             return res.status(404).json({ success: false, message: "Requisition not found" });
@@ -67,8 +81,6 @@ exports.approverequisationds12 = async (req, res) => {
         if (stagingReq.reqstatus === 'Approved') {
             return res.status(400).json({ success: false, message: "Already Approved" });
         }
-
-        let shouldGoToStore = false;
 
         if (stagingReq.approvalOption === 'Manual') {
             if (approverRole === 'AHOI') {
@@ -124,26 +136,62 @@ exports.approverequisationds12 = async (req, res) => {
             message: "Error approving requisition",
             error: error.message
         });
+    } finally {
+        if (id) {
+            purchaseRecordLog({
+                username: req.body.username || approverName,
+                useremail: req.body.useremail,
+                action: 'APPROVE',
+                module: 'REQUISITION',
+                recordid: id,
+                colid: stagingReq?.colid,
+                details: { role: approverRole, name: approverName, fullyApproved: shouldGoToStore }
+            });
+        }
     }
 };
 
 // Reject in Staging
 exports.rejectrequisationds12 = async (req, res) => {
+    const { id } = req.body;
     try {
-        const { id } = req.body; // or query
         await requisationds12.findByIdAndUpdate(id, { reqstatus: 'Rejected' });
         res.status(200).json({ success: true, message: "Requisition Rejected" });
     } catch (error) {
         res.status(500).json({ success: false, message: "Error rejecting requisition", error: error.message });
+    } finally {
+        if (id) {
+            purchaseRecordLog({
+                username: req.body.username,
+                useremail: req.body.useremail,
+                action: 'REJECT',
+                module: 'REQUISITION',
+                recordid: id,
+                colid: req.body.colid, // This needs to be passed in req body for lookup if not available to stagingReq
+                details: { id }
+            });
+        }
     }
 };
 
 exports.deleterequisationds12 = async (req, res) => {
+    const { id } = req.query;
     try {
-        const { id } = req.query;
         await requisationds12.findByIdAndDelete(id);
         res.status(200).json({ success: true, message: "Requisition deleted" });
     } catch (error) {
         res.status(500).json({ success: false, message: "Error deleting requisition", error: error.message });
+    } finally {
+        if (id) {
+            purchaseRecordLog({
+                username: req.query.username,
+                useremail: req.query.useremail,
+                action: 'DELETE',
+                module: 'REQUISITION',
+                recordid: id,
+                colid: req.query.colid,
+                details: { id }
+            });
+        }
     }
 };

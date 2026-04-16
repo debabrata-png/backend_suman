@@ -1,6 +1,7 @@
 const budgetpods = require('../Models/budgetpods');
 const budgetpocatds = require('../Models/budgetpocatds');
 const budgetapproverds = require('../Models/budgetapproverds');
+const { recordLog } = require('./budgetauditutils');
 
 // Helper: recalculate budget amount from its categories
 async function recalcBudgetAmount(budgetId) {
@@ -12,8 +13,16 @@ async function recalcBudgetAmount(budgetId) {
 
 exports.addbudgetpods = async (req, res) => {
     try {
-        const data = { ...req.body, amount: 0, status: 'Draft' };
+        const { username, useremail, ...bodyData } = req.body;
+        const data = { ...bodyData, amount: 0, status: 'Draft' };
         const newItem = await budgetpods.create(data);
+        
+        await recordLog({
+            username, useremail, colid: newItem.colid,
+            action: 'CREATE', module: 'BUDGET', recordid: newItem._id, budgetid: newItem._id,
+            details: { budgetname: newItem.budgetname, year: newItem.year, department: newItem.department }
+        });
+
         res.status(201).json({ status: 'success', data: { item: newItem } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
@@ -22,9 +31,17 @@ exports.addbudgetpods = async (req, res) => {
 
 exports.updatebudgetpods = async (req, res) => {
     try {
-        // Do not allow amount update from here — amount is always auto-calculated
-        const { amount, ...updateData } = req.body;
+        const { username, useremail, amount, ...updateData } = req.body;
         const item = await budgetpods.findByIdAndUpdate(req.query.id, updateData, { new: true, runValidators: true });
+        
+        if (item) {
+            await recordLog({
+                username, useremail, colid: item.colid,
+                action: 'UPDATE', module: 'BUDGET', recordid: item._id, budgetid: item._id,
+                details: { changedFields: Object.keys(updateData) }
+            });
+        }
+
         res.status(200).json({ status: 'success', data: { item } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
@@ -33,9 +50,18 @@ exports.updatebudgetpods = async (req, res) => {
 
 exports.deletebudgetpods = async (req, res) => {
     try {
-        // Delete all budget categories belonging to this budget
-        await budgetpocatds.deleteMany({ budgetid: req.query.id });
-        await budgetpods.findByIdAndDelete(req.query.id);
+        const { username, useremail } = req.query; // Deletes often use query params for identity
+        const item = await budgetpods.findById(req.query.id);
+        if (item) {
+            await recordLog({
+                username, useremail, colid: item.colid,
+                action: 'DELETE', module: 'BUDGET', recordid: item._id, budgetid: item._id,
+                details: { budgetname: item.budgetname }
+            });
+            // Delete all budget categories belonging to this budget
+            await budgetpocatds.deleteMany({ budgetid: req.query.id });
+            await budgetpods.findByIdAndDelete(req.query.id);
+        }
         res.status(204).json({ status: 'success', data: null });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
@@ -74,7 +100,7 @@ exports.getbudgetpodsbyid = async (req, res) => {
 // Submit budget for approval — sets status to Pending and starts the progression at level 1
 exports.submitbudgetforapproval = async (req, res) => {
     try {
-        const { id, colid } = req.query;
+        const { id, colid, username, useremail } = req.query;
         const budget = await budgetpods.findById(id);
         if (!budget) return res.status(404).json({ status: 'fail', message: 'Budget not found' });
 
@@ -104,6 +130,12 @@ exports.submitbudgetforapproval = async (req, res) => {
         budget.currentlevel = 1;
         budget.approvedby = []; // Start with fresh history
         await budget.save();
+
+        await recordLog({
+            username, useremail, colid: cid,
+            action: 'SUBMIT', module: 'BUDGET', recordid: budget._id, budgetid: budget._id,
+            details: { status: 'Pending', currentlevel: 1 }
+        });
 
         res.status(200).json({ status: 'success', data: { item: budget } });
     } catch (err) {
@@ -196,6 +228,9 @@ exports.approvebudgetpods = async (req, res) => {
             date: new Date()
         });
 
+        const oldLevel = budget.currentlevel;
+        const oldStatus = budget.status;
+
         if (status === 'Rejected') {
             budget.status = 'Rejected';
             budget.remarks = remarks || '';
@@ -218,6 +253,20 @@ exports.approvebudgetpods = async (req, res) => {
         }
 
         await budget.save();
+
+        await recordLog({
+            username: approvername, useremail: approveremail, colid: budget.colid,
+            action: status === 'Approved' ? 'APPROVE' : 'REJECT', 
+            module: 'BUDGET', recordid: budget._id, budgetid: budget._id,
+            details: { 
+                level: oldLevel, 
+                remarks, 
+                fromStatus: oldStatus, 
+                toStatus: budget.status,
+                nextLevel: budget.currentlevel 
+            }
+        });
+
         res.status(200).json({ status: 'success', data: { item: budget } });
     } catch (err) {
         console.error('Error in approvebudgetpods:', err);

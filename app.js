@@ -614,6 +614,12 @@ const rviewallusers = require('./router/viewallusersrouter.js');
 const redituser = require('./router/edituserrouter.js');
 const rdeleteuser = require('./router/deleteuserrouter.js');
 
+const budgetauditctlr = require('./controllers/budgetauditctlr');
+app.get('/api/v2/getbudgetauditlogs', budgetauditctlr.getBudgetAuditLogs);
+
+const purchaseauditctlr = require('./controllers/purchaseauditctlr');
+app.get('/api/v2/getpurchaseauditlogs', purchaseauditctlr.getPurchaseAuditLogs);
+
 const rselectprograminst = require('./router/selectprograminstrouter.js');
 // const rleadadmin = require('./routes/leadadminrouterds.js');
 

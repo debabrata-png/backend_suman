@@ -1,6 +1,7 @@
 const DepartmentIndentds = require('../Models/departmentindentds');
 const User = require('../Models/user');
 const mongoose = require('mongoose');
+const { purchaseRecordLog } = require('./purchaseauditutils');
 
 
 // Get all indents for a colid
@@ -61,6 +62,17 @@ exports.createDepartmentIndentds = async (req, res) => {
     } catch (err) {
         console.error("Error creating indent:", err);
         res.status(500).json({ success: false, message: err.message });
+    } finally {
+        if (req.body.colid) {
+            purchaseRecordLog({
+                username: req.body.username || req.body.name,
+                useremail: req.body.useremail || req.body.user,
+                action: 'CREATE',
+                module: 'MRN_CONFIG',
+                colid: req.body.colid,
+                details: { department: req.body.departmentname }
+            });
+        }
     }
 };
 
@@ -88,6 +100,18 @@ exports.updateDepartmentIndentds = async (req, res) => {
     } catch (err) {
         console.error("Error updating indent:", err);
         res.status(500).json({ success: false, message: "Internal server error" });
+    } finally {
+        if (colid) {
+            purchaseRecordLog({
+                username: req.body.username || req.body.name,
+                useremail: req.body.useremail || req.body.user,
+                action: 'UPDATE',
+                module: 'MRN_CONFIG',
+                recordid: id,
+                colid: colid,
+                details: { department: departmentname, body: req.body }
+            });
+        }
     }
 };
 
@@ -108,6 +132,18 @@ exports.deleteDepartmentIndentds = async (req, res) => {
     } catch (err) {
         console.error("Error deleting indent:", err);
         res.status(500).json({ success: false, message: "Internal server error" });
+    } finally {
+        if (id && req.body.colid) {
+            purchaseRecordLog({
+                username: req.body.username || req.body.name,
+                useremail: req.body.useremail || req.body.user,
+                action: 'DELETE',
+                module: 'MRN_CONFIG',
+                recordid: id,
+                colid: req.body.colid,
+                details: { id }
+            });
+        }
     }
 };
 
@@ -133,6 +169,17 @@ exports.bulkUpload = async (req, res) => {
     } catch (err) {
         console.error("Error in bulk upload:", err);
         res.status(500).json({ success: false, message: err.message });
+    } finally {
+        if (colid) {
+            purchaseRecordLog({
+                username: req.body.username || name,
+                useremail: req.body.useremail || user,
+                action: 'BULK_UPLOAD',
+                module: 'MRN_CONFIG',
+                colid: colid,
+                details: { count: data?.length }
+            });
+        }
     }
 };
 
@@ -162,6 +209,18 @@ exports.toggleDepartmentFrozen = async (req, res) => {
     } catch (err) {
         console.error("Error toggling freeze status:", err);
         res.status(500).json({ success: false, message: "Internal server error" });
+    } finally {
+        if (colid) {
+            purchaseRecordLog({
+                username: req.body.username || req.body.name,
+                useremail: req.body.useremail || req.body.user,
+                action: isfrozen ? 'FREEZE' : 'UNFREEZE',
+                module: 'MRN_CONFIG',
+                recordid: id,
+                colid: colid,
+                details: { department: departmentname, isfrozen }
+            });
+        }
     }
 };
 

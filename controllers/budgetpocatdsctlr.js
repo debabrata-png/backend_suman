@@ -1,6 +1,7 @@
 const Institution = require('../Models/institutions');
 const budgetpocatds = require('../Models/budgetpocatds');
 const budgetpods = require('../Models/budgetpods');
+const { recordLog } = require('./budgetauditutils');
 
 // Helper: recalculate parent budget amount
 async function recalcBudgetAmount(budgetId) {
@@ -19,9 +20,17 @@ async function getColidList(colid, isAdmin = false) {
 
 exports.addbudgetpocatds = async (req, res) => {
     try {
-        const newItem = await budgetpocatds.create(req.body);
+        const { username, useremail, ...bodyData } = req.body;
+        const newItem = await budgetpocatds.create(bodyData);
         // Recalculate parent budget amount
         if (newItem.budgetid) await recalcBudgetAmount(newItem.budgetid);
+
+        await recordLog({
+            username, useremail, colid: newItem.colid,
+            action: 'ADD_CATEGORY', module: 'BUDGET_CATEGORY', recordid: newItem._id, budgetid: newItem.budgetid,
+            details: { category: newItem.category, amount: newItem.amount, budgetname: newItem.budgetname }
+        });
+
         res.status(201).json({ status: 'success', data: { item: newItem } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
@@ -30,9 +39,17 @@ exports.addbudgetpocatds = async (req, res) => {
 
 exports.updatebudgetpocatds = async (req, res) => {
     try {
-        const item = await budgetpocatds.findByIdAndUpdate(req.query.id, req.body, { new: true, runValidators: true });
+        const { username, useremail, ...updateData } = req.body;
+        const item = await budgetpocatds.findByIdAndUpdate(req.query.id, updateData, { new: true, runValidators: true });
         // Recalculate parent budget amount
-        if (item && item.budgetid) await recalcBudgetAmount(item.budgetid);
+        if (item && item.budgetid) {
+            await recalcBudgetAmount(item.budgetid);
+            await recordLog({
+                username, useremail, colid: item.colid,
+                action: 'UPDATE_CATEGORY', module: 'BUDGET_CATEGORY', recordid: item._id, budgetid: item.budgetid,
+                details: { changedFields: Object.keys(updateData) }
+            });
+        }
         res.status(200).json({ status: 'success', data: { item } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
@@ -41,11 +58,19 @@ exports.updatebudgetpocatds = async (req, res) => {
 
 exports.deletebudgetpocatds = async (req, res) => {
     try {
+        const { username, useremail } = req.query;
         const item = await budgetpocatds.findById(req.query.id);
-        const budgetId = item ? item.budgetid : null;
-        await budgetpocatds.findByIdAndDelete(req.query.id);
-        // Recalculate parent budget amount
-        if (budgetId) await recalcBudgetAmount(budgetId);
+        if (item) {
+            const budgetId = item.budgetid;
+            await recordLog({
+                username, useremail, colid: item.colid,
+                action: 'DELETE_CATEGORY', module: 'BUDGET_CATEGORY', recordid: item._id, budgetid: item.budgetid,
+                details: { category: item.category, amount: item.amount }
+            });
+            await budgetpocatds.findByIdAndDelete(req.query.id);
+            // Recalculate parent budget amount
+            if (budgetId) await recalcBudgetAmount(budgetId);
+        }
         res.status(204).json({ status: 'success', data: null });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
@@ -77,9 +102,22 @@ exports.getbudgetpocatdsbybudgetid = async (req, res) => {
 exports.updatebudgetpocatdsamount = async (req, res) => {
     try {
         const { id } = req.query;
-        const { amount } = req.body;
+        const { amount, username, useremail } = req.body;
+        const oldItem = await budgetpocatds.findById(id);
+        
         const item = await budgetpocatds.findByIdAndUpdate(id, { amount }, { new: true });
-        if (item && item.budgetid) await recalcBudgetAmount(item.budgetid);
+        if (item && item.budgetid) {
+            await recalcBudgetAmount(item.budgetid);
+            await recordLog({
+                username, useremail, colid: item.colid,
+                action: 'APPROVER_EDIT_AMOUNT', module: 'BUDGET_CATEGORY', recordid: item._id, budgetid: item.budgetid,
+                details: { 
+                    category: item.category, 
+                    oldAmount: oldItem ? oldItem.amount : 0, 
+                    newAmount: amount 
+                }
+            });
+        }
         res.status(200).json({ status: 'success', data: { item } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err });
