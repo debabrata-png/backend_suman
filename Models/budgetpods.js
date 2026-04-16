@@ -4,6 +4,7 @@ const budgetpodsschema = new mongoose.Schema({
     name: { type: String, required: true },
     user: { type: String, required: true },
     colid: { type: Number, required: true },
+    budgetid: { type: String },
     budgetname: { type: String },
     year: { type: String },
     department: { type: String },
@@ -11,13 +12,15 @@ const budgetpodsschema = new mongoose.Schema({
     budgettype: { type: String },
     approvedby: [{
         approvername: { type: String },
-        levelofapproval: { type: String },
+        approveremail: { type: String },
+        levelofapproval: { type: Number },
         status: { type: String },
         date: { type: Date }
     }],
-    finallevel: { type: String },
+    currentlevel: { type: Number, default: 0 },
+    finallevel: { type: Number },
     institution: { type: String },
-    status: { type: String },
+    status: { type: String, default: 'Draft' },
     remarks: { type: String }
 })
 

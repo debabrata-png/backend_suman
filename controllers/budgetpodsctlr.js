@@ -71,41 +71,38 @@ exports.getbudgetpodsbyid = async (req, res) => {
     }
 };
 
-// Submit budget for approval — sets status to Pending and populates approvedby from configured approvers
+// Submit budget for approval — sets status to Pending and starts the progression at level 1
 exports.submitbudgetforapproval = async (req, res) => {
     try {
         const { id, colid } = req.query;
         const budget = await budgetpods.findById(id);
         if (!budget) return res.status(404).json({ status: 'fail', message: 'Budget not found' });
 
-        const dept = budget.department;
+        const cid = Number(colid);
+        const dept = (budget.department || '').trim();
 
-        // Fetch department-specific approvers and global approvers
-        const deptApprovers = await budgetapproverds.find({ colid, approvaltype: 'Department', department: dept }).sort({ levelofapproval: 1 });
-        const globalApprovers = await budgetapproverds.find({ colid, approvaltype: 'Global' }).sort({ levelofapproval: 1 });
+        // Safety check: Ensure at least one approver (Dept or Global) exists for this flow
+        const hasApprovers = await budgetapproverds.findOne({
+            colid: cid,
+            $or: [
+                { approvaltype: { $regex: /^global$/i } },
+                { approvaltype: { $regex: /^department$/i }, department: dept },
+                { approvaltype: { $exists: false } },
+                { approvaltype: '' },
+                { approvaltype: null }
+            ]
+        });
 
-        // Merge logic: Department approvers first, then Global approvers
-        // We need to re-assign levels or ensure they don't overlap if they are meant to be sequential
-        // For simplicity, we'll just chain them as they are configured. 
-        // A better way is to treat them as independent levels.
-        const combinedApprovers = [...deptApprovers, ...globalApprovers];
+        if (!hasApprovers) {
+            return res.status(400).json({ 
+                status: 'fail', 
+                message: `No approvers configured for colid ${cid} and department ${dept}. Please configure at least one level.` 
+            });
+        }
 
-        if (combinedApprovers.length === 0) return res.status(400).json({ status: 'fail', message: 'No approvers configured' });
-
-        const approvedby = combinedApprovers.map((a, index) => ({
-            approvername: a.approvername,
-            approveremail: a.approveremail,
-            levelofapproval: index + 1, // Sequential level
-            status: 'Pending',
-            date: null
-        }));
-
-        // Final level is the last one in the combined list
-        const finallevel = approvedby.length;
-
-        budget.approvedby = approvedby;
-        budget.finallevel = finallevel;
         budget.status = 'Pending';
+        budget.currentlevel = 1;
+        budget.approvedby = []; // Start with fresh history
         await budget.save();
 
         res.status(200).json({ status: 'success', data: { item: budget } });
@@ -115,84 +112,115 @@ exports.submitbudgetforapproval = async (req, res) => {
 };
 
 
-// Get budgets that the current user needs to approve
+// Get budgets that the current user needs to approve (Dynamic approach)
 exports.getbudgetsforapproval = async (req, res) => {
     try {
         const { colid, useremail } = req.query;
         if (!useremail) return res.status(400).json({ status: 'fail', message: 'useremail is required' });
 
-        // Get all pending budgets for this colid
-        const pendingBudgets = await budgetpods.find({ colid, status: 'Pending' });
+        const cid = Number(colid);
+        
+        // 1. Fetch all approver configurations for this user
+        const myConfigs = await budgetapproverds.find({ 
+            colid: cid, 
+            approveremail: { $regex: new RegExp(`^${useremail}$`, 'i') } 
+        });
 
-        // Filter: budgets where this user is one of the approvers and it's their turn
-        const filtered = [];
-        for (const b of pendingBudgets) {
-            // Find user's entry in approvedby
-            const myEntry = b.approvedby.find(a => a.approveremail === useremail && a.status === 'Pending');
-            if (!myEntry) continue;
+        if (myConfigs.length === 0) {
+            return res.status(200).json({ status: 'success', data: { items: [] } });
+        }
 
-            // My level
-            const myLevel = myEntry.levelofapproval;
+        // 2. Build conditions based on my config levels
+        const conditions = myConfigs.map(conf => {
+            const level = Number(conf.levelofapproval);
+            const type = (conf.approvaltype || 'Global').toLowerCase();
+            
+            const cond = { 
+                colid: cid, 
+                status: 'Pending', 
+                currentlevel: level 
+            };
 
-            // Check if all previous levels are Approved
-            const lowerLevels = b.approvedby.filter(a => a.levelofapproval < myLevel);
-            if (lowerLevels.every(a => a.status === 'Approved')) {
-                // Attach approver config for editing permissions
-                const conf = await budgetapproverds.findOne({ colid, approveremail: useremail });
-                const budgetObj = b.toObject();
-                budgetObj.approverConfig = conf ? conf.toObject() : {};
-                filtered.push(budgetObj);
+            if (type === 'department' && conf.department) {
+                cond.department = conf.department;
             }
-        }
+            return cond;
+        });
 
-        // Attach category info
-        const result = [];
-        for (const budget of filtered) {
-            const cats = await budgetpocatds.find({ budgetid: budget._id });
-            const total = cats.reduce((sum, c) => sum + (c.amount || 0), 0);
-            budget.amount = total;
-            budget.categories = cats;
-            result.push(budget);
-        }
+        // 3. Find budgets matching ANY of my configurations
+        const budgets = await budgetpods.find({ $or: conditions });
 
-        res.status(200).json({ status: 'success', results: result.length, count: result.length, data: { items: result } });
+        // Build response items and attach matching config and categories
+        const items = await Promise.all(budgets.map(async b => {
+            const budgetObj = b.toObject();
+            
+            // Fetch categories for this budget to show in the approval screen
+            const cats = await budgetpocatds.find({ budgetid: b._id });
+            budgetObj.categories = cats;
+            budgetObj.amount = cats.reduce((sum, c) => sum + (c.amount || 0), 0);
+
+            const matchingConfig = myConfigs.find(c => {
+                const level = Number(c.levelofapproval);
+                const type = (c.approvaltype || 'Global').toLowerCase();
+                if (level !== b.currentlevel) return false;
+                if (type === 'department' && c.department !== b.department) return false;
+                return true;
+            });
+            budgetObj.approverConfig = matchingConfig ? matchingConfig.toObject() : {};
+            return budgetObj;
+        }));
+
+        res.status(200).json({ status: 'success', data: { items } });
     } catch (err) {
-        res.status(400).json({ status: 'fail', message: err });
+        console.error('Error in getbudgetsforapproval:', err);
+        res.status(400).json({ status: 'fail', message: err.message });
     }
 };
 
 
-// Approve or reject a budget at a specific level
+// Approve or reject a budget (Dynamic approach: adds to history and moves level)
 exports.approvebudgetpods = async (req, res) => {
     try {
         const { id } = req.query;
-        const { levelofapproval, status, remarks } = req.body; // status = 'Approved' or 'Rejected'
+        const { status, remarks, approvername, approveremail } = req.body; 
 
         const budget = await budgetpods.findById(id);
         if (!budget) return res.status(404).json({ status: 'fail', message: 'Budget not found' });
 
-        const entriesAtLevel = budget.approvedby.filter(a => a.levelofapproval === levelofapproval);
-        if (entriesAtLevel.length === 0) return res.status(400).json({ status: 'fail', message: 'Approval level not found' });
-
-        entriesAtLevel.forEach(entry => {
-            entry.status = status;
-            entry.date = new Date();
+        // Add to approval history
+        budget.approvedby.push({
+            approvername: approvername || 'Unknown',
+            approveremail: approveremail || '',
+            levelofapproval: budget.currentlevel,
+            status: status,
+            date: new Date()
         });
 
         if (status === 'Rejected') {
             budget.status = 'Rejected';
             budget.remarks = remarks || '';
-        } else if (status === 'Approved') {
-            // Check if this is the final level
-            if (levelofapproval === budget.finallevel) {
+        } else {
+            // Check if there are any approvers for the NEXT level
+            const nextLevel = budget.currentlevel + 1;
+            const hasNextApprovers = await budgetapproverds.findOne({
+                colid: budget.colid,
+                $or: [
+                    { levelofapproval: nextLevel, approvaltype: { $regex: /^global$/i } },
+                    { levelofapproval: nextLevel, approvaltype: { $regex: /^department$/i }, department: budget.department }
+                ]
+            });
+
+            if (hasNextApprovers) {
+                budget.currentlevel = nextLevel;
+            } else {
                 budget.status = 'Approved';
             }
-            // Otherwise budget stays Pending for next level
         }
 
         await budget.save();
         res.status(200).json({ status: 'success', data: { item: budget } });
     } catch (err) {
-        res.status(400).json({ status: 'fail', message: err });
+        console.error('Error in approvebudgetpods:', err);
+        res.status(400).json({ status: 'fail', message: err.message });
     }
 };
