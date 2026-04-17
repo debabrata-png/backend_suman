@@ -623,6 +623,15 @@ app.get('/api/v2/getpurchaseauditlogs', purchaseauditctlr.getPurchaseAuditLogs);
 const rselectprograminst = require('./router/selectprograminstrouter.js');
 // const rleadadmin = require('./routes/leadadminrouterds.js');
 
+const unifiedlandingpage3ctlrds = require('./controllers/unifiedlandingpage3ctlrds');
+app.get('/api/v2/getallunifiedlandingpagesds3', unifiedlandingpage3ctlrds.getallunifiedlandingpagesds3);
+app.post('/api/v2/createunifiedlandingpageds3', unifiedlandingpage3ctlrds.createunifiedlandingpageds3);
+app.post('/api/v2/updateunifiedlandingpageds3', unifiedlandingpage3ctlrds.updateunifiedlandingpageds3);
+app.get('/api/v2/getunifiedlandingpagebyslugds3/:slug', unifiedlandingpage3ctlrds.getunifiedlandingpagebyslugds3);
+app.get('/api/v2/deleteunifiedlandingpageds3/:id', unifiedlandingpage3ctlrds.deleteunifiedlandingpageds3);
+app.post('/api/v2/addunifiedqrcodeds3', unifiedlandingpage3ctlrds.addunifiedqrcodeds3);
+app.get('/api/v2/deleteunifiedqrcodeds3', unifiedlandingpage3ctlrds.deleteunifiedqrcodeds3);
+
 
 const User = require('./Models/user');
 const Admusers = require('./Models/admusers');

@@ -16,6 +16,12 @@ const calculateLeadScore = (lead) => {
   if (lead.counselling_session_booked === 'Yes') score += 20;
   if (lead.scholarship_interest === 'Yes') score += 10;
   if (lead.campus_visit_completed === 'Yes') score += 15;
+
+  // Extended fields scoring
+  if (lead.board10th) score += 10;
+  if (lead.board12th) score += 10;
+  if (lead.universityug) score += 20;
+  
   return score;
 };
 
@@ -212,7 +218,9 @@ exports.getallleadsds = async (req, res) => {
             { name: { $regex: search, $options: 'i' } },
             { email: { $regex: search, $options: 'i' } },
             { phone: { $regex: search, $options: 'i' } },
-            { category: { $regex: search, $options: 'i' } }
+            { category: { $regex: search, $options: 'i' } },
+            { fathername: { $regex: search, $options: 'i' } },
+            { fathercontactno: { $regex: search, $options: 'i' } }
           ]
         }
       ];

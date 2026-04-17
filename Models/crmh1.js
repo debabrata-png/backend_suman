@@ -294,6 +294,60 @@ const crmh1schema = new mongoose.Schema({
     },
     attenderemail: {
         type: String
+    },
+    board10th: {
+        type: String
+    },
+    school10th: {
+        type: String
+    },
+    stream10th: {
+        type: String
+    },
+    yearofpassing10th: {
+        type: String
+    },
+    percentage10th: {
+        type: String
+    },
+    board12th: {
+        type: String
+    },
+    school12th: {
+        type: String
+    },
+    stream12th: {
+        type: String
+    },
+    yearofpassing12th: {
+        type: String
+    },
+    percentage12th: {
+        type: String
+    },
+    universityug: {
+        type: String
+    },
+    collegeug: {
+        type: String
+    },
+    streamug: {
+        type: String
+    },
+    yearofpassingug: {
+        type: String
+    },
+    cgpaug: {
+        type: String
+    },
+    fathername: {
+        type: String
+    },
+    fathercontactno: {
+        type: String
+    },
+    gender: {
+        type: String
     }
 }, {
     timestamps: true
