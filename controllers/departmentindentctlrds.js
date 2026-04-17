@@ -4,8 +4,20 @@ const mongoose = require('mongoose');
 const { purchaseRecordLog } = require('./purchaseauditutils');
 
 
-// Get all indents for a colid
+// Get all indents for a colid (Simplified for Department Indent Management - No User Table Search)
 exports.getDepartmentIndentds = async (req, res) => {
+    const { colid } = req.body;
+    try {
+        const indents = await DepartmentIndentds.find({ colid: Number(colid) });
+        res.status(200).json({ success: true, data: indents });
+    } catch (err) {
+        console.error("Error fetching indents:", err);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+// Get all indents including virtual ones from User table (Specifically for Budget Department Settings)
+exports.getBudgetDepartmentSettingsds = async (req, res) => {
     const { colid } = req.body;
     try {
         // Fetch distinct departments from User table
@@ -27,12 +39,11 @@ exports.getDepartmentIndentds = async (req, res) => {
                 isfrozen: config ? config.isfrozen : false,
                 colid: Number(colid),
                 isNew: !config,
-                // Include other fields from config if available (for DepartmentIndent Management page)
                 ...(config ? config._doc : {})
             };
         });
 
-        // Add records from DepartmentIndentds that might not be in User table (if any)
+        // Add records from DepartmentIndentds that might not be in User table
         indents.forEach(config => {
             if (!mergedData.find(m => m.departmentname === config.departmentname)) {
                 mergedData.push({
@@ -44,7 +55,7 @@ exports.getDepartmentIndentds = async (req, res) => {
 
         res.status(200).json({ success: true, data: mergedData });
     } catch (err) {
-        console.error("Error fetching indents:", err);
+        console.error("Error fetching budget settings:", err);
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };

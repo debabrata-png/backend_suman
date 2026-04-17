@@ -379,3 +379,49 @@ exports.getinstitutionsforbudget = async (req, res) => {
     }
 };
 
+
+exports.getcategorydepartmentwisebudget = async (req, res) => {
+    try {
+        const { colid, year, ismanagement, searchcolid } = req.query;
+        const colidList = searchcolid ? [Number(searchcolid)] : await getColidList(colid, ismanagement === 'true');
+        let query = { colid: { $in: colidList } };
+        if (year) query.year = year;
+
+        const results = await budgetpocatds.aggregate([
+            { $match: query },
+            {
+                $group: {
+                    _id: { category: "$category", department: "$department" },
+                    totalAmount: { $sum: "$amount" }
+                }
+            },
+            {
+                $group: {
+                    _id: "$_id.category",
+                    departments: {
+                        $push: {
+                            department: { $ifNull: ["$_id.department", "Unspecified Department"] },
+                            amount: "$totalAmount"
+                        }
+                    },
+                    categoryTotal: { $sum: "$totalAmount" }
+                }
+            },
+            {
+                $sort: { categoryTotal: -1 }
+            },
+            {
+                $project: {
+                    category: "$_id",
+                    departments: 1,
+                    categoryTotal: 1,
+                    _id: 0
+                }
+            }
+        ]);
+
+        res.status(200).json({ status: 'success', results: results.length, data: { items: results } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err });
+    }
+};

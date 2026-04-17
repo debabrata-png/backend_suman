@@ -15652,6 +15652,7 @@ app.get('/api/v2/getdistinctbudgetgroups', budgetpocatdsctlr.getdistinctbudgetgr
 app.get('/api/v2/getinstitutioncategorybudget', budgetpocatdsctlr.getinstitutioncategorybudget);
 app.get('/api/v2/getinstitutiongroupcategorybudget', budgetpocatdsctlr.getinstitutiongroupcategorybudget);
 app.get('/api/v2/getinstitutionsforbudget', budgetpocatdsctlr.getinstitutionsforbudget);
+app.get('/api/v2/getcategorydepartmentwisebudget', budgetpocatdsctlr.getcategorydepartmentwisebudget);
 
 
 const budgetgroupdsctlr = require('./controllers/budgetgroupdsctlr');
@@ -15893,6 +15894,7 @@ app.get('/api/v2/templatefeeapplicationds', feeapplicationdsController.downloadT
 const departmentindentctlrds = require('./controllers/departmentindentctlrds');
 
 app.post('/api/v2/getdepartmentindentds', departmentindentctlrds.getDepartmentIndentds);
+app.post('/api/v2/getbudgetdepartmentsettingsds', departmentindentctlrds.getBudgetDepartmentSettingsds);
 app.post('/api/v2/adddepartmentindentds', departmentindentctlrds.createDepartmentIndentds);
 app.post('/api/v2/updatedepartmentindentds', departmentindentctlrds.updateDepartmentIndentds);
 app.post('/api/v2/deletedepartmentindentds', departmentindentctlrds.deleteDepartmentIndentds);
