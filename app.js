@@ -849,6 +849,7 @@ const deliverydsdsctlr2 = require('./controllers/deliverydsdsctlr2');
 const stockregisterdsctlr2 = require('./controllers/stockregisterdsctlr2');
 const vendordsctlr12 = require('./controllers/vendordsctlr12'); // Renamed to avoid conflict
 const approvalconfigdsctlr2 = require('./controllers/approvalconfigdsctlr2');
+const prapproverctlr2 = require('./controllers/prapproverctlr2');
 
 const prassignedsctlr2 = require('./controllers/prassignedsctlr2');
 app.post('/api/v2/addprassigneds2', prassignedsctlr2.addprassigneds2);
@@ -1039,6 +1040,14 @@ const prconfigdsctlr2 = require('./controllers/prconfigdsctlr2');
 app.post('/api/v2/addprconfigds2', prconfigdsctlr2.addprconfigds2);
 app.get('/api/v2/getprconfigds2', prconfigdsctlr2.getprconfigds2);
 app.post('/api/v2/updateprconfigds2', prconfigdsctlr2.updateprconfigds2);
+
+// 9b. PR Approver Configuration (New)
+app.post('/api/v2/addprapprover2', prapproverctlr2.addPRApprover2);
+app.get('/api/v2/getprapprovers2', prapproverctlr2.getPRApprovers2);
+app.get('/api/v2/deleteprapprover2', prapproverctlr2.deletePRApprover2);
+app.get('/api/v2/getPRsForApproval2', prapproverctlr2.getPRsForApproval2);
+app.post('/api/v2/verifyPRStep2', prapproverctlr2.verifyPRStep2);
+app.post('/api/v2/rejectPR2', prapproverctlr2.rejectPR2);
 
 // 9. PO Items
 app.post('/api/v2/addstorepoitemsds2', storepoitemsdsctlr2.addstorepoitemsds2);

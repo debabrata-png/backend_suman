@@ -22,7 +22,10 @@ const storerequisationschema = new mongoose.Schema({
     itemid: { type: String },           // Master item _id reference
     category: { type: String },
     itemtype: { type: String },
-    departmentname: { type: String }
+    departmentname: { type: String },
+    // Approval Fields
+    currentStep: { type: Number, default: 1 },
+    approvalStatus: { type: String, default: 'Pending' }
 });
 
 const storerequisationds2 = mongoose.model('storerequisationds2', storerequisationschema);

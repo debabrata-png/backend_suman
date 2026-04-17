@@ -1,12 +1,53 @@
 const storerequisationds2 = require("../Models/storerequisationds2");
+const prapproverds = require("../Models/prapproverds");
+const { purchaseRecordLog } = require('./purchaseauditutils');
 
 exports.addstorerequisationds2 = async (req, res) => {
     try {
-        // year, itemcode, itemname, store, storeid, reqdate, quantity, reqstatus, poid
-        const newReq = await storerequisationds2.create(req.body);
+        const { colid } = req.body;
+        
+        // Default initial status
+        let reqstatus = 'Pending';
+        let currentStep = 1;
+        let approvalStatus = 'Direct to Store';
+
+        // Check if any PR approvers are configured for this colid
+        const approvers = await prapproverds.find({ colid, status: 1 }).sort({ level: 1 });
+
+        if (approvers.length > 0) {
+            reqstatus = 'Pending Approval';
+            approvalStatus = 'Pending Level 1';
+            currentStep = 1;
+        }
+
+        const newReq = await storerequisationds2.create({ 
+            ...req.body, 
+            reqstatus, 
+            currentStep, 
+            approvalStatus 
+        });
+
+        // Audit Log
+        if (colid) {
+            await purchaseRecordLog({
+                username: req.body.username || req.body.name || req.body.user,
+                useremail: req.body.useremail || req.body.user,
+                action: 'SUBMIT',
+                module: 'STORE_REQUISITION',
+                recordid: newReq._id,
+                colid: colid,
+                details: { 
+                    item: req.body.itemname, 
+                    quantity: req.body.quantity, 
+                    status: reqstatus,
+                    approvalRequired: approvers.length > 0
+                }
+            });
+        }
+
         res.status(201).json({
             success: true,
-            message: "Store Requisition added successfully",
+            message: approvers.length > 0 ? "Store Requisition sent for approval" : "Store Requisition added successfully",
             data: newReq
         });
     } catch (error) {

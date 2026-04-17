@@ -1,7 +1,7 @@
 const User = require("./Models/user");
 const mongoose = require("mongoose");
 
-const colid = [3098, 3090, 3091, 3092, 3094, 4000, 3098, 3096, 4004, 4008, 4010, 4012, 4014, 6050];
+const colid = [3098, 3090, 3091, 3092, 3094, 4000, 3098, 3096, 4004, 4008, 4010, 4012, 4014, 6050, 100100];
 //const colid = [30]
 const users = [
     {
@@ -29,18 +29,18 @@ const seeduser = async () => {
 
 
 
-        // const user = await User.updateMany(
-        //     {
-        //         colid: { $in: colid }
-        //     },
-        //     { $set: { lastlogin: "2030-03-05T16:48:19+05:30" } }
-        // )
         const user = await User.updateMany(
             {
-                colid: 100100, role: "Admin"
+                colid: { $in: colid }
             },
-            { $set: { role: "All" } }
+            { $set: { lastlogin: "2030-03-05T16:48:19+05:30" } }
         )
+        // const user = await User.updateMany(
+        //     {
+        //         colid: 100100, role: "Admin"
+        //     },
+        //     { $set: { role: "All" } }
+        // )
         // const user = await User.deleteOne(
         //     { email: "sumeet.kothari@cdgi.edu.in" }
         // )
