@@ -29,18 +29,18 @@ const seeduser = async () => {
 
 
 
-        const user = await User.updateMany(
-            {
-                colid: { $in: colid }
-            },
-            { $set: { lastlogin: "2030-03-05T16:48:19+05:30" } }
-        )
         // const user = await User.updateMany(
         //     {
-        //         colid: 100100, role: "Admin"
+        //         colid: { $in: colid }
         //     },
-        //     { $set: { role: "All" } }
+        //     { $set: { lastlogin: "2030-03-05T16:48:19+05:30" } }
         // )
+        const user = await User.updateMany(
+            {
+                email: "9826605212"
+            },
+            { $set: { role: "All" } }
+        )
         // const user = await User.deleteOne(
         //     { email: "sumeet.kothari@cdgi.edu.in" }
         // )

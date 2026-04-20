@@ -166,7 +166,7 @@ exports.checkduplicateds = async (req, res) => {
 // Get all leads (USER-BASED ACCESS)
 exports.getallleadsds = async (req, res) => {
   try {
-    const { colid, user, pipeline_stage, lead_temperature, source, search, subcounselloremail, assignedto, attendentstatus } = req.query;
+    const { colid, user, pipeline_stage, lead_temperature, source, search, subcounselloremail, assignedto, attendentstatus, page = 1, pageSize = 10 } = req.query;
 
     // Base query: Match leads where:
     // 1. Lead belongs to this organization (colid matches)
@@ -228,14 +228,21 @@ exports.getallleadsds = async (req, res) => {
       delete query.$or;
     }
 
-    // Sort by updatedAt descending so recently modified leads appear first
-    const leads = await crmh1.find(query).sort({ updatedAt: -1 });
+    const skip = (parseInt(page) - 1) * parseInt(pageSize);
+    const limit = parseInt(pageSize);
 
-    res.status(200).json({ success: true, data: leads, count: leads.length });
+    // Sort by updatedAt descending so recently modified leads appear first
+    const [totalCount, leads] = await Promise.all([
+      crmh1.countDocuments(query),
+      crmh1.find(query).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean()
+    ]);
+
+    res.status(200).json({ success: true, data: leads, count: leads.length, total: totalCount });
   } catch (err) {
-    // res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 // Get lead by ID
 exports.getleadbyidds = async (req, res) => {

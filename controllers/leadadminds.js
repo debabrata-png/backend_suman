@@ -3,11 +3,10 @@ const crmh1 = require('../Models/crmh1');
 // Get all leads (USER-BASED ACCESS)
 exports.getallleadsdsadmin = async (req, res) => {
   try {
-    const { colid, user, pipeline_stage, lead_temperature, source, search } = req.query;
+    const { colid, user, pipeline_stage, lead_temperature, source, search, page = 1, pageSize = 10 } = req.query;
 
     // Base query: Match leads where:
     // 1. Lead belongs to this organization (colid matches)
-    // 2. Either lead.user === user (admin/owner) OR lead.assignedto === user (counsellor)
     let query = {
       colid: Number(colid),
     };
@@ -37,23 +36,29 @@ exports.getallleadsdsadmin = async (req, res) => {
           ]
         }
       ];
-      // Remove the $or key since we're using $and now
-      delete query.$or;
+      // Remove any $or key that might conflict (though here it's simple)
     }
 
-    // Sort by updatedAt descending so recently modified leads appear first
-    const leads = await crmh1.find(query).sort({ updatedAt: -1 });
+    const skip = (parseInt(page) - 1) * parseInt(pageSize);
+    const limit = parseInt(pageSize);
 
-    res.status(200).json({ success: true, data: leads, count: leads.length });
+    // Sort by updatedAt descending so recently modified leads appear first
+    const [totalCount, leads] = await Promise.all([
+      crmh1.countDocuments(query),
+      crmh1.find(query).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean()
+    ]);
+
+    res.status(200).json({ success: true, data: leads, count: leads.length, total: totalCount });
   } catch (err) {
-    // res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 // Get leads by date range
 exports.getLeadsByDateRange = async (req, res) => {
   try {
-    const { colid, startDate, endDate } = req.query;
+    const { colid, startDate, endDate, page = 1, pageSize = 10 } = req.query;
 
     // Validate inputs
     if (!colid || !startDate || !endDate) {
@@ -72,13 +77,27 @@ exports.getLeadsByDateRange = async (req, res) => {
       }
     };
 
-    const leads = await crmh1.find(query).sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: leads.length, data: leads });
+    const skip = (parseInt(page) - 1) * parseInt(pageSize);
+    const limit = parseInt(pageSize);
+
+    // Fetch total count and paginated data in parallel
+    const [totalCount, leads] = await Promise.all([
+      crmh1.countDocuments(query),
+      crmh1.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean()
+    ]);
+
+    res.status(200).json({ 
+      success: true, 
+      total: totalCount,
+      count: leads.length, 
+      data: leads 
+    });
 
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 // Bulk Assign Counselor
 exports.bulkAssignCounselor = async (req, res) => {

@@ -130,18 +130,31 @@ const sampleInstitutions = [
     //     admincolid: 6050,
     //     logo: "",
     //   }
+    // {
+    //     institutionname: "ST FRANCIS DE SALES COLLEGE – [SFS]",
+    //     name: 'Admin',
+    //     institutioncode: '01',
+    //     user: 'admin1@sfs.in',
+    //     address: 'Nagpur, Maharashtra',
+    //     district: 'Nagpur',
+    //     type: 'Autonomus',
+    //     status: 'Active',
+    //     colid: 3060, // New ColID for this institution
+    //     admincolid: 3060,
+    //     logo: "https://www.sfscollege.in/images/logo.png"
+    // }
     {
-        institutionname: "ST FRANCIS DE SALES COLLEGE – [SFS]",
+        institutionname: "School of Computer Science & Application",
         name: 'Admin',
         institutioncode: '01',
-        user: 'admin1@sfs.in',
-        address: 'Nagpur, Maharashtra',
-        district: 'Nagpur',
+        user: 'admin@shreyarthuni.in',
+        address: 'Ahemdabad',
+        district: 'Ahemdabad',
         type: 'Autonomus',
         status: 'Active',
-        colid: 3060, // New ColID for this institution
-        admincolid: 3060,
-        logo: "https://www.sfscollege.in/images/logo.png"
+        colid: 100220, // New ColID for this institution
+        admincolid: 100200,
+        logo: "https://shreyarthuni.ac.in/static/images/logoShrey.png"
     }
 ];
 

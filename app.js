@@ -1124,6 +1124,125 @@ app.get('/api/v2/getallgrnds2', grndsctlr2.getallgrnds2);
 app.get('/api/v2/getpendinggrnds2', grndsctlr2.getpendinggrnds2);
 app.post('/api/v2/markgrnqcdone2', grndsctlr2.markgrnqcdone2);
 
+const indcontroller1 = require('./controllers/indcontroller1');
+
+
+// STORE ROUTES
+app.post('/indstore', indcontroller1.indCreateStore);
+app.get('/indstore', indcontroller1.indGetStores);
+app.post('/indstore/:id', indcontroller1.indUpdateStore);
+app.post('/indstore/:id', indcontroller1.indDeleteStore);
+
+// CATEGORY ROUTES
+app.post('/indcategory', indcontroller1.indCreateCategory);
+app.get('/indcategory', indcontroller1.indGetCategories);
+app.post('/indcategory/:id', indcontroller1.indUpdateCategory);
+app.post('/indcategory/:id', indcontroller1.indDeleteCategory);
+
+// STOCK ROUTES
+app.post('/indstock', indcontroller1.indCreateStock);
+app.get('/indstock', indcontroller1.indGetStock);
+app.post('/indstock/:id', indcontroller1.indUpdateStock);
+app.post('/indstock/:id', indcontroller1.indDeleteStock);
+
+
+const budgetCtrl = require('./controllers/indbudgetcontroller');
+
+// BUDGET ROUTES
+app.post('/indbudget', budgetCtrl.indCreateBudget);
+app.get('/indbudget', budgetCtrl.indGetBudget);
+app.post('/indbudget/approve/:id', budgetCtrl.indApproveBudget);
+app.post('/indbudget/reject/:id', budgetCtrl.indRejectBudget);
+
+
+// const indentCtrl = require('./controllers/indentController');
+// // INDENT
+// app.post('/indent', indentCtrl.indentCreate);
+// app.get('/indent', indentCtrl.indentGet);
+// app.post('/indent/:id', indentCtrl.indentUpdate);
+// app.post('/indent/:id', indentCtrl.indentDelete);
+// app.post('/indent/approve/:id', indentCtrl.indentApprove);
+// app.get('/budget/available', indentCtrl.budgetavailable);
+
+
+// const indentController1 = require('./controllers/indentController1');
+// /* STORE */
+// app.post('/store', indentController1.storeCreate);
+// app.get('/store', indentController1.storeGet);
+
+// /* CATEGORY */
+// app.post('/category', indentController1.categoryCreate);
+// app.get('/category', indentController1.categoryGet);
+
+// /* BUDGET */
+// app.post('/budget', indentController1.budgetCreate);
+// app.get('/budget/available', indentController1.budgetAvailable);
+
+// /* INDENT */
+// app.post('/indent', indentController1.indentCreate);
+// app.get('/indent', indentController1.indentGet);
+// app.post('/indent/approve/:id', indentController1.indentApprove);
+
+
+// const rfpcontroller = require('./controllers/rfpcontroller');
+
+// /* APPROVED INDENTS */
+// app.get('/indent/approved', rfpcontroller.indentApproved);
+
+// /* RFP */
+// app.post('/rfp', rfpcontroller.rfpCreate);
+// app.get('/rfp', rfpcontroller.rfpGet);
+
+// /* VENDOR */
+// app.post('/vendor', rfpcontroller.vendorSubmit);
+// app.get('/vendor', rfpcontroller.vendorGet);
+
+// const vendorcontroller = require('./controllers/vendorcontroller');
+// app.get('/vendor/comparison', vendorcontroller.vendorComparison);
+
+
+// const vnegotiationcontroller = require('./controllers/vnegotiationcontroller');
+// /* VENDORS BY RFP */
+// app.get('/vendor/byrfp', vnegotiationcontroller.vendorByRfp);
+
+// /* NEGOTIATION */
+// app.post('/negotiation', vnegotiationcontroller.negCreate);
+// app.get('/negotiation', vnegotiationcontroller.negGet);
+
+// /* FINAL PRICE */
+// app.post('/finalprice', vnegotiationcontroller.finalPriceSave);
+// app.get('/finalprice', vnegotiationcontroller.finalPriceGet);
+
+// const vpricecontroller = require('./controllers/vpricecontroller');
+// app.get('/finalprice/comparison', vpricecontroller.finalPriceComparison);
+
+// const pcategorycontroller = require('./controllers/pcategorycontroller');
+
+// /* CATEGORY OFFICER */
+// app.post('/categoryofficer', pcategorycontroller.catOfficerCreate);
+// app.get('/categoryofficer', pcategorycontroller.catOfficerGet);
+// app.post('/categoryofficer/:id', pcategorycontroller.catOfficerUpdate);
+// app.post('/categoryofficer/:id', pcategorycontroller.catOfficerDelete);
+
+
+// const ppocontroller = require('./controllers/ppocontroller');
+// /* CATEGORY BY USER */
+// app.get('/category/byuser', ppocontroller.categoryByUser);
+
+// /* FINAL PRICE */
+// app.get('/finalprice/byrfp', ppocontroller.finalPriceByRfp);
+
+// /* PO */
+// app.post('/po', ppocontroller.poCreate);
+// app.get('/po', ppocontroller.poGet);
+// app.post('/po/approve/:id', ppocontroller.poApprove);
+
+// app.get('/rfp/bycategory', ppocontroller.rfpByCategory);
+
+// const poapprovalcontroller = require('./controllers/poapprovalcontroller');
+// app.get('/poall', poapprovalcontroller.poGet);
+// app.post('/po/approve/:id', poapprovalcontroller.poApprove);
+
 const swapController = require('./controllers/swapcontroller');
 
 app.get('/swapGetUsers', swapController.swapGetUsers);

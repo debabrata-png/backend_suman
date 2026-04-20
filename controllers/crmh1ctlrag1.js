@@ -1,4 +1,4 @@
-﻿const crmh1 = require('../Models/crmh1.js');
+const crmh1 = require('../Models/crmh1.js');
 const leadactivityds = require('../Models/leadactivityds.js');
 const user = require('../Models/user.js');
 const sourceds = require('../Models/sourceds.js');
@@ -39,9 +39,10 @@ exports.checkduplicateag = async (req, res) => {
 // Get all leads — paginated (page size: 5)
 exports.getallleadsag = async (req, res) => {
   try {
-    const { colid, user, pipeline_stage, lead_temperature, source, search } = req.query;
+    const { colid, user, pipeline_stage, lead_temperature, source, search, pageSize } = req.query;
+    const size = parseInt(pageSize) || PAGE_SIZE;
     const page = Math.max(1, parseInt(req.query.page) || 1);
-    const skip = (page - 1) * PAGE_SIZE;
+    const skip = (page - 1) * size;
 
     let query = {
       colid: Number(colid),
@@ -71,17 +72,18 @@ exports.getallleadsag = async (req, res) => {
 
     const [totalCount, leads] = await Promise.all([
       crmh1.countDocuments(query),
-      crmh1.find(query).sort({ updatedAt: -1 }).skip(skip).limit(PAGE_SIZE).lean()
+      crmh1.find(query).sort({ updatedAt: -1 }).skip(skip).limit(size).lean()
     ]);
 
-    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+    const totalPages = Math.ceil(totalCount / size);
 
     res.status(200).json({
       success: true,
       data: leads,
       count: leads.length,
+      total: totalCount, // Added for frontend consistency
       pagination: {
-        totalCount, totalPages, currentPage: page, pageSize: PAGE_SIZE,
+        totalCount, totalPages, currentPage: page, pageSize: size,
         hasNextPage: page < totalPages, hasPrevPage: page > 1
       }
     });
@@ -89,6 +91,7 @@ exports.getallleadsag = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 // Get lead by ID
 exports.getleadbyidag = async (req, res) => {
