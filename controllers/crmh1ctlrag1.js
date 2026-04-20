@@ -56,7 +56,18 @@ exports.getallleadsag = async (req, res) => {
 
     if (pipeline_stage && pipeline_stage !== 'All') query.pipeline_stage = pipeline_stage;
     if (lead_temperature && lead_temperature !== 'All') query.lead_temperature = lead_temperature;
-    if (source) query.source = source;
+    if (source && source !== 'All') query.source = source;
+
+    const { startDate, endDate } = req.query;
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
+    }
 
     if (search) {
       query.$and = [{

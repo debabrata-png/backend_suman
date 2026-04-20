@@ -1,6 +1,7 @@
 const CrmLead = require("../Models/crmh1");
 const LeadActivity = require("../Models/leadactivityds");
 const PipelineStage = require("../Models/PipelineStageag");
+const Outcomeag = require("../Models/Outcomeag");
 
 /*
 Lead Report
@@ -590,64 +591,49 @@ Columns: Date, Counsellor, New Leads Assigned, Calls Done, Connected, Follow Up
 exports.crmdsDailyCallingReportV2 = async (req, res) => {
     try {
         const { colid, startDate, endDate } = req.body;
+        // 1. Get All Active Pipeline Stages and Outcomes for this college
+        const [activeStagesDocs, activeOutcomesDocs] = await Promise.all([
+            PipelineStage.find({ colid, isactive: true }).lean(),
+            Outcomeag.find({ colid, isactive: true }).lean()
+        ]);
+
+        const activeStages = activeStagesDocs.map(s => (s.stagename || s.name || "").trim()).filter(Boolean);
+        const activeOutcomes = activeOutcomesDocs.map(o => (o.outcomename || o.name || "").trim()).filter(Boolean);
+        
+        const masterCategories = [...new Set([...activeStages, ...activeOutcomes])];
+
         const start = new Date(startDate);
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
 
-        // 1. Get All Active Pipeline Stages for this college
-        const activeStagesDocs = await PipelineStage.find({ colid, isactive: true }).lean();
-        const activeStages = activeStagesDocs.map(s => s.stagename || s.name).filter(Boolean);
-
-        // 2. Get New Leads Assigned per day per counselor
-        const newLeads = await CrmLead.aggregate([
-            { $match: { colid, createdAt: { $gte: start, $lte: end } } },
-            {
-                $group: {
-                    _id: {
-                        date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "Asia/Kolkata" } },
-                        counselor: "$assignedto"
-                    },
-                    count: { $sum: 1 }
-                }
-            }
-        ]);
-
-        // 3. Get Activities per day per counselor, grouped by the dynamic stage (outcome)
-        // Note: Outcome in LeadActivity should match the PipelineStage name for this to work perfectly.
+        // 2. Get Activities per day per counselor
         const activities = await LeadActivity.aggregate([
             { $match: { colid, activity_date: { $gte: start, $lte: end }, activity_type: "call" } },
+            {
+                $lookup: {
+                    from: "crmh1s",
+                    localField: "lead_id",
+                    foreignField: "_id",
+                    as: "leadInfo"
+                }
+            },
+            { $unwind: { path: "$leadInfo", preserveNullAndEmptyArrays: true } },
             {
                 $group: {
                     _id: {
                         date: { $dateToString: { format: "%Y-%m-%d", date: "$activity_date", timezone: "Asia/Kolkata" } },
                         counselor: "$performed_by",
-                        stage: "$outcome"
+                        stage: "$outcome",
+                        leadStage: "$leadInfo.pipeline_stage"
                     },
                     count: { $sum: 1 }
                 }
             }
         ]);
-
+ 
         // Merge results
         const mergedMap = {};
         
-        // Initialize with new leads
-        newLeads.forEach(item => {
-            const key = `${item._id.date}_${item._id.counselor}`;
-            if (!mergedMap[key]) {
-                mergedMap[key] = {
-                    date: item._id.date,
-                    counsellor: item._id.counselor || "Unassigned",
-                    newLeadsAssigned: 0,
-                    callsDone: 0,
-                    stageCounts: {}
-                };
-                // Initialize active stages with 0
-                activeStages.forEach(s => mergedMap[key].stageCounts[s] = 0);
-            }
-            mergedMap[key].newLeadsAssigned = item.count;
-        });
-
         // Add activities
         activities.forEach(item => {
             const key = `${item._id.date}_${item._id.counselor}`;
@@ -655,16 +641,31 @@ exports.crmdsDailyCallingReportV2 = async (req, res) => {
                 mergedMap[key] = {
                     date: item._id.date,
                     counsellor: item._id.counselor || "Unassigned",
-                    newLeadsAssigned: 0,
                     callsDone: 0,
                     stageCounts: {}
                 };
                 activeStages.forEach(s => mergedMap[key].stageCounts[s] = 0);
             }
             mergedMap[key].callsDone += item.count;
-            const stage = item._id.stage;
-            if (activeStages.includes(stage)) {
-                mergedMap[key].stageCounts[stage] = (mergedMap[key].stageCounts[stage] || 0) + item.count;
+            const stageOutcome = (item._id.stage || "").trim();
+            const leadStageBackup = (item._id.leadStage || "").trim();
+
+            let targetCategory = "Other Activities";
+
+            if (stageOutcome && masterCategories.includes(stageOutcome)) {
+                targetCategory = stageOutcome;
+            } else if (leadStageBackup && masterCategories.includes(leadStageBackup)) {
+                targetCategory = leadStageBackup;
+            } else if (stageOutcome) {
+                // If it's not in the active list but has a name, let's show it anyway 
+                // to avoid "Other" as much as possible for debugging
+                targetCategory = stageOutcome;
+            }
+
+            mergedMap[key].stageCounts[targetCategory] = (mergedMap[key].stageCounts[targetCategory] || 0) + item.count;
+            
+            if (!activeStages.includes(targetCategory)) {
+                activeStages.push(targetCategory);
             }
         });
 
