@@ -21,13 +21,23 @@ exports.addrequisationds2 = async (req, res) => {
 exports.getallrequisationds2 = async (req, res) => {
     try {
         const { colid } = req.query;
-        const requisitions = await requisationds2.find({ colid }).sort({ reqdate: -1 });
+        // Match colid as either Number or String for safety
+        const query = {
+            $or: [
+                { colid: Number(colid) },
+                { colid: String(colid) }
+            ],
+            reqstatus: { $ne: 'Rejected' }
+        };
+        const requisitions = await requisationds2.find(query).sort({ reqdate: -1 });
+
         res.status(200).json({
             success: true,
             count: requisitions.length,
             data: { requisitions }
         });
     } catch (error) {
+        console.error("[Requisition] Fetch Error:", error);
         res.status(500).json({
             success: false,
             message: "Error fetching requisitions",

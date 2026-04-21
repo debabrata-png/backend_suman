@@ -19,7 +19,15 @@ exports.addrequisationds12 = async (req, res) => {
             delete mainReqPayload.__v;
             mainReqPayload.reqstatus = 'Pending'; // Pending for Store Manager now
             await requisationds2.create(mainReqPayload);
+        } else {
+            // Early visibility for Store - Not Approved status
+            const mainReqPayload = newReq.toObject();
+            delete mainReqPayload._id;
+            delete mainReqPayload.__v;
+            mainReqPayload.reqstatus = 'Not Approved';
+            await requisationds2.create(mainReqPayload);
         }
+
 
         res.status(201).json({
             success: true,
@@ -50,8 +58,16 @@ exports.addrequisationds12 = async (req, res) => {
 exports.getallrequisationds12 = async (req, res) => {
     try {
         const { colid } = req.query;
-        // Fetch only those pending approval? Or all? Let's fetch all for history, filtering in frontend usually.
-        const requisitions = await requisationds12.find({ colid }).sort({ reqdate: -1 });
+        console.log(`[Staging Requisition] getallrequisationds12 called for colid: ${colid}`);
+        // Match colid as either Number or String for safety
+        const query = {
+            $or: [
+                { colid: Number(colid) },
+                { colid: String(colid) }
+            ]
+        };
+        const requisitions = await requisationds12.find(query).sort({ reqdate: -1 });
+
         res.status(200).json({
             success: true,
             count: requisitions.length,
@@ -103,24 +119,40 @@ exports.approverequisationds12 = async (req, res) => {
         }
 
         if (shouldGoToStore) {
-            // Create in Main Store Request
-            // We strip _id to let mongo generate new one, or mapped fields
-            const mainReqPayload = stagingReq.toObject();
-            delete mainReqPayload._id;
-            delete mainReqPayload.__v;
-            mainReqPayload.reqstatus = 'Pending'; // Pending for Store Manager now
+            // Find existing 'Not Approved' record in Store table to update
+            const existingStoreReq = await requisationds2.findOne({
+                indentNumber: stagingReq.indentNumber,
+                itemcode: stagingReq.itemcode,
+                quantity: stagingReq.quantity,
+                reqstatus: 'Not Approved'
+            });
 
-            const newMainReq = await requisationds2.create(mainReqPayload);
+            if (existingStoreReq) {
+                existingStoreReq.reqstatus = 'Pending';
+                existingStoreReq.hoiApproverName = stagingReq.hoiApproverName;
+                existingStoreReq.ahoiApproverName = stagingReq.ahoiApproverName;
+                existingStoreReq.remark = stagingReq.remark;
+                await existingStoreReq.save();
+            } else {
+                // Fallback: Create in Main Store Request if not found
+                const mainReqPayload = stagingReq.toObject();
+                delete mainReqPayload._id;
+                delete mainReqPayload.__v;
+                mainReqPayload.reqstatus = 'Pending';
+                await requisationds2.create(mainReqPayload);
+            }
 
             // Update Staging Status
             stagingReq.reqstatus = 'Approved';
             await stagingReq.save();
 
+
             return res.status(200).json({
                 success: true,
                 message: "Requisition Approved and Sent to Store",
-                data: newMainReq
+                data: stagingReq
             });
+
         } else {
             await stagingReq.save();
             return res.status(200).json({
@@ -155,7 +187,17 @@ exports.approverequisationds12 = async (req, res) => {
 exports.rejectrequisationds12 = async (req, res) => {
     const { id } = req.body;
     try {
-        await requisationds12.findByIdAndUpdate(id, { reqstatus: 'Rejected' });
+        const stagingReq = await requisationds12.findByIdAndUpdate(id, { reqstatus: 'Rejected' }, { new: true });
+        
+        if (stagingReq) {
+            await requisationds2.findOneAndUpdate({
+                indentNumber: stagingReq.indentNumber,
+                itemcode: stagingReq.itemcode,
+                quantity: stagingReq.quantity,
+                reqstatus: 'Not Approved'
+            }, { reqstatus: 'Rejected' });
+        }
+
         res.status(200).json({ success: true, message: "Requisition Rejected" });
     } catch (error) {
         res.status(500).json({ success: false, message: "Error rejecting requisition", error: error.message });

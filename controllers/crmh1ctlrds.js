@@ -21,7 +21,7 @@ const calculateLeadScore = (lead) => {
   if (lead.board10th) score += 10;
   if (lead.board12th) score += 10;
   if (lead.universityug) score += 20;
-  
+
   return score;
 };
 
@@ -166,29 +166,53 @@ exports.checkduplicateds = async (req, res) => {
 // Get all leads (USER-BASED ACCESS)
 exports.getallleadsds = async (req, res) => {
   try {
-    const { colid, user, pipeline_stage, lead_temperature, source, search, subcounselloremail, assignedto, attendentstatus, page = 1, pageSize = 10 } = req.query;
+    const { colid, user, role, ignoreUserFilter, pipeline_stage, lead_temperature, source, search, subcounselloremail, assignedto, attendentstatus, page = 1, pageSize = 10 } = req.query;
 
-    // Base query: Match leads where:
-    // 1. Lead belongs to this organization (colid matches)
-    // 2. Either lead.user === user (admin/owner) OR lead.assignedto === user (counsellor)
+    if (!colid) {
+      return res.status(400).json({ success: false, message: 'colid is required' });
+    }
+
+    // Base query: Match leads where colid matches
     let query = {
-      colid: Number(colid),
-      $or: [
-        { user: user },        // Admin/Owner sees all their organization's leads
-        { assignedto: user },   // Counsellor sees leads assigned to them
-        { subcounselloremail: user }, // Sub-counselor sees leads assigned to them
-        { countercounserloeremail: user }, // Counter-counsellor sees leads for visit
-        { assignedto: null },    // Unassigned leads
-        { assignedto: "" }
+      $and: [
+        {
+          $or: [
+            { colid: Number(colid) },
+            { colid: String(colid) }
+          ]
+        }
       ]
     };
 
+    const isIgnoreFilter = ignoreUserFilter === "true" || ignoreUserFilter === true;
+
+    // Make role checks case-insensitive
+    const normalizedRole = role?.toLowerCase();
+    const isPrivileged = normalizedRole === "admin" || normalizedRole === "crm" || normalizedRole === "all";
+
+    if (!isPrivileged && !isIgnoreFilter) {
+      query.$and.push({
+        $or: [
+          { user: user },        // User sees leads they created
+          { assignedto: user },   // Counsellor sees leads assigned to them
+          { subcounselloremail: user }, // Sub-counselor sees leads assigned to them
+          { countercounserloeremail: user }, // Counter-counsellor sees leads for visit
+          { assignedto: null },    // Unassigned leads
+          { assignedto: "" }
+        ]
+      });
+    }
+
+
+
+
+
     if (subcounselloremail) {
-        query.subcounselloremail = subcounselloremail;
+      query.subcounselloremail = subcounselloremail;
     }
 
     if (assignedto) {
-        query.assignedto = assignedto;
+      query.assignedto = assignedto;
     }
 
     // Apply filters
@@ -200,8 +224,14 @@ exports.getallleadsds = async (req, res) => {
       query.lead_temperature = lead_temperature;
     }
 
-    if (source) {
+    if (source && source !== 'All') {
       query.source = source;
+    }
+
+    const { category } = req.query;
+    if (category && category !== 'All') {
+      // Find leads matching this category (case-insensitive regex for flexibility)
+      query.category = { $regex: category, $options: 'i' };
     }
 
     if (attendentstatus === 'No') {
@@ -212,21 +242,23 @@ exports.getallleadsds = async (req, res) => {
 
     if (search) {
       // For search, we bypass the assignment check and search strictly within the colid
-      query.$and = [
-        {
-          $or: [
-            { name: { $regex: search, $options: 'i' } },
-            { email: { $regex: search, $options: 'i' } },
-            { phone: { $regex: search, $options: 'i' } },
-            { category: { $regex: search, $options: 'i' } },
-            { fathername: { $regex: search, $options: 'i' } },
-            { fathercontactno: { $regex: search, $options: 'i' } }
-          ]
-        }
-      ];
-      // Remove the $or key since we're using $and now (and effectively removing the visibility restriction)
-      delete query.$or;
+      // So we remove the visibility restriction if it was added
+      if (query.$and.length > 1) {
+        query.$and.splice(1, 1);
+      }
+
+      query.$and.push({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+          { phone: { $regex: search, $options: 'i' } },
+          { category: { $regex: search, $options: 'i' } },
+          { fathername: { $regex: search, $options: 'i' } },
+          { fathercontactno: { $regex: search, $options: 'i' } }
+        ]
+      });
     }
+
 
     const skip = (parseInt(page) - 1) * parseInt(pageSize);
     const limit = parseInt(pageSize);
@@ -239,6 +271,7 @@ exports.getallleadsds = async (req, res) => {
 
     res.status(200).json({ success: true, data: leads, count: leads.length, total: totalCount });
   } catch (err) {
+    console.error("[CRM] Fetch Error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -682,40 +715,40 @@ exports.getProvisionalFeeLeadsds = async (req, res) => {
 };
 
 exports.markleadasattendedds = async (req, res) => {
-    try {
-        const { id, attendername, attenderemail } = req.body;
-        
-        if (!id) {
-            return res.status(400).json({ success: false, message: 'Lead ID is required' });
-        }
+  try {
+    const { id, attendername, attenderemail } = req.body;
 
-        const lead = await crmh1.findByIdAndUpdate(
-            id,
-            {
-                attendentstatus: 'Yes',
-                attendername: attendername,
-                attenderemail: attenderemail
-            },
-            { new: true }
-        );
-
-        if (!lead) {
-            return res.status(404).json({ success: false, message: 'Lead not found' });
-        }
-
-        // Add an activity log
-        await leadactivityds.create({
-            lead_id: id,
-            colid: lead.colid,
-            activity_type: 'note',
-            performed_by: attenderemail,
-            notes: `Lead marked as attended by ${attendername}`,
-            activity_date: new Date()
-        });
-
-        res.status(200).json({ success: true, data: lead });
-    } catch (err) {
-        console.error("Error marking lead as attended:", err);
-        res.status(500).json({ success: false, message: "Internal server error" });
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'Lead ID is required' });
     }
+
+    const lead = await crmh1.findByIdAndUpdate(
+      id,
+      {
+        attendentstatus: 'Yes',
+        attendername: attendername,
+        attenderemail: attenderemail
+      },
+      { new: true }
+    );
+
+    if (!lead) {
+      return res.status(404).json({ success: false, message: 'Lead not found' });
+    }
+
+    // Add an activity log
+    await leadactivityds.create({
+      lead_id: id,
+      colid: lead.colid,
+      activity_type: 'note',
+      performed_by: attenderemail,
+      notes: `Lead marked as attended by ${attendername}`,
+      activity_date: new Date()
+    });
+
+    res.status(200).json({ success: true, data: lead });
+  } catch (err) {
+    console.error("Error marking lead as attended:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
 };

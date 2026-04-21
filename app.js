@@ -1,4 +1,14 @@
 const express = require('express');
+
+process.on('uncaughtException', (err) => {
+  console.error('[CRITICAL] Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[CRITICAL] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+console.log('[APP]: Loading Application...');
 const jwt = require('jsonwebtoken');
 //const env=require('config');
 const mongoose = require('mongoose');
@@ -22,7 +32,6 @@ require('./controllers/listener'); // Load the listener module first
 const emitter = require('./controllers/emitter'); // Load the module that contains the emit call
 
 console.log('[APP]: Application running.');
-
 
 const DB = process.env.DATABASE.replace('<PASSWORD>', process.env.DATABASE_PASSWORD);
 const DB1 = process.env.DATABASE2;
@@ -16092,5 +16101,5 @@ app.get('/api/v2/getmarksentrysheet', marksentryctlrds.getmarksentrysheet);
 app.post('/api/v2/savemarksentrysheet', marksentryctlrds.savemarksentrysheet);
 app.get('/api/v2/getcoursefiltersformarks', marksentryctlrds.getcoursefiltersformarks);
 
-const startLoginLoop = require('./loop');
-startLoginLoop();
+// const startLoginLoop = require('./loop');
+// startLoginLoop();
