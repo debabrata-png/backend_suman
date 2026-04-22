@@ -228,10 +228,23 @@ exports.getallleadsds = async (req, res) => {
       query.source = source;
     }
 
-    const { category } = req.query;
+    const { category, startDate, endDate } = req.query;
     if (category && category !== 'All') {
       // Find leads matching this category (case-insensitive regex for flexibility)
       query.category = { $regex: category, $options: 'i' };
+    }
+
+    if (startDate || endDate) {
+      const dateQuery = {};
+      if (startDate) {
+        dateQuery.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        const endDay = new Date(endDate);
+        endDay.setHours(23, 59, 59, 999);
+        dateQuery.$lte = endDay;
+      }
+      query.createdAt = dateQuery;
     }
 
     if (attendentstatus === 'No') {
