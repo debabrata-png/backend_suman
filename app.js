@@ -6278,6 +6278,7 @@ app.get('/api/v2/getoverduefollowupsds', crmh1ctlrds.getoverduefollowupsds);
 app.get('/api/v2/getleadanalyticsds', crmh1ctlrds.getleadanalyticsds);
 app.get('/api/v2/checkduplicateds', crmh1ctlrds.checkduplicateds);
 app.post('/api/v2/markleadasattendedds', crmh1ctlrds.markleadasattendedds);
+app.post('/api/v2/markcounselorattendedds', crmh1ctlrds.markcounselorattendedds);
 // Add this with your other lead routes
 app.get('/api/v2/deleteleadds/:id', crmh1ctlrds.deleteleadds);
 

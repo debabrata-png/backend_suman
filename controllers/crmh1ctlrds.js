@@ -166,7 +166,7 @@ exports.checkduplicateds = async (req, res) => {
 // Get all leads (USER-BASED ACCESS)
 exports.getallleadsds = async (req, res) => {
   try {
-    const { colid, user, role, ignoreUserFilter, pipeline_stage, lead_temperature, source, search, subcounselloremail, assignedto, attendentstatus, page = 1, pageSize = 10 } = req.query;
+    const { colid, user, role, ignoreUserFilter, pipeline_stage, lead_temperature, source, search, subcounselloremail, assignedto, attendentstatus, counselor_attendentstatus, landing_page_slug, page = 1, pageSize = 10 } = req.query;
 
     if (!colid) {
       return res.status(400).json({ success: false, message: 'colid is required' });
@@ -251,6 +251,16 @@ exports.getallleadsds = async (req, res) => {
       query.attendentstatus = { $ne: 'Yes' };
     } else if (attendentstatus) {
       query.attendentstatus = attendentstatus;
+    }
+
+    if (counselor_attendentstatus === 'No') {
+      query.counselor_attendentstatus = { $ne: 'Yes' };
+    } else if (counselor_attendentstatus) {
+      query.counselor_attendentstatus = counselor_attendentstatus;
+    }
+
+    if (landing_page_slug) {
+      query.landing_page_slug = landing_page_slug;
     }
 
     if (search) {
@@ -729,19 +739,25 @@ exports.getProvisionalFeeLeadsds = async (req, res) => {
 
 exports.markleadasattendedds = async (req, res) => {
   try {
-    const { id, attendername, attenderemail } = req.body;
+    const { id, attendername, attenderemail, assignedto } = req.body;
 
     if (!id) {
       return res.status(400).json({ success: false, message: 'Lead ID is required' });
     }
 
+    const updateData = {
+      attendentstatus: 'Yes',
+      attendername: attendername,
+      attenderemail: attenderemail
+    };
+
+    if (assignedto) {
+      updateData.assignedto = assignedto;
+    }
+
     const lead = await crmh1.findByIdAndUpdate(
       id,
-      {
-        attendentstatus: 'Yes',
-        attendername: attendername,
-        attenderemail: attenderemail
-      },
+      updateData,
       { new: true }
     );
 
@@ -762,6 +778,40 @@ exports.markleadasattendedds = async (req, res) => {
     res.status(200).json({ success: true, data: lead });
   } catch (err) {
     console.error("Error marking lead as attended:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+exports.markcounselorattendedds = async (req, res) => {
+  try {
+    const { id, counselor_email } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'Lead ID is required' });
+    }
+
+    const lead = await crmh1.findByIdAndUpdate(
+      id,
+      { counselor_attendentstatus: 'Yes' },
+      { new: true }
+    );
+
+    if (!lead) {
+      return res.status(404).json({ success: false, message: 'Lead not found' });
+    }
+
+    await leadactivityds.create({
+      lead_id: id,
+      colid: lead.colid,
+      activity_type: 'note',
+      performed_by: counselor_email,
+      notes: `Lead processed and attended by Counselor ${counselor_email}`,
+      activity_date: new Date()
+    });
+
+    res.status(200).json({ success: true, message: 'Lead marked as attended by counselor', data: lead });
+  } catch (err) {
+    console.error("markcounselorattendedds error:", err);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

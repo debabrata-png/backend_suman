@@ -348,6 +348,13 @@ const crmh1schema = new mongoose.Schema({
     },
     gender: {
         type: String
+    },
+    landing_page_slug: {
+        type: String
+    },
+    counselor_attendentstatus: {
+        type: String,
+        default: 'No'
     }
 }, {
     timestamps: true
