@@ -17,9 +17,26 @@ exports.registerStep0 = async (req, res) => {
             return res.status(400).json({ status: 'fail', message: 'Email already registered' });
         }
 
+        // Generate Admission Number: JGU2627/0001
+        // academicYear format: 2026-27
+        const yearPart = academicYear.replace(/-/g, '').slice(2); // 2026-27 -> 2627
+        const prefix = `JGU${yearPart}/`;
+        
+        const lastApp = await StandardAdmission.findOne({ 
+            admissionNo: new RegExp(`^${prefix}`) 
+        }).sort({ admissionNo: -1 });
+
+        let nextNumber = 1;
+        if (lastApp && lastApp.admissionNo) {
+            const lastNum = parseInt(lastApp.admissionNo.split('/')[1]);
+            if (!isNaN(lastNum)) nextNumber = lastNum + 1;
+        }
+        const admissionNo = `${prefix}${nextNumber.toString().padStart(4, '0')}`;
+
         application = await StandardAdmission.create({
             fullName, mobileNo, email, academicYear,
             programLevel, school, program, password, colid, programId,
+            admissionNo,
             currentStep: 0,
             status: 'Draft'
         });
@@ -166,11 +183,11 @@ exports.approveApplication = async (req, res) => {
                 password: password,
                 role: 'Student',
                 regno: `TEMP_${Date.now()}`, // Placeholder for regno
-                programcode: program,
+                programcode: Array.isArray(program) ? program.join(', ') : program,
                 admissionyear: academicYear,
                 semester: '1',
                 section: 'NA',
-                department: application.school,
+                department: Array.isArray(application.school) ? [...new Set(application.school)].join(', ') : application.school,
                 colid: colid,
                 status: 1 // Active
             });
@@ -193,7 +210,7 @@ exports.approveApplication = async (req, res) => {
                 colid: colid,
                 classdate: new Date(),
                 status: 'Active',
-                programcode: program,
+                programcode: Array.isArray(program) ? program.join(', ') : program,
                 admissionyear: academicYear
             });
         }
