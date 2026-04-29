@@ -22,7 +22,7 @@ exports.getallprogramcounselords = async (req, res) => {
         if (is_active) query.is_active = is_active;
         if (education_qualification) query.education_qualification = education_qualification;
 
-        const programs = await ProgramCounselords.find(query).sort({ category: 1, course_name: 1 });
+        const programs = await ProgramCounselords.find(query).sort({ display_order: 1, course_name: 1 });
 
         res.status(200).json({ success: true, data: programs, count: programs.length });
     } catch (err) {

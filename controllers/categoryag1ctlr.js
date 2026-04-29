@@ -30,13 +30,13 @@ exports.getcategoriesbyedqag1 = async (req, res) => {
             return res.status(400).json({ success: false, message: 'education_qualification is required' });
         }
 
-        const categories = await categoryag1.distinct("category_name", {
-            colid: Number(colid),
-            is_active: 'Yes',
-            education_qualification: education_qualification
-        })
+        // Return full objects sorted by display_order so the sequence is preserved
+        const categories = await categoryag1
+            .find({ colid: Number(colid), is_active: 'Yes', education_qualification })
+            .sort({ display_order: 1, category_name: 1 })
+            .select('category_name display_order');
 
-        res.status(200).json({ success: true, data: categories });
+        res.status(200).json({ success: true, data: categories.map(c => c.category_name) });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -64,7 +64,8 @@ exports.createcategoryag1 = async (req, res) => {
             education_qualification,
             description,
             counsellors: counsellors || [],
-            created_by
+            created_by,
+            display_order: req.body.display_order !== undefined ? Number(req.body.display_order) : 0
         });
 
         await newCategory.save();
@@ -81,7 +82,7 @@ exports.getallcategoriesag1 = async (req, res) => {
             return res.status(400).json({ success: false, message: 'colid is required' });
         }
 
-        const categories = await categoryag1.find({ colid: Number(colid) }).sort({ createdAt: -1 });
+        const categories = await categoryag1.find({ colid: Number(colid) }).sort({ display_order: 1, category_name: 1 });
         res.status(200).json({ success: true, data: categories });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -98,7 +99,8 @@ exports.updatecategoryag1 = async (req, res) => {
 
         const updatedCategory = await categoryag1.findByIdAndUpdate(
             id,
-            { category_name, category_code, education_qualification, description, counsellors, is_active },
+            { category_name, category_code, education_qualification, description, counsellors, is_active,
+              display_order: req.body.display_order !== undefined ? Number(req.body.display_order) : undefined },
             { new: true, runValidators: true }
         );
 

@@ -63,6 +63,10 @@ const ProgramCounselorSchema = new mongoose.Schema({
     accreditation: {
         type: String
     },
+    display_order: {
+        type: Number,
+        default: 0
+    },
     is_active: {
         type: String,
         default: 'Yes'

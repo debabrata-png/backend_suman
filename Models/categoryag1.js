@@ -36,6 +36,10 @@ const categorydsschema = new mongoose.Schema({
     education_qualification: {
         type: String,
     },
+    display_order: {
+        type: Number,
+        default: 0
+    },
 }, {
     timestamps: true
 });
