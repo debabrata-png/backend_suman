@@ -173,6 +173,33 @@ const userschema = new mongoose.Schema({
     },
     institution: {
         type: String
+    },
+    academicyear: {
+        type: String
+    },
+    fathermobile: {
+        type: String
+    },
+    fatheremail: {
+        type: String
+    },
+    counteryname: {
+        type: String
+    },
+    state: {
+        type: String
+    },
+    district: {
+        type: String
+    },
+    pincode: {
+        type: String
+    },
+    board: {
+        type: String
+    },
+    husbendname: {
+        type: String
     }
 })
 

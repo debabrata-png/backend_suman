@@ -446,11 +446,15 @@ exports.ds1updatestudentprofile = async (req, res) => {
     // Define allowed fields for student update
     const allowedFields = [
       // Personal Info
-      'phone', 'gender', 'photo', 'category', 'address', 'quota', 'dob',
+      'name', 'phone', 'gender', 'photo', 'category', 'address', 'quota', 'dob',
+      'bloodgroup', 'adhaarno', 'wpno', 'abcid', 'income', 'cbseno',
+      'counteryname', 'state', 'district', 'pincode',
       // Family Info
-      'fathername', 'mothername',
-      // Academic Info
+      'fathername', 'mothername', 'fathermobile', 'fatheremail', 'husbendname',
+      // Academic & Official Info
+      'department', 'semester', 'institution', 'rollno',
       'eligibilityname', 'degree', 'minorsub', 'vocationalsub', 'mdcsub', 'othersub',
+      'designation', 'joiningdate', 'board', 'academicyear',
       // Merit/Scholarship
       'merit', 'obtain', 'bonus', 'weightage', 'ncctype', 'isdisabled', 'scholarship', 'ews'
     ];
