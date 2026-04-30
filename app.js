@@ -6439,6 +6439,7 @@ const userdsctlr = require('./controllers/userdsctlr.js');
 // Student filter routes
 app.get('/api/v2/getstudentfilteroptions', userdsctlr.getstudentfilteroptions);
 app.get('/api/v2/getfilteredstudentsds', userdsctlr.getfilteredstudentsds);
+app.get('/api/v2/getfilterednonstudentsds', userdsctlr.getfilterednonstudentsds);
 
 // AI WORKFLOW BOT ROUTES
 const aiworkflowcontrollerds = require('./controllers/aiworkflowcontrollerds');

@@ -200,6 +200,18 @@ const userschema = new mongoose.Schema({
     },
     husbendname: {
         type: String
+    },
+    retirementdate: {
+        type: Date
+    },
+    basicpay: {
+        type: Number
+    },
+    gradepay: {
+        type: Number
+    },
+    payrule: {
+        type: String
     }
 })
 
