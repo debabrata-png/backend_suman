@@ -418,7 +418,7 @@ exports.ds1getstudentprofile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json({ data: user });
+    res.status(200).json({ status: 'Success', data: user });
   } catch (error) {
     res.status(500).json({
       message: "Error fetching profile",
@@ -522,6 +522,7 @@ exports.ds1updatestudentprofile = async (req, res) => {
     }
 
     res.status(200).json({
+      status: 'Success',
       message: "Profile updated successfully",
       data: user,
       changesLogged: changes.length // RETURN LOG COUNT
