@@ -5482,6 +5482,11 @@ app.post(
   crmdsreportController.crmdsPipelineStageWiseReport
 );
 
+app.post(
+  "/api/v2/crmds/coursewise-pipeline-report",
+  crmdsreportController.crmdsCourseWisePipelineStageReport
+);
+
 /* Date Wise New Leads */
 app.post(
   "/api/v2/crmds/datewise-new-leads",

@@ -175,6 +175,51 @@ exports.savemarks11ds = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid data format" });
         }
 
+        const normalMarks = marksData.filter(mark => mark.subjectcode !== 'ATTENDANCE');
+        const configQuery = normalMarks.reduce((acc, mark) => {
+            if (!mark.colid || !mark.semester || !mark.academicyear || !mark.subjectcode) return acc;
+            const section = mark.section || '';
+            acc.push({
+                colid: Number(mark.colid),
+                semester: mark.semester,
+                academicyear: mark.academicyear,
+                subjectcode: mark.subjectcode,
+                section
+            });
+            if (section) {
+                acc.push({
+                    colid: Number(mark.colid),
+                    semester: mark.semester,
+                    academicyear: mark.academicyear,
+                    subjectcode: mark.subjectcode,
+                    section: ''
+                });
+            }
+            return acc;
+        }, []);
+
+        const subjectConfigs = configQuery.length > 0
+            ? await SubjectComponentConfig11ds.find({ $or: configQuery }).lean()
+            : [];
+
+        const configMap = {};
+        subjectConfigs.forEach(config => {
+            const sectionKey = `${config.colid}|${config.semester}|${config.academicyear}|${config.subjectcode}|${config.section || ''}`;
+            configMap[sectionKey] = config;
+        });
+
+        const getSubjectConfig = (mark) => {
+            const sectionKey = `${Number(mark.colid)}|${mark.semester}|${mark.academicyear}|${mark.subjectcode}|${mark.section || ''}`;
+            const fallbackKey = `${Number(mark.colid)}|${mark.semester}|${mark.academicyear}|${mark.subjectcode}|`;
+            return configMap[sectionKey] || configMap[fallbackKey] || {};
+        };
+
+        const weightedScore = (obtained, max, weight) => {
+            const maxValue = Number(max) || 0;
+            if (maxValue <= 0) return 0;
+            return Number(((obtained / maxValue) * weight).toFixed(2));
+        };
+
         const bulkOps = marksData.map(mark => {
             // Check if it's attendance
             if (mark.subjectcode === 'ATTENDANCE') {
@@ -214,20 +259,24 @@ exports.savemarks11ds = async (req, res) => {
             }
 
             // Standard Subject Logic
+            const config = getSubjectConfig(mark);
             const preMid = (mark.unitpremidobtain !== undefined && mark.unitpremidobtain !== null && mark.unitpremidobtain !== '') ? Number(mark.unitpremidobtain) : 0;
             const postMid = (mark.unitpostmidobtain !== undefined && mark.unitpostmidobtain !== null && mark.unitpostmidobtain !== '') ? Number(mark.unitpostmidobtain) : 0;
             const unitTotalRaw = preMid + postMid;
-            const unit20 = Number((unitTotalRaw * 0.2).toFixed(2));
+            const unitMax = (Number(config.unitpremid) || 0) + (Number(config.unitpostmid) || 0);
+            const unit20 = weightedScore(unitTotalRaw, unitMax || 100, 20);
 
             const hyTh = (mark.halfyearlythobtain !== undefined && mark.halfyearlythobtain !== null && mark.halfyearlythobtain !== '') ? Number(mark.halfyearlythobtain) : 0;
             const hyPr = (mark.halfyearlypracticalobtain !== undefined && mark.halfyearlypracticalobtain !== null && mark.halfyearlypracticalobtain !== '') ? Number(mark.halfyearlypracticalobtain) : 0;
             const hyTotalRaw = hyTh + hyPr;
-            const halfyearly30 = Number((hyTotalRaw * 0.3).toFixed(2));
+            const hyMax = (Number(config.halfyearlyth) || 0) + (Number(config.halfyearlypractical) || 0);
+            const halfyearly30 = weightedScore(hyTotalRaw, hyMax || 100, 30);
 
             const annTh = (mark.annualthobtain !== undefined && mark.annualthobtain !== null && mark.annualthobtain !== '') ? Number(mark.annualthobtain) : 0;
             const annPr = (mark.annualpracticalobtain !== undefined && mark.annualpracticalobtain !== null && mark.annualpracticalobtain !== '') ? Number(mark.annualpracticalobtain) : 0;
             const annTotalRaw = annTh + annPr;
-            const annual50 = Number((annTotalRaw * 0.5).toFixed(2));
+            const annualMax = (Number(config.annualth) || 0) + (Number(config.annualpractical) || 0);
+            const annual50 = weightedScore(annTotalRaw, annualMax || 100, 50);
 
             const total = Number((unit20 + halfyearly30 + annual50).toFixed(2));
             const totalgrade = calculateGrade(total, 100);

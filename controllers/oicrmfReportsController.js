@@ -79,19 +79,44 @@ const leads = await Crm.find(filter)
 const workbook = new ExcelJS.Workbook()
 const sheet = workbook.addWorksheet("OICRMF Report")
 
+sheet.addRow(["OICRMF Report"])
+sheet.addRow(["Generated On", new Date().toLocaleString("en-IN")])
+sheet.addRow(["College ID", colid || "All"])
+sheet.addRow(["Source", source || "All"])
+sheet.addRow(["Counsellor", counsellor || "All"])
+sheet.addRow([])
+
 sheet.columns = [
 
-{header:'Name',key:'name',width:20},
-{header:'Phone',key:'phone',width:15},
-{header:'Source',key:'source',width:15},
-{header:'Counsellor',key:'assignedto',width:20},
-{header:'Pipeline Stage',key:'pipeline_stage',width:20},
-{header:'Temperature',key:'lead_temperature',width:15}
+{key:'name',width:20},
+{key:'phone',width:15},
+{key:'source',width:15},
+{key:'assignedto',width:20},
+{key:'pipeline_stage',width:20},
+{key:'lead_temperature',width:15}
 
 ]
 
+sheet.addRow({
+name: "Name",
+phone: "Phone",
+source: "Source",
+assignedto: "Counsellor",
+pipeline_stage: "Pipeline Stage",
+lead_temperature: "Temperature"
+})
+
 leads.forEach(l=>{
 sheet.addRow(l)
+})
+
+sheet.addRow({
+name: `Total Leads: ${leads.length}`,
+phone: "",
+source: "",
+assignedto: "",
+pipeline_stage: "",
+lead_temperature: ""
 })
 
 res.setHeader(

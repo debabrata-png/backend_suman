@@ -379,6 +379,87 @@ exports.crmdsPipelineStageWiseReport = async (req, res) => {
     }
 };
 
+exports.crmdsCourseWisePipelineStageReport = async (req, res) => {
+    try {
+        const { colid, startDate, endDate, pipelineStage } = req.body;
+
+        if (!colid) {
+            return res.status(400).json({ success: false, message: "colid is required" });
+        }
+
+        const match = { colid: Number(colid) };
+
+        if (pipelineStage && pipelineStage !== "ALL") {
+            match.pipeline_stage = pipelineStage;
+        }
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            match.createdAt = { $gte: start, $lte: end };
+        }
+
+        const rawData = await CrmLead.aggregate([
+            { $match: match },
+            {
+                $group: {
+                    _id: {
+                        course: { $ifNull: ["$course_interested", "Not Specified"] },
+                        stage: { $ifNull: ["$pipeline_stage", "Unknown"] }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { "_id.course": 1, "_id.stage": 1 } }
+        ]);
+
+        const courseMap = {};
+        const stageSet = new Set();
+        let grandTotal = 0;
+
+        rawData.forEach(({ _id, count }) => {
+            const course = _id.course || "Not Specified";
+            const stage = _id.stage || "Unknown";
+
+            if (!courseMap[course]) {
+                courseMap[course] = {
+                    course,
+                    total: 0,
+                    stageCounts: {}
+                };
+            }
+
+            courseMap[course].total += count;
+            courseMap[course].stageCounts[stage] = count;
+            stageSet.add(stage);
+            grandTotal += count;
+        });
+
+        const summary = Object.values(courseMap).sort((a, b) => b.total - a.total);
+        const allStages = Array.from(stageSet).sort();
+
+        const leads = await CrmLead.find(match)
+            .select("name phone email course_interested pipeline_stage assignedto source createdAt")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.json({
+            success: true,
+            summary,
+            allStages,
+            totalLeads: grandTotal,
+            data: leads
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 exports.crmdsDateWiseNewLeadsReport = async (req, res) => {
     try {
         const { colid, startDate, endDate } = req.body;
@@ -894,4 +975,4 @@ exports.crmdsConversionReportV2 = async (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
-};
+};
