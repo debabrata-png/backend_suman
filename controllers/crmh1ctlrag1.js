@@ -4,6 +4,7 @@ const user = require('../Models/user.js');
 const sourceds = require('../Models/sourceds.js');
 const ProgramCounselords = require('../Models/ProgramCounselords.js');
 const unifiedlandingpageds = require('../Models/unifiedlandingpageds.js');
+const Ledgerstud = require('../Models/ledgerstud.js');
 
 const PAGE_SIZE = 5;
 
@@ -331,16 +332,20 @@ exports.getCrmhDashboard = async (req, res) => {
       return res.status(400).json({ success: false, message: 'colid is required' });
     }
 
-    if (!userEmail) {
-      return res.status(400).json({ success: false, message: 'user is required' });
-    }
-
-
     const numColid = Number(colid);
-    const baseQuery = { colid: numColid };
-    if (role && role !== 'Admin') {
-      baseQuery.$or = [{ user: userEmail }, { assignedto: userEmail }];
+    if (Number.isNaN(numColid)) {
+      return res.status(400).json({ success: false, message: 'valid numeric colid is required' });
     }
+
+    const normalizedRole = String(role || '').trim().toLowerCase();
+    const isPrivilegedRole = ['admin', 'all', 'crm', 'management'].includes(normalizedRole);
+    const colidQuery = { $or: [{ colid: numColid }, { colid: String(colid) }] };
+    const baseQuery = { $and: [colidQuery] };
+
+    if (!isPrivilegedRole && userEmail) {
+      baseQuery.$and.push({ $or: [{ user: userEmail }, { assignedto: userEmail }] });
+    }
+
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const skip = (page - 1) * PAGE_SIZE;
 
@@ -350,6 +355,31 @@ exports.getCrmhDashboard = async (req, res) => {
     const oneDayAgo = new Date(today); oneDayAgo.setDate(oneDayAgo.getDate() - 1);
     const threeDaysAgo = new Date(today); threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
     const sevenDaysAgo = new Date(today); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const confirmedStages = ['Admitted', 'Admission Done', 'Fee Paid', 'Fees Paid', 'Seat Booked', 'ePravesh Done', 'ERP Done'];
+    const confirmedStatuses = ['Admitted', 'Admission Done', 'Converted'];
+    const applicationStages = ['Application Sent', 'Application Submitted', ...confirmedStages];
+    const lostStages = ['Lost', 'Not Interested', 'Admission Cancelled', 'Junk Lead', 'Wrong Number', 'Not Eligible', 'Admited in Another College'];
+    const lostStatuses = ['Lost', 'Rejected', 'Closed'];
+    const confirmedLeadExpression = {
+      $or: [
+        { $in: ['$pipeline_stage', confirmedStages] },
+        { $in: ['$leadstatus', confirmedStatuses] }
+      ]
+    };
+    const applicationLeadExpression = {
+      $or: [
+        { $in: ['$pipeline_stage', applicationStages] },
+        { $eq: ['$application_submitted', 'Yes'] }
+      ]
+    };
+    const closedLeadExpression = {
+      $or: [
+        confirmedLeadExpression,
+        { $in: ['$pipeline_stage', lostStages] },
+        { $in: ['$leadstatus', lostStatuses] }
+      ]
+    };
 
     // ── Single $facet aggregation for ALL counts + groupings ──
     const [facetResult] = await crmh1.aggregate([
@@ -367,24 +397,24 @@ exports.getCrmhDashboard = async (req, res) => {
               hot: { $sum: { $cond: [{ $eq: ['$lead_temperature', 'Hot'] }, 1, 0] } },
               warm: { $sum: { $cond: [{ $eq: ['$lead_temperature', 'Warm'] }, 1, 0] } },
               cold: { $sum: { $cond: [{ $eq: ['$lead_temperature', 'Cold'] }, 1, 0] } },
-              applications: { $sum: { $cond: [{ $in: ['$pipeline_stage', ['Application Submitted', 'Fee Paid', 'Admitted']] }, 1, 0] } },
-              confirmed: { $sum: { $cond: [{ $eq: ['$pipeline_stage', 'Admitted'] }, 1, 0] } },
-              closedLeads: { $sum: { $cond: [{ $in: ['$leadstatus', ['Converted', 'Lost']] }, 1, 0] } },
+              applications: { $sum: { $cond: [applicationLeadExpression, 1, 0] } },
+              confirmed: { $sum: { $cond: [confirmedLeadExpression, 1, 0] } },
+              closedLeads: { $sum: { $cond: [closedLeadExpression, 1, 0] } },
               campusVisitDone: { $sum: { $cond: [{ $eq: ['$campus_visit_completed', 'Yes'] }, 1, 0] } },
               hotPending: {
                 $sum: {
-                  $cond: [{ $and: [{ $eq: ['$lead_temperature', 'Hot'] }, { $lt: ['$next_followup_date', today] }] }, 1, 0]
+                  $cond: [{ $and: [{ $eq: ['$lead_temperature', 'Hot'] }, { $ne: ['$next_followup_date', null] }, { $lt: ['$next_followup_date', today] }] }, 1, 0]
                 }
               },
               overdueFollowups: {
                 $sum: {
-                  $cond: [{ $and: [{ $lt: ['$next_followup_date', today] }, { $eq: ['$leadstatus', 'Active'] }] }, 1, 0]
+                  $cond: [{ $and: [{ $ne: ['$next_followup_date', null] }, { $lt: ['$next_followup_date', today] }, { $eq: ['$leadstatus', 'Active'] }] }, 1, 0]
                 }
               },
               inactive7Days: { $sum: { $cond: [{ $lt: ['$updatedAt', sevenDaysAgo] }, 1, 0] } },
               feePaidAmount: {
                 $sum: {
-                  $cond: [{ $in: ['$pipeline_stage', ['Fee Paid', 'Admitted']] }, { $ifNull: ['$amount', 0] }, 0]
+                  $cond: [confirmedLeadExpression, { $ifNull: ['$amount', 0] }, 0]
                 }
               }
             }
@@ -420,12 +450,31 @@ exports.getCrmhDashboard = async (req, res) => {
           ],
           // Source performance
           sourcePerformance: [
-            { $group: { _id: '$source', count: { $sum: 1 } } },
+            {
+              $group: {
+                _id: '$source',
+                count: { $sum: 1 },
+                conversions: { $sum: { $cond: [confirmedLeadExpression, 1, 0] } }
+              }
+            },
             { $sort: { count: -1 } }
           ],
-          // Course-wise admissions
+          // Course-wise admitted students
           courseWiseAdmissions: [
-            { $group: { _id: '$course_interested', count: { $sum: 1 } } },
+            {
+              $match: {
+                $or: [
+                  { pipeline_stage: { $in: confirmedStages } },
+                  { leadstatus: { $in: confirmedStatuses } }
+                ]
+              }
+            },
+            { $group: { _id: { $ifNull: ['$course_interested', '$program'] }, count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+          ],
+          // Course-wise total leads
+          courseWiseLeads: [
+            { $group: { _id: { $ifNull: ['$course_interested', '$program'] }, count: { $sum: 1 } } },
             { $sort: { count: -1 } }
           ],
           // Counsellor performance
@@ -435,7 +484,7 @@ exports.getCrmhDashboard = async (req, res) => {
                 _id: '$assignedto',
                 leadsCount: { $sum: 1 },
                 hotLeads: { $sum: { $cond: [{ $eq: ['$lead_temperature', 'Hot'] }, 1, 0] } },
-                conversions: { $sum: { $cond: [{ $in: ['$pipeline_stage', ['Admitted', 'Fee Paid']] }, 1, 0] } }
+                conversions: { $sum: { $cond: [confirmedLeadExpression, 1, 0] } }
               }
             },
             { $sort: { leadsCount: -1 } }
@@ -474,10 +523,10 @@ exports.getCrmhDashboard = async (req, res) => {
       'Campus Visited': 'Interested', 'Follow Up': 'Interested', 'General Enquiry': 'Interested',
       'Call Reschedule': 'Interested', 'Prospect': 'Interested',
       'Application Sent': 'Applied', 'Application Submitted': 'Applied',
-      'Fee Paid': 'Confirmed', 'Admitted': 'Confirmed', 'Seat Booked': 'Confirmed',
+      'Fee Paid': 'Confirmed', 'Fees Paid': 'Confirmed', 'Admitted': 'Confirmed', 'Seat Booked': 'Confirmed',
       'ePravesh Done': 'Confirmed', 'Admission Done': 'Confirmed', 'ERP Done': 'Confirmed',
       'Lost': 'Lost', 'Not Interested': 'Lost', 'Admission Cancelled': 'Lost',
-      'Junk Lead': 'Lost', 'Wrong Number': 'Lost', 'Not Eligible': 'Lost'
+      'Junk Lead': 'Lost', 'Wrong Number': 'Lost', 'Not Eligible': 'Lost', 'Admited in Another College': 'Lost'
     };
     const funnelCounts = { 'New Lead': 0, 'Contacted': 0, 'Interested': 0, 'Applied': 0, 'Confirmed': 0, 'Lost': 0 };
     facetResult.pipelineStageBreakdown.forEach(s => {
@@ -491,7 +540,7 @@ exports.getCrmhDashboard = async (req, res) => {
       upcomingFollowupsTotal, upcomingFollowups,
       lastFollowupTotal, lastFollowupDates,
       campusVisitsTotal, campusVisits,
-      allLeads
+      allLeads, ledgerSummaryRows
     ] = await Promise.all([
       sourceds.find({ colid: numColid, is_active: 'Yes' }).select('source_name source_type description').lean(),
       ProgramCounselords.find({ colid: numColid, is_active: 'Yes' })
@@ -518,18 +567,82 @@ exports.getCrmhDashboard = async (req, res) => {
       crmh1.find(baseQuery)
         .select('name phone email category course_interested source pipeline_stage leadstatus lead_temperature lead_score assignedto city state next_followup_date campus_visit_date createdAt updatedAt')
         .sort({ updatedAt: -1 }).skip(skip).limit(PAGE_SIZE).lean(),
+      Ledgerstud.aggregate([
+        { $match: colidQuery },
+        {
+          $addFields: {
+            amountValue: { $ifNull: ['$amount', 0] },
+            paidValue: { $ifNull: ['$paid', 0] },
+            balanceValue: { $ifNull: ['$balance', 0] },
+            concessionValue: { $ifNull: ['$concession', 0] },
+            cashValue: { $ifNull: ['$cash', 0] },
+            upiValue: { $ifNull: ['$upi', 0] },
+            chequeValue: { $ifNull: ['$cheque', 0] },
+            cardValue: { $ifNull: ['$card', 0] },
+            pgValue: { $ifNull: ['$pg', 0] },
+            neftValue: { $ifNull: ['$neft', 0] }
+          }
+        },
+        {
+          $addFields: {
+            amountMinusBalance: { $subtract: ['$amountValue', '$balanceValue'] }
+          }
+        },
+        {
+          $addFields: {
+            effectivePaid: {
+              $cond: [
+                { $gt: ['$paidValue', 0] },
+                '$paidValue',
+                {
+                  $cond: [
+                    { $lt: ['$amountValue', 0] },
+                    { $abs: '$amountValue' },
+                    {
+                      $cond: [
+                        { $gt: ['$amountMinusBalance', 0] },
+                        '$amountMinusBalance',
+                        0
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: { $cond: [{ $gt: ['$amountValue', 0] }, '$amountValue', 0] } },
+            totalPaid: { $sum: '$effectivePaid' },
+            totalBalance: { $sum: { $cond: [{ $gt: ['$balanceValue', 0] }, '$balanceValue', 0] } },
+            totalConcession: { $sum: '$concessionValue' },
+            totalCash: { $sum: '$cashValue' },
+            totalUPI: { $sum: '$upiValue' },
+            totalCheque: { $sum: '$chequeValue' },
+            totalCard: { $sum: '$cardValue' },
+            totalPG: { $sum: '$pgValue' },
+            totalNEFT: { $sum: '$neftValue' },
+            entries: { $sum: 1 }
+          }
+        }
+      ])
     ]);
 
     // ── Enrich source performance ──
     const sourceMap = {};
     activeSources.forEach(s => { sourceMap[s.source_name] = s.source_type; });
     const enrichedSourcePerformance = facetResult.sourcePerformance.map(s => ({
-      ...s, source_type: sourceMap[s._id] || 'Other', isRegistered: !!sourceMap[s._id]
+      ...s,
+      conversionRate: s.count > 0 ? Number((((s.conversions || 0) / s.count) * 100).toFixed(1)) : 0,
+      source_type: sourceMap[s._id] || 'Other',
+      isRegistered: !!sourceMap[s._id]
     }));
 
     // ── Program performance ──
     const courseAdmMap = {};
-    facetResult.courseWiseAdmissions.forEach(c => { courseAdmMap[c._id] = c.count; });
+    facetResult.courseWiseLeads.forEach(c => { courseAdmMap[c._id] = c.count; });
     const programPerformance = activePrograms.map(prog => {
       const leadsCount = courseAdmMap[prog.course_name] || 0;
       const seatUtil = prog.total_seats > 0 ? ((leadsCount / prog.total_seats) * 100).toFixed(1) : 0;
@@ -558,19 +671,20 @@ exports.getCrmhDashboard = async (req, res) => {
       }))
     };
 
-    // ── Fees: use amount from facet + fallback from program fee ──
-    let totalFeesCollected = c.feePaidAmount;
-    if (totalFeesCollected === 0) {
-      // Fallback: estimate from program fee structure × confirmed count
-      const feeMap = {};
-      activePrograms.forEach(p => { feeMap[p.course_name] = p.fee_structure?.total_fee || 0; });
-      const feePaidLeads = await crmh1.find({ ...baseQuery, pipeline_stage: { $in: ['Fee Paid', 'Admitted'] } })
-        .select('course_interested amount').lean();
-      feePaidLeads.forEach(l => {
-        if (l.amount && l.amount > 0) totalFeesCollected += l.amount;
-        else if (l.course_interested && feeMap[l.course_interested]) totalFeesCollected += feeMap[l.course_interested];
-      });
-    }
+    const ledgerFinancials = ledgerSummaryRows[0] || {
+      totalAmount: 0,
+      totalPaid: 0,
+      totalBalance: 0,
+      totalConcession: 0,
+      totalCash: 0,
+      totalUPI: 0,
+      totalCheque: 0,
+      totalCard: 0,
+      totalPG: 0,
+      totalNEFT: 0,
+      entries: 0
+    };
+    const totalFeesCollected = ledgerFinancials.totalPaid || c.feePaidAmount || 0;
 
     // ── Target vs Achieved ──
     const totalSeats = activePrograms.reduce((sum, p) => sum + (p.total_seats || 0), 0);
@@ -600,6 +714,7 @@ exports.getCrmhDashboard = async (req, res) => {
         sourcePerformance: enrichedSourcePerformance,
         activeSources,
         courseWiseAdmissions: facetResult.courseWiseAdmissions,
+        courseWiseLeads: facetResult.courseWiseLeads,
         programPerformance,
         counsellorPerformance: facetResult.counsellorPerformance,
         landingPageStats,
@@ -609,6 +724,7 @@ exports.getCrmhDashboard = async (req, res) => {
         campusVisitCompletedCount: c.campusVisitDone,
         lastVisitCount: c.campusVisitDone,
         totalFeesCollected,
+        ledgerFinancials,
         funnelData,
         leadsByCity: facetResult.leadsByCity,
         overdueFollowupsCount: c.overdueFollowups,
