@@ -147,6 +147,12 @@ const userschema = new mongoose.Schema({
     adhaarno: {
         type: String
     },
+    aadharno: {
+        type: String
+    },
+    aadhaarno: {
+        type: String
+    },
     wpno: {
         type: String
     },
@@ -183,10 +189,28 @@ const userschema = new mongoose.Schema({
     fatheremail: {
         type: String
     },
+    mothermobile: {
+        type: String
+    },
+    motheremail: {
+        type: String
+    },
+    guardianname: {
+        type: String
+    },
+    guardianmobile: {
+        type: String
+    },
+    guardianemail: {
+        type: String
+    },
     counteryname: {
         type: String
     },
     state: {
+        type: String
+    },
+    city: {
         type: String
     },
     district: {

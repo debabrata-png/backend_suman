@@ -1,7 +1,8 @@
 const StandardAdmission = require('../Models/standardadmissionds');
-const Fees = require('../Models/fees');
+const admissionService = require('./admissionSharedService');
 const User = require('../Models/user');
 const Ledgerstud = require('../Models/ledgerstud');
+const StudentDocument = require('../Models/studentdocumentds');
 
 // Step 0: Registration
 exports.registerStep0 = async (req, res) => {
@@ -108,7 +109,7 @@ exports.getAllApplications = async (req, res) => {
         if (status) query.status = status;
 
         console.log("Fetching Applications with query:", query);
-        const applications = await StandardAdmission.find(query).sort({ createdAt: -1 });
+        const applications = await StandardAdmission.find(query).populate('programId').sort({ createdAt: -1 });
 
         res.status(200).json({
             status: 'success',
@@ -152,81 +153,195 @@ exports.updateApplicationStatus = async (req, res) => {
 // Admin: Approve Application (The Heavy Lifting)
 exports.approveApplication = async (req, res) => {
     try {
-        const application = await StandardAdmission.findById(req.params.id);
+        const application = await StandardAdmission.findById(req.params.id).populate('programId');
         if (!application) return res.status(404).json({ status: 'fail', message: 'Application not found' });
 
-        const { academicYear, program, category, colid, email, fullName, mobileNo, password } = application;
+        const {
+            feeType = 'fees',
+            programcode,
+            academicyear,
+            semester = '1',
+            feecategory,
+            concession = 0,
+            regno,
+            fullName,
+            email,
+            mobileNo,
+            phone,
+            dob,
+            gender,
+            category,
+            fatherName,
+            fatherMobile,
+            fatherEmail,
+            motherName,
+            motherMobile,
+            motherEmail,
+            guardianName,
+            guardianMobile,
+            guardianEmail,
+            aadharNumber,
+            whatsAppNumber,
+            address,
+            city,
+            district,
+            state,
+            pincode
+        } = req.body || {};
 
-        // 1. Fetch Fees
-        // Requirement: fetch using academic year and programcode and category
-        // Assuming 'program' field in application maps to 'programcode' in Fees model OR we need to get programcode from application
-        // Let's assume the 'program' name or code is stored correctly.
-        const programFees = await Fees.find({
-            academicyear: academicYear,
-            programcode: program, // Assumes program name/code matches
-            feecategory: category,
-            colid
+        const programCodeValue = programcode || (Array.isArray(application.program) ? application.program[0] : application.program);
+        const academicYearValue = academicyear || application.academicYear;
+
+        const fees = await admissionService.fetchAdmissionFees({
+            colid: application.colid,
+            academicyear: academicYearValue,
+            programcode: programCodeValue,
+            semester,
+            feecategory: feecategory || application.category,
+            feeType
         });
 
-        if (programFees.length === 0) {
-            return res.status(400).json({ status: 'fail', message: 'No fee configuration found for this program and category' });
+        if (fees.length === 0) {
+            return res.status(400).json({ status: 'fail', message: 'No fee configuration found for the selected fee type and criteria' });
         }
 
-        // 2. Create User
-        // Check if user already exists in official Users table
-        let officialUser = await User.findOne({ email });
-        if (!officialUser) {
-            officialUser = await User.create({
-                name: fullName,
-                email: email,
-                phone: mobileNo,
-                password: password,
-                role: 'Student',
-                regno: `TEMP_${Date.now()}`, // Placeholder for regno
-                programcode: Array.isArray(program) ? program.join(', ') : program,
-                admissionyear: academicYear,
-                semester: '1',
-                section: 'NA',
-                department: Array.isArray(application.school) ? [...new Set(application.school)].join(', ') : application.school,
-                colid: colid,
-                status: 1 // Active
-            });
-        }
+        const { user: officialUser } = await admissionService.createOrGetStudent({
+            colid: application.colid,
+            data: {
+                ...application.toObject(),
+                name: fullName || application.fullName,
+                fullName: fullName || application.fullName,
+                email: email || application.email,
+                phone: phone || mobileNo || application.mobileNo,
+                mobileNo: mobileNo || phone || application.mobileNo,
+                dob: dob || application.dob,
+                gender: gender || application.gender,
+                category: category || application.category,
+                fatherName: fatherName || application.fatherName,
+                fatherMobile: fatherMobile || application.fatherMobile,
+                fatherEmail: fatherEmail || application.fatherEmail,
+                motherName: motherName || application.motherName,
+                motherMobile: motherMobile || application.motherMobile,
+                motherEmail: motherEmail || application.motherEmail,
+                guardianName: guardianName || application.guardianName,
+                guardianMobile: guardianMobile || application.guardianMobile,
+                guardianEmail: guardianEmail || application.guardianEmail,
+                aadharNumber: aadharNumber || application.aadharNumber,
+                whatsAppNumber: whatsAppNumber || application.whatsAppNumber,
+                address: address || application.permanentAddress?.addressLine1 || application.correspondenceAddress?.addressLine1,
+                city: city || application.permanentAddress?.city || application.correspondenceAddress?.city,
+                state: state || application.permanentAddress?.state || application.correspondenceAddress?.state,
+                district: district || application.permanentAddress?.district || application.correspondenceAddress?.district,
+                pincode: pincode || application.permanentAddress?.pincode || application.correspondenceAddress?.pincode,
+                regno: regno || application.regno,
+                programcode: programCodeValue,
+                admissionyear: academicYearValue,
+                semester,
+                department: Array.isArray(application.school) ? [...new Set(application.school)].join(', ') : application.school
+            }
+        });
 
-        // 3. Add to Ledgerstud
-        for (const fee of programFees) {
-            await Ledgerstud.create({
-                name: fullName,
-                user: email,
-                feegroup: fee.feegroup,
+        await admissionService.createLedgerEntries({
+            fees,
+            colid: application.colid,
+            concession,
+            feeType,
+            student: {
+                name: officialUser.name,
+                email: officialUser.email,
                 regno: officialUser.regno,
-                student: fullName,
-                feeitem: fee.feeeitem,
-                amount: fee.amount,
-                paid: 0,
-                concession: 0,
-                balance: fee.amount,
-                academicyear: academicYear,
-                colid: colid,
-                classdate: new Date(),
-                status: 'Active',
-                programcode: Array.isArray(program) ? program.join(', ') : program,
-                admissionyear: academicYear
-            });
-        }
+                programcode: officialUser.programcode,
+                admissionyear: officialUser.admissionyear,
+                semester: officialUser.semester
+            }
+        });
 
-        // 4. Update Application Status
+        await admissionService.saveStudentDocuments({
+            colid: application.colid,
+            student: officialUser,
+            documents: application.documents
+        });
+
         application.status = 'Approved';
+        application.fullName = fullName || application.fullName;
+        application.email = email || application.email;
+        application.mobileNo = mobileNo || phone || application.mobileNo;
+        application.dob = dob || application.dob;
+        application.gender = gender || application.gender;
+        application.category = category || application.category;
+        application.fatherName = fatherName || application.fatherName;
+        application.fatherMobile = fatherMobile || application.fatherMobile;
+        application.fatherEmail = fatherEmail || application.fatherEmail;
+        application.motherName = motherName || application.motherName;
+        application.motherMobile = motherMobile || application.motherMobile;
+        application.motherEmail = motherEmail || application.motherEmail;
+        application.guardianName = guardianName || application.guardianName;
+        application.guardianMobile = guardianMobile || application.guardianMobile;
+        application.guardianEmail = guardianEmail || application.guardianEmail;
+        application.aadharNumber = aadharNumber || application.aadharNumber;
+        application.whatsAppNumber = whatsAppNumber || application.whatsAppNumber;
+        application.permanentAddress = {
+            ...(application.permanentAddress?.toObject ? application.permanentAddress.toObject() : application.permanentAddress || {}),
+            addressLine1: address || application.permanentAddress?.addressLine1,
+            city: city || application.permanentAddress?.city,
+            district: district || application.permanentAddress?.district,
+            state: state || application.permanentAddress?.state,
+            pincode: pincode || application.permanentAddress?.pincode
+        };
+        application.regno = officialUser.regno;
         application.decisionDate = Date.now();
         await application.save();
 
         res.status(200).json({
             status: 'success',
             message: 'Application approved, user created, and fees allocated',
-            data: application
+            data: { application, user: officialUser, fees }
         });
 
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+exports.getAdmissionFees = async (req, res) => {
+    try {
+        const { colid, academicyear, programcode, semester, feecategory, feeType = 'fees' } = req.body;
+        const data = await admissionService.fetchAdmissionFees({
+            colid,
+            academicyear,
+            programcode,
+            semester,
+            feecategory,
+            feeType
+        });
+        res.status(200).json({ success: true, data });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
+};
+
+exports.getStudentAdmissionProfile = async (req, res) => {
+    try {
+        const { colid, regno, userId, email } = req.query;
+        const userQuery = { colid: Number(colid), role: 'Student' };
+        if (userId) userQuery._id = userId;
+        if (regno) userQuery.regno = regno;
+        if (email) userQuery.email = email;
+
+        const user = await User.findOne(userQuery).lean();
+        if (!user) return res.status(404).json({ success: false, message: 'Student not found' });
+
+        const [documents, ledger, application] = await Promise.all([
+            StudentDocument.find({ colid: Number(colid), regno: user.regno }).sort({ documentname: 1 }).lean(),
+            Ledgerstud.find({ colid: Number(colid), regno: user.regno }).sort({ classdate: -1 }).lean(),
+            StandardAdmission.findOne({ colid: Number(colid), $or: [{ regno: user.regno }, { email: user.email }] }).lean()
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: { user, documents, ledger, application }
+        });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
     }
 };

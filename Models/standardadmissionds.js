@@ -11,6 +11,7 @@ const StandardAdmissionSchema = new mongoose.Schema({
     program: [{ type: String }],
     programId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ProgramCounselords' }],
     admissionNo: { type: String, unique: true },
+    regno: { type: String },
     password: { type: String, required: true },
     colid: { type: Number, required: true },
 

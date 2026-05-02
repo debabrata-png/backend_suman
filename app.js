@@ -545,6 +545,8 @@ app.get('/api/v2/admission/applications', standardAdmissionController.getAllAppl
 app.get('/api/v2/admission/application/:id', standardAdmissionController.getApplicationDetails);
 app.post('/api/v2/admission/status/:id', standardAdmissionController.updateApplicationStatus);
 app.post('/api/v2/admission/approve/:id', standardAdmissionController.approveApplication);
+app.post('/api/v2/admission/fees', standardAdmissionController.getAdmissionFees);
+app.get('/api/v2/admission/student-profile', standardAdmissionController.getStudentAdmissionProfile);
 
 const admissionDocUploadCtlr = require('./controllers/admissionDocUploadController');
 app.post('/api/v2/admission/upload-document', admissionDocUploadCtlr.uploadMiddleware, admissionDocUploadCtlr.uploadAdmissionDocument);

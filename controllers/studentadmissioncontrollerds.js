@@ -1,11 +1,10 @@
 const User = require('../Models/user');
 const Lead = require('../Models/crmh1');
-const Ledgerstud = require('../Models/ledgerstud');
-const Feesprovds = require('../Models/feesprovds');
+const admissionService = require('./admissionSharedService');
 
 exports.confirmadmissionds = async (req, res) => {
     try {
-        const { lead_id, colid, concession, ...studentData } = req.body;
+        const { lead_id, colid, concession, feeType = 'provisional', documents = [], ...studentData } = req.body;
 
         // 1. Check if Lead exists
         const lead = await Lead.findById(lead_id);
@@ -13,20 +12,63 @@ exports.confirmadmissionds = async (req, res) => {
             return res.status(404).json({ success: false, message: "Lead not found" });
         }
 
-        // 2. Check if User already exists (by email)
-        const existingUser = await User.findOne({ email: studentData.email, colid });
+        const existingUser = await User.findOne({ email: studentData.email, colid: Number(colid) });
         if (existingUser) {
             return res.status(400).json({ success: false, message: "Student account already exists with this email" });
         }
 
-        const hashedPassword = "Password@123";
+        const { user: newUser } = await admissionService.createOrGetStudent({
+            colid,
+            data: {
+                ...lead.toObject(),
+                ...studentData,
+                name: studentData.name || lead.name,
+                email: studentData.email || lead.email,
+                phone: studentData.phone || lead.phone,
+                password: studentData.password || 'Password@123',
+                department: studentData.department || lead.course_interested,
+                program: studentData.course_interested || lead.course_interested
+            }
+        });
 
-        // 4. Create new User
-        const newUser = new User({
+        const fees = await admissionService.fetchAdmissionFees({
+            colid,
+            academicyear: studentData.admissionyear,
+            programcode: studentData.programcode,
+            semester: studentData.semester,
+            feecategory: studentData.feecategory,
+            feeType
+        });
+
+        if (fees && fees.length > 0) {
+            await admissionService.createLedgerEntries({
+                fees,
+                colid,
+                concession,
+                feeType,
+                student: {
+                    name: newUser.name,
+                    email: newUser.email,
+                    regno: newUser.regno,
+                    programcode: newUser.programcode,
+                    admissionyear: newUser.admissionyear,
+                    semester: newUser.semester
+                }
+            });
+        }
+
+        await admissionService.saveStudentDocuments({
+            colid,
+            student: newUser,
+            documents
+        });
+
+        /* Legacy shape kept here as a reference for field mapping:
+        new User({
             name: studentData.name,
             email: studentData.email,
             phone: studentData.phone,
-            password: hashedPassword,
+            password: "Password@123",
             role: 'Student',
             colid: Number(colid),
             status: 1,
@@ -41,55 +83,7 @@ exports.confirmadmissionds = async (req, res) => {
             state: studentData.state || lead.state || "",
             designation: "Student"
         });
-
-        await newUser.save();
-
-        // 5. Fee Provisioning & Ledger Integration
-        const provFees = await Feesprovds.find({
-            colid: Number(colid),
-            academicyear: studentData.admissionyear,
-            programcode: studentData.programcode,
-            semester: studentData.semester
-        });
-
-        if (provFees && provFees.length > 0) {
-            let remainingConcession = Number(concession) || 0;
-
-            const nextMonthDate = new Date();
-            nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-
-            for (const fee of provFees) {
-                let itemConcession = 0;
-                if (remainingConcession > 0) {
-                    itemConcession = Math.min(remainingConcession, fee.amount);
-                    remainingConcession -= itemConcession;
-                }
-
-                const newLedger = new Ledgerstud({
-                    name: studentData.name,
-                    user: studentData.email,
-                    feegroup: fee.feegroup,
-                    regno: studentData.regno,
-                    student: studentData.name,
-                    feeitem: fee.feeeitem,
-                    amount: fee.amount,
-                    paid: 0,
-                    concession: itemConcession,
-                    balance: fee.amount - itemConcession,
-                    academicyear: studentData.admissionyear,
-                    colid: Number(colid),
-                    classdate: nextMonthDate,
-                    status: 'Active',
-                    programcode: studentData.programcode,
-                    admissionyear: studentData.admissionyear,
-                    feecategory: fee.feecategory,
-                    semester: fee.semester,
-                    type: 'Regular' // Defaulting type
-                });
-
-                await newLedger.save();
-            }
-        }
+        */
 
         // 6. Update Lead Status
         lead.leadstatus = "Converted";

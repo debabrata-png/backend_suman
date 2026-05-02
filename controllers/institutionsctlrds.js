@@ -11,7 +11,10 @@ exports.checkInstitutionsds = async (req, res) => {
             });
         }
 
-        const institutions = await Institution.find({ admincolid: colid });
+        const numericColid = Number(colid);
+        const exactInstitutions = await Institution.find({ colid: numericColid });
+        const adminInstitutions = await Institution.find({ admincolid: numericColid, colid: { $ne: numericColid } });
+        const institutions = [...exactInstitutions, ...adminInstitutions];
 
         res.status(200).json({
             status: 'success',

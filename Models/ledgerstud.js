@@ -129,6 +129,20 @@ const ledgerstudschema = new mongoose.Schema({
     }
 })
 //
+ledgerstudschema.pre('validate', function(next) {
+    const amount = Number(this.amount || 0);
+    const paid = Number(this.paid || 0);
+    const concession = Number(this.concession || 0);
+
+    if (this.paid === undefined || this.paid === null) this.paid = 0;
+    if (this.concession === undefined || this.concession === null) this.concession = 0;
+    if (this.balance === undefined || this.balance === null) {
+        this.balance = Math.max(0, amount - paid - concession);
+    }
+
+    next();
+});
+
 
 // Compound indexes for reporting performance
 ledgerstudschema.index({ colid: 1, academicyear: 1 });
