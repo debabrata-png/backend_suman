@@ -671,7 +671,7 @@ Columns: Date, Counsellor, New Leads Assigned, Calls Done, Connected, Follow Up
 */
 exports.crmdsDailyCallingReportV2 = async (req, res) => {
     try {
-        const { colid, startDate, endDate } = req.body;
+        const { colid, startDate, endDate, counselor } = req.body;
         // 1. Get All Active Pipeline Stages and Outcomes for this college
         const [activeStagesDocs, activeOutcomesDocs] = await Promise.all([
             PipelineStage.find({ colid, isactive: true }).lean(),
@@ -688,7 +688,7 @@ exports.crmdsDailyCallingReportV2 = async (req, res) => {
         end.setHours(23, 59, 59, 999);
 
         // 2. Get Activities per day per counselor
-        const activities = await LeadActivity.aggregate([
+        let pipeline = [
             { $match: { colid, activity_date: { $gte: start, $lte: end }, activity_type: "call" } },
             {
                 $lookup: {
@@ -698,19 +698,26 @@ exports.crmdsDailyCallingReportV2 = async (req, res) => {
                     as: "leadInfo"
                 }
             },
-            { $unwind: { path: "$leadInfo", preserveNullAndEmptyArrays: true } },
-            {
-                $group: {
-                    _id: {
-                        date: { $dateToString: { format: "%Y-%m-%d", date: "$activity_date", timezone: "Asia/Kolkata" } },
-                        counselor: "$performed_by",
-                        stage: "$outcome",
-                        leadStage: "$leadInfo.pipeline_stage"
-                    },
-                    count: { $sum: 1 }
-                }
+            { $unwind: { path: "$leadInfo", preserveNullAndEmptyArrays: true } }
+        ];
+
+        if (counselor && counselor !== "ALL") {
+            pipeline.push({ $match: { "leadInfo.assignedto": counselor } });
+        }
+
+        pipeline.push({
+            $group: {
+                _id: {
+                    date: { $dateToString: { format: "%Y-%m-%d", date: "$activity_date", timezone: "Asia/Kolkata" } },
+                    counselor: "$performed_by",
+                    stage: "$outcome",
+                    leadStage: "$leadInfo.pipeline_stage"
+                },
+                count: { $sum: 1 }
             }
-        ]);
+        });
+
+        const activities = await LeadActivity.aggregate(pipeline);
  
         // Merge results
         const mergedMap = {};
