@@ -27,7 +27,8 @@ const storerequisationschema = new mongoose.Schema({
     currentStep: { type: Number, default: 1 },
     approvalStatus: { type: String, default: 'Pending' },
     remarks: { type: String },
-    make: { type: String }
+    make: { type: String },
+    prRemarks: { type: String }
 });
 
 const storerequisationds2 = mongoose.model('storerequisationds2', storerequisationschema);
