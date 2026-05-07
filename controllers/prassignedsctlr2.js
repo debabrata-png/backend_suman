@@ -143,7 +143,7 @@ exports.getAssignedRequisitions2 = async (req, res) => {
         // 1. Find all assignments for this user
         // We fetch ALL assignments first to get the full list of IDs. 
         // If the list is massive this might be slow, but for a single user it should be fine.
-        const assignments = await prassigneds2.find({ colid, prassigneemail: user }).select('storereqid');
+        const assignments = await prassigneds2.find({ colid, prassigneemail: user }).select('storereqid prassignename').lean();
         const assignedIds = assignments.map(a => a.storereqid);
 
         // 2. Query Store Requisitions using these IDs with pagination
@@ -156,10 +156,17 @@ exports.getAssignedRequisitions2 = async (req, res) => {
             const skip = (pageNum - 1) * limitNum;
 
             const total = await storerequisationds2.countDocuments(query);
-            const requisitions = await storerequisationds2.find(query)
+            let requisitions = await storerequisationds2.find(query)
                 .sort({ reqdate: -1 })
                 .skip(skip)
-                .limit(limitNum);
+                .limit(limitNum)
+                .lean();
+
+            requisitions = requisitions.map(r => {
+                const assignment = assignments.find(a => String(a.storereqid) === String(r._id));
+                if (assignment) r.assignedToName = assignment.prassignename;
+                return r;
+            });
 
             res.status(200).json({
                 success: true,
@@ -174,7 +181,13 @@ exports.getAssignedRequisitions2 = async (req, res) => {
                 }
             });
         } else {
-            const requisitions = await storerequisationds2.find(query).sort({ reqdate: -1 });
+            let requisitions = await storerequisationds2.find(query).sort({ reqdate: -1 }).lean();
+            
+            requisitions = requisitions.map(r => {
+                const assignment = assignments.find(a => String(a.storereqid) === String(r._id));
+                if (assignment) r.assignedToName = assignment.prassignename;
+                return r;
+            });
             res.status(200).json({
                 success: true,
                 count: requisitions.length,

@@ -18,7 +18,7 @@ exports.registerStep0 = async (req, res) => {
             return res.status(400).json({ status: 'fail', message: 'Email already registered' });
         }
 
-        // Generate Admission Number: JGU2627/0001
+        // Generate Application Number: JGU2627/150000
         // academicYear format: 2026-27
         const yearPart = academicYear.replace(/-/g, '').slice(2); // 2026-27 -> 2627
         const prefix = `JGU${yearPart}/`;
@@ -27,12 +27,12 @@ exports.registerStep0 = async (req, res) => {
             admissionNo: new RegExp(`^${prefix}`) 
         }).sort({ admissionNo: -1 });
 
-        let nextNumber = 1;
+        let nextNumber = 150000;
         if (lastApp && lastApp.admissionNo) {
             const lastNum = parseInt(lastApp.admissionNo.split('/')[1]);
-            if (!isNaN(lastNum)) nextNumber = lastNum + 1;
+            if (!isNaN(lastNum) && lastNum >= 150000) nextNumber = lastNum + 1;
         }
-        const admissionNo = `${prefix}${nextNumber.toString().padStart(4, '0')}`;
+        const admissionNo = `${prefix}${nextNumber.toString()}`;
 
         application = await StandardAdmission.create({
             fullName, mobileNo, email, academicYear,

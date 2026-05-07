@@ -62,6 +62,7 @@ exports.addstorerequisationds2 = async (req, res) => {
 exports.getallstorerequisationds2 = async (req, res) => {
     try {
         const { colid, page, limit, reqstatus, storeid } = req.query;
+        const prassigneds2 = require("../Models/prassigneds2");
         const query = { colid };
         if (reqstatus) query.reqstatus = reqstatus;
         if (storeid) query.storeid = storeid;
@@ -72,10 +73,19 @@ exports.getallstorerequisationds2 = async (req, res) => {
             const skip = (pageNum - 1) * limitNum;
 
             const total = await storerequisationds2.countDocuments(query);
-            const requisitions = await storerequisationds2.find(query)
+            let requisitions = await storerequisationds2.find(query)
                 .sort({ reqdate: -1 })
                 .skip(skip)
-                .limit(limitNum);
+                .limit(limitNum)
+                .lean();
+
+            const reqIds = requisitions.map(r => r._id);
+            const assignments = await prassigneds2.find({ storereqid: { $in: reqIds } }).lean();
+            requisitions = requisitions.map(r => {
+                const assignment = assignments.find(a => String(a.storereqid) === String(r._id));
+                if (assignment) r.assignedToName = assignment.prassignename;
+                return r;
+            });
 
             res.status(200).json({
                 success: true,
@@ -90,7 +100,16 @@ exports.getallstorerequisationds2 = async (req, res) => {
                 }
             });
         } else {
-            const requisitions = await storerequisationds2.find(query).sort({ reqdate: -1 });
+            let requisitions = await storerequisationds2.find(query).sort({ reqdate: -1 }).lean();
+            
+            const reqIds = requisitions.map(r => r._id);
+            const assignments = await prassigneds2.find({ storereqid: { $in: reqIds } }).lean();
+            requisitions = requisitions.map(r => {
+                const assignment = assignments.find(a => String(a.storereqid) === String(r._id));
+                if (assignment) r.assignedToName = assignment.prassignename;
+                return r;
+            });
+
             res.status(200).json({
                 success: true,
                 count: requisitions.length,
