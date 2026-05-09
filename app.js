@@ -15832,6 +15832,17 @@ app.post('/api/v2/easebuzzgatewayds/update', easebuzzgatewaydsctlr.updateEasebuz
 app.post('/api/v2/easebuzz/initiate', easebuzzgatewaydsctlr.initiateEasebuzzPayment);
 app.post('/api/v2/easebuzz/callback', easebuzzgatewaydsctlr.handleEasebuzzCallback);
 
+const omniwaregatewaydsctlr = require('./controllers/omniwaregatewaydsctlr');
+app.post('/api/v2/omniwaregatewayds/create', omniwaregatewaydsctlr.createOmniwareConfig);
+app.post('/api/v2/omniwaregatewayds/get', omniwaregatewaydsctlr.getOmniwareConfig);
+app.post('/api/v2/omniwaregatewayds/update', omniwaregatewaydsctlr.updateOmniwareConfig);
+app.post('/api/v2/omniwaregatewayds/initiate', omniwaregatewaydsctlr.initiateOmniwarePayment);
+app.post('/api/v2/omniwaregatewayds/callback', omniwaregatewaydsctlr.handleOmniwareCallback);
+
+// Aliases for compatibility
+app.post('/api/v2/omniware/initiate', omniwaregatewaydsctlr.initiateOmniwarePayment);
+app.post('/api/v2/omniware/callback', omniwaregatewaydsctlr.handleOmniwareCallback);
+
 const universalpaymentgatewaydsctlr = require('./controllers/universalpaymentgatewaydsctlr');
 app.post('/api/v2/universalpaymentgatewayds/gethistory', universalpaymentgatewaydsctlr.getHistory);
 app.post('/api/v2/universalpaymentgatewayds/getallhistory', universalpaymentgatewaydsctlr.getAllHistory);

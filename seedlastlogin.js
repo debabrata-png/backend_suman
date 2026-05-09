@@ -28,26 +28,18 @@ const seeduser = async () => {
     await connectDB();
     try {
         //const user = await User.find({ email: "v.geetika@peoplesuniversity.edu.in" });
+        const lastLoginDate = new Date('2030-01-01T09:00:00Z');
+        console.log(`Updating lastlogin for colids: ${colid.join(', ')} to ${lastLoginDate}`);
 
-        // const user = await User.updateMany(
-        //     {
-        //         email: "milind.d@peoplesuniversity.edu.in"
-        //     },
-        //     { $set: { colid: 3091 } }
-        // )
-        // const user = await User.updateMany(
-        //     {
-        //         email: "computerlab@careercollegeindia.com"
-        //     },
-        //     { $set: { colid: 3000, status: 1 } }
-        // )
-        const user = await User.deleteOne(
-            { email: "v.geetika@peoplesuniversity.edu.in" }
-        )
-        console.log(user);
+        const result = await User.updateMany(
+            { colid: { $in: colid } },
+            { $set: { lastlogin: lastLoginDate, status: 1 } }
+        );
+
+        console.log(`✅ Update Summary: ${result.modifiedCount} users updated.`);
         mongoose.connection.close();
     } catch (err) {
-        console.error(err);
+        console.error("❌ Error during update:", err);
     }
 }
 
