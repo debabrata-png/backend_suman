@@ -506,7 +506,7 @@ app.get('/api/v2/getsubcounselorsbycounselords', subcounsellordsctlr.getsubcouns
 app.post('/api/v2/createsubcounsellords', subcounsellordsctlr.createsubcounsellords);
 app.get('/api/v2/getallsubcounsellords', subcounsellordsctlr.getallsubcounsellords);
 app.post('/api/v2/updatesubcounsellords', subcounsellordsctlr.updatesubcounsellords);
-app.delete('/api/v2/deletesubcounsellords/:id', subcounsellordsctlr.deletesubcounsellords);
+app.get('/api/v2/deletesubcounsellords/:id', subcounsellordsctlr.deletesubcounsellords);
 
 // --- WISER CMS ROUTES ---
 const webcmsdsctlr = require('./controllers/webcmsdsctlr');

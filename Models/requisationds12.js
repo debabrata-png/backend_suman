@@ -27,7 +27,8 @@ const requisastiondsschema = new mongoose.Schema({
     ahoiapproveruserid: { type: String, default: '' },
     departmentname: { type: String, default: '' },
     remark: { type: String, default: '' },
-    indentNumber: { type: String }
+    indentNumber: { type: String },
+    category: { type: String, default: '' }
 });
 
 const requisationds12 = mongoose.model('requisationds12', requisastiondsschema);

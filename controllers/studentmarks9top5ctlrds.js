@@ -133,9 +133,9 @@ function computeTop5(sMarks, configMap) {
 
     const overallGrade = calculateGrade(top5Total, top5Max);
 
-    // FIX: hasFail = overall grade E  OR  any individual top-5 subject failed
+    // Rank eligibility depends only on failures inside the selected top 5.
     const hasIndividualFail = top5.some(s => s.isFail);
-    const hasFail = (overallGrade === 'E') || hasIndividualFail;
+    const hasFail = hasIndividualFail;
 
     return { top5, top5Total, top5Max, pct, overallGrade, hasFail };
 }
@@ -364,9 +364,9 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
         const percentage = maxMarks > 0 ? parseFloat(((grandTotal / maxMarks) * 100).toFixed(2)) : 0;
         const overallGrade = calculateGrade(grandTotal, maxMarks);
 
-        // FIX: hasFail = overall E OR any individual top-5 subject failed
+        // Rank eligibility depends only on failures inside the selected top 5.
         const hasIndividualFail = top5.some(s => s.isFail);
-        const studentHasFail = (overallGrade === 'E') || hasIndividualFail;
+        const studentHasFail = hasIndividualFail;
 
         // ── 5. Attendance ────────────────────────────────────────
         const fallbackRecord = marksData.length > 0 ? marksData[0] : {};
@@ -427,11 +427,13 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
 
         const coScholasticData = Object.values(coScholasticMap);
 
-        // ── 5.8. Dynamic Class-Wide Rank Calculation ─────────────
+        // ── 5.8. Dynamic Section-Wide Rank Calculation ───────────
+        const sectionFilter = userData.section ? { section: userData.section } : {};
         const classStudents = await User.find({
             colid: Number(colid),
             semester: querySemester,
-            role: 'Student'
+            role: 'Student',
+            ...sectionFilter
         }).lean();
 
         const classRegNos = classStudents.map(s => s.regno);
@@ -459,10 +461,10 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
         });
 
         // Build rank data using shared computeTop5 helper
-        let studentRankData = Object.keys(studentGroups).map(rNo => {
-            const result = computeTop5(studentGroups[rNo], configMap);
+        let studentRankData = classStudents.map(student => {
+            const result = computeTop5(studentGroups[student.regno] || [], configMap);
             if (!result) return null;
-            return { regno: rNo, percentage: result.pct, hasFail: result.hasFail };
+            return { regno: student.regno, percentage: result.pct, hasFail: result.hasFail };
         }).filter(Boolean).sort((a, b) => b.percentage - a.percentage);
 
         // FIX: Dense ranking — tied percentage = tied rank, no gaps
@@ -540,7 +542,7 @@ exports.getmarksheetpdfdata9top5ds = async (req, res) => {
 // ============================================================
 exports.calculateAndStoreRank9top5ds = async (req, res) => {
     try {
-        const { colid, academicyear, semester } = req.body;
+        const { colid, academicyear, semester, section } = req.body;
 
         if (!colid || !academicyear || !semester) {
             return res.status(400).json({
@@ -552,11 +554,14 @@ exports.calculateAndStoreRank9top5ds = async (req, res) => {
         const querySemester = semester;
 
         // ── 1. Fetch Class Students ──────────────────────────────
-        const classStudents = await User.find({
+        const studentQuery = {
             colid: Number(colid),
             semester: querySemester,
             role: 'Student'
-        }).lean();
+        };
+        if (section) studentQuery.section = section;
+
+        const classStudents = await User.find(studentQuery).lean();
 
         if (!classStudents || classStudents.length === 0) {
             return res.status(404).json({ success: false, message: 'No students found for this class' });
@@ -589,14 +594,25 @@ exports.calculateAndStoreRank9top5ds = async (req, res) => {
         });
 
         // ── 4. Compute Top-5 & Percentage per Student ────────────
-        let studentRankData = Object.keys(studentGroups).map(rNo => {
-            const result = computeTop5(studentGroups[rNo], configMap);
-            if (!result) return null;
-            return { regno: rNo, percentage: result.pct, hasFail: result.hasFail };
-        }).filter(Boolean).sort((a, b) => b.percentage - a.percentage);
+        const studentsBySection = {};
+        classStudents.forEach(student => {
+            const sectionKey = student.section || '';
+            if (!studentsBySection[sectionKey]) studentsBySection[sectionKey] = [];
+            studentsBySection[sectionKey].push(student);
+        });
 
-        // ── 5. FIX: Dense Ranking — ties get same rank ───────────
-        studentRankData = assignDenseRanks(studentRankData);
+        const studentRankData = [];
+        Object.values(studentsBySection).forEach(sectionStudents => {
+            let sectionRankData = sectionStudents.map(student => {
+                const rNo = student.regno;
+                const result = computeTop5(studentGroups[rNo] || [], configMap);
+                if (!result) return null;
+                return { regno: rNo, percentage: result.pct, hasFail: result.hasFail };
+            }).filter(Boolean).sort((a, b) => b.percentage - a.percentage);
+
+            sectionRankData = assignDenseRanks(sectionRankData);
+            studentRankData.push(...sectionRankData);
+        });
 
         // ── 6. Bulk Store Ranks ──────────────────────────────────
         const updateOps = studentRankData.map(sData => ({

@@ -27,23 +27,23 @@ const connectDB = async () => {
 const seeduser = async () => {
     await connectDB();
     try {
-        //const user = await User.find({ email: "computerlab@careercollegeindia.com" });
+        //const user = await User.find({ email: "v.geetika@peoplesuniversity.edu.in" });
 
-        const user = await User.updateMany(
-            {
-                colid: { $in: colid }
-            },
-            { $set: { lastlogin: "2030-03-05T16:48:19+05:30" } }
-        )
+        // const user = await User.updateMany(
+        //     {
+        //         email: "milind.d@peoplesuniversity.edu.in"
+        //     },
+        //     { $set: { colid: 3091 } }
+        // )
         // const user = await User.updateMany(
         //     {
         //         email: "computerlab@careercollegeindia.com"
         //     },
         //     { $set: { colid: 3000, status: 1 } }
         // )
-        // const user = await User.deleteOne(
-        //     { email: "admin@ldarts.edu.in" }
-        // )
+        const user = await User.deleteOne(
+            { email: "v.geetika@peoplesuniversity.edu.in" }
+        )
         console.log(user);
         mongoose.connection.close();
     } catch (err) {
