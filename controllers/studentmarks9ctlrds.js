@@ -33,6 +33,11 @@ function toRoman(num) {
   return roman;
 }
 
+function isRealAcademicYear(value) {
+  const normalized = String(value || '').trim().toUpperCase();
+  return normalized && !['NA', 'N/A', 'NULL', 'NONE', 'UNDEFINED', '-'].includes(normalized);
+}
+
 // Get students and subjects using aggregation pipeline
 exports.getstudentsandsubjectsformarks9ds = async (req, res) => {
   try {
@@ -530,15 +535,25 @@ exports.getdistinctsemestersandyears9ds = async (req, res) => {
       });
     }
 
+    const marksYears = await StudentMarks9ds.distinct('academicyear', { colid: Number(colid) });
+    const configYears = await SubjectComponentConfig9ds.distinct('academicyear', { colid: Number(colid) });
+
     // Sort semesters, years and sections
     const semesters = result[0].semesters.sort();
-    const admissionyears = result[0].admissionyears.filter(y => y).sort().reverse();
+    const allYears = [...new Set([
+      ...marksYears,
+      ...configYears,
+      ...result[0].admissionyears
+    ].map(year => String(year || '').trim()).filter(Boolean))];
+    const realYears = allYears.filter(isRealAcademicYear);
+    const admissionyears = (realYears.length > 0 ? realYears : allYears).sort().reverse();
     const sections = result[0].sections.filter(s => s).sort();
 
     res.json({
       success: true,
       semesters: semesters,
       admissionyears: admissionyears,
+      academicyears: admissionyears,
       sections: sections
     });
   } catch (error) {

@@ -18,6 +18,8 @@ var path = require('path');
 var flash = require('express-flash');
 var session = require("express-session");
 var cookieParser = require('cookie-parser');
+const http = require('http');
+const https = require('https');
 
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
@@ -94,6 +96,69 @@ app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
+});
+
+const pipeRemoteImage = (imageUrl, res, redirectCount = 0) => {
+  let parsedUrl;
+
+  try {
+    parsedUrl = new URL(imageUrl);
+  } catch (error) {
+    return res.status(400).json({ message: 'Invalid image URL' });
+  }
+
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    return res.status(400).json({ message: 'Only HTTP and HTTPS image URLs are allowed' });
+  }
+
+  const client = parsedUrl.protocol === 'https:' ? https : http;
+  const imageRequest = client.get(parsedUrl, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+    }
+  }, (imageResponse) => {
+    const statusCode = imageResponse.statusCode || 500;
+    const location = imageResponse.headers.location;
+
+    if ([301, 302, 303, 307, 308].includes(statusCode) && location && redirectCount < 3) {
+      imageResponse.resume();
+      const redirectedUrl = new URL(location, parsedUrl).toString();
+      return pipeRemoteImage(redirectedUrl, res, redirectCount + 1);
+    }
+
+    if (statusCode < 200 || statusCode >= 300) {
+      imageResponse.resume();
+      return res.status(statusCode).json({ message: 'Unable to load image' });
+    }
+
+    const contentType = imageResponse.headers['content-type'] || 'image/jpeg';
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Content-Type', contentType.startsWith('image/') ? contentType : 'image/jpeg');
+    imageResponse.pipe(res);
+  });
+
+  imageRequest.setTimeout(15000, () => {
+    imageRequest.destroy(new Error('Image request timed out'));
+  });
+
+  imageRequest.on('error', (error) => {
+    console.error('Image proxy error:', error.message);
+    if (!res.headersSent) {
+      res.status(502).json({ message: 'Unable to load image' });
+    }
+  });
+};
+
+app.get('/api/v2/proxy-image', (req, res) => {
+  const { url } = req.query;
+
+  if (!url) {
+    return res.status(400).json({ message: 'Image URL is required' });
+  }
+
+  pipeRemoteImage(url, res);
 });
 
 // const http = require('http');
