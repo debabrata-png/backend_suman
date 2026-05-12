@@ -1,0 +1,35 @@
+const mongoose = require('mongoose');
+
+const storerequisationschema = new mongoose.Schema({
+    name: { type: String, required: true },
+    user: { type: String, required: true },
+    colid: { type: Number, required: true },
+
+    year: { type: String },
+    itemcode: { type: String },
+    itemname: { type: String },
+    store: { type: String },
+    storeid: { type: String },
+    reqdate: { type: Date },
+    quantity: { type: Number },
+    orderedQuantity: { type: Number, default: 0 },
+    reqstatus: { type: String },
+    poid: { type: String },
+    prnumber: { type: String },
+    assignedTo: { type: String },       // Email of PE/SPE assigned
+    assignedToName: { type: String },   // Display name of assignee
+    unit: { type: String },             // e.g. 'Nos', 'Kg', 'Box'
+    itemid: { type: String },           // Master item _id reference
+    category: { type: String },
+    itemtype: { type: String },
+    departmentname: { type: String },
+    // Approval Fields
+    currentStep: { type: Number, default: 1 },
+    approvalStatus: { type: String, default: 'Pending' },
+    remarks: { type: String },
+    make: { type: String },
+    prRemarks: { type: String }
+});
+
+const storerequisationds2 = mongoose.model('storerequisationds2', storerequisationschema);
+module.exports = storerequisationds2;

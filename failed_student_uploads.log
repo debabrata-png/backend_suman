@@ -1,0 +1,7 @@
+Batch Upload Log - Timestamp: 2026-02-05T08:19:37.935Z
+
+=== Processing File: ./PCNRC STUDENT DATA.xlsx ===
+SKIPPED RECORDS:
+  Row 48: Name=N/A - Reason: Cannot generate email (Missing Regno AND (Name/Phone))
+  Row 49: Name=N/A - Reason: Cannot generate email (Missing Regno AND (Name/Phone))
+

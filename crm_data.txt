@@ -1,0 +1,28 @@
+Row 0: A=Lead (Pipeline) Stages, B=Outcome
+Row 1: A=Prospect , B=Contacted
+Row 2: A=Contact Attempted, B=DNP1
+Row 3: A=Phone Conversation, B=DNP2
+Row 4: A=WhatsApp Conversation , B=DNP3
+Row 5: A=Follow Up, B=DNP4
+Row 6: A=General Enquiry , B=DNP5
+Row 7: A=Call Reschedule , B=DNP6
+Row 8: A=Interested , B=DNP7
+Row 9: A=Not Interested , B=Follow Up 1
+Row 10: A=Seat Booked, B=Follow Up 2
+Row 11: A=ePravesh Done, B=Follow Up 3
+Row 12: A=Admission Done, B=Will visit college
+Row 13: A=Admission Cancelled , B=Visited College
+Row 14: A=Admited in Another College , B=Registration Done
+Row 15: A=Consultancy Services , B=Admission Confirmed
+Row 16: A=Enquiry for 2nd year, B=Lead Closed
+Row 17: A=Enquiry for 3rd year , B=Interested 
+Row 18: A=Enquiry for 4th year Hons., B=Not Interested 
+Row 19: A=Existing Student, B=Admission In Process
+Row 20: A=Hospital Enquiry , B=
+Row 21: A=Junk Lead / Wrong Number, B=
+Row 22: A=Not Done Enquiry , B=
+Row 23: A=Not Eligible , B=
+Row 24: A=Offer Letter Issued , B=
+Row 25: A=Other Courses, B=
+Row 26: A=Prospect for next academic year , B=
+Row 27: A=ERP Done, B=
