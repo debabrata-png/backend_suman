@@ -242,7 +242,8 @@ const userschema = new mongoose.Schema({
     },
     Major: {
         type: String
-    },
+    }
+
 })
 
 // ── Performance Indexes ────────────────────────────────────────────────────

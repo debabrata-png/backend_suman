@@ -62,4 +62,3 @@ jobs:
           app-name: 'peoplesuniversity'
           slot-name: 'Production'
           package: .
-          
