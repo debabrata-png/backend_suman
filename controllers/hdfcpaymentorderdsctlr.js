@@ -31,6 +31,10 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       feeitem,
       feecategory,
       installment,
+      type,
+      ledgerid,
+      ledgerbalance,
+      ledgerdetails,
       frontendCallbackUrl,
       backendReturnUrl,
       comments,
@@ -154,6 +158,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       amount: finalamount,
       paymenttype: paymentType || 'OTHER',
       paymentpurpose: paymentPurpose || 'Fee Payment',
+      type,
       academicyear: academicYear,
       semester,
       course,
@@ -173,6 +178,9 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       feeitem,
       feecategory,
       installment,
+      ledgerid,
+      ledgerbalance,
+      ledgerdetails,
       comments,
       notes
     });

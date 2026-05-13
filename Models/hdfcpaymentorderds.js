@@ -84,6 +84,9 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
     type: String,
     required: [true, 'Please enter payment purpose']
   },
+  type: {
+    type: String
+  },
 
   // Academic details
   academicyear: {
@@ -161,6 +164,15 @@ const hdfcpaymentorderdsschema = new mongoose.Schema({
   },
 
   // Ledger tracking
+  ledgerid: {
+    type: String
+  },
+  ledgerbalance: {
+    type: Number
+  },
+  ledgerdetails: {
+    type: mongoose.Schema.Types.Mixed
+  },
   ledgerentrycreated: {
     type: Boolean,
     default: false
@@ -236,6 +248,7 @@ hdfcpaymentorderdsschema.index({ regno: 1, colid: 1, createdAt: -1 });
 hdfcpaymentorderdsschema.index({ studentemail: 1 });
 // hdfcpaymentorderdsschema.index({ orderid: 1 });
 hdfcpaymentorderdsschema.index({ merchanttransactionid: 1 });
+hdfcpaymentorderdsschema.index({ ledgerid: 1 });
 hdfcpaymentorderdsschema.index({ hdfcorderid: 1 });
 hdfcpaymentorderdsschema.index({ hdfctransactionid: 1 });
 hdfcpaymentorderdsschema.index({ colid: 1, regno: 1, status: 1 });

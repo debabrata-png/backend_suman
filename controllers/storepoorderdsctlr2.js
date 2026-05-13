@@ -104,8 +104,28 @@ exports.updatestorepoorderds2 = async (req, res) => {
 exports.deletestorepoorderds2 = async (req, res) => {
     try {
         const { id } = req.query;
+
+        // Find the PO first to get its poid
+        const po = await storepoorderds2.findById(id);
+        if (!po) return res.status(404).json({ success: false, message: "PO not found" });
+
+        // Find all PO items linked to this PO
+        const storepoitemsds2 = require("../Models/storepoitemsds2");
+        const storerequisationds2 = require("../Models/storerequisationds2");
+        const poItems = await storepoitemsds2.find({ poid: po.poid, colid: po.colid });
+
+        // Reset linked PR items' status back to Pending
+        const storeReqIds = poItems.map(item => item.storereqid).filter(Boolean);
+        if (storeReqIds.length > 0) {
+            await storerequisationds2.updateMany(
+                { _id: { $in: storeReqIds } },
+                { $set: { reqstatus: 'Pending' } }
+            );
+        }
+
+        // Delete the PO
         await storepoorderds2.findByIdAndDelete(id);
-        res.status(200).json({ success: true, message: "PO deleted" });
+        res.status(200).json({ success: true, message: "PO deleted and linked PR items reset to Pending" });
     } catch (error) {
         res.status(500).json({ success: false, message: "Error deleting PO", error: error.message });
     }

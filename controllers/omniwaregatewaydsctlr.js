@@ -82,6 +82,17 @@ exports.initiateOmniwarePayment = async (req, res) => {
       state,
       zip_code,
       country,
+      type,
+      ledgerid,
+      ledgerbalance,
+      feegroup,
+      feeitem,
+      feecategory,
+      semester,
+      installment,
+      academicyear,
+      classdate,
+      ledgerdetails,
       frontendcallbackurl
     } = req.body;
 
@@ -147,6 +158,17 @@ exports.initiateOmniwarePayment = async (req, res) => {
       accountno,
       paymenttype,
       paymentpurpose,
+      type,
+      ledgerid,
+      ledgerbalance,
+      feegroup,
+      feeitem,
+      feecategory,
+      semester,
+      installment,
+      academicyear,
+      classdate,
+      ledgerdetails,
       status: 'INITIATED',
       frontendcallbackurl: frontendcallbackurl
     });

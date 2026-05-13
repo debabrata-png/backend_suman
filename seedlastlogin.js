@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const programmasterds = require("./Models/programmasterds");
 const pipelinestage = require("./Models/PipelineStageag")
 
-const colid = [3098, 3090, 3091, 3092, 3094, 4000, 3098, 3096, 4004, 4008, 4010, 4012, 4014, 6050, 100100, 5050, 9050, 3000];
+const colid = [3098, 3090, 3091, 3092, 3094, 4000, 3098, 3096, 4004, 4008, 4010, 4012, 4014, 6050, 100100, 5050, 9050, 3000, 3060];
 //const colid = [30]
 const users = [
     {

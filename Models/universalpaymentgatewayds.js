@@ -57,6 +57,39 @@ const universalpaymentgatewaydsschema = new mongoose.Schema({
   paymentpurpose: { 
     type: String 
   },
+  type: {
+    type: String
+  },
+  ledgerid: {
+    type: String
+  },
+  ledgerbalance: {
+    type: Number
+  },
+  feegroup: {
+    type: String
+  },
+  feeitem: {
+    type: String
+  },
+  feecategory: {
+    type: String
+  },
+  semester: {
+    type: String
+  },
+  installment: {
+    type: String
+  },
+  academicyear: {
+    type: String
+  },
+  classdate: {
+    type: Date
+  },
+  ledgerdetails: {
+    type: mongoose.Schema.Types.Mixed
+  },
   gatewayresponse: { 
     type: mongoose.Schema.Types.Mixed 
   },
@@ -75,6 +108,7 @@ const universalpaymentgatewaydsschema = new mongoose.Schema({
 
 universalpaymentgatewaydsschema.index({ colid: 1, regno: 1 });
 universalpaymentgatewaydsschema.index({ gatewayname: 1 });
+universalpaymentgatewaydsschema.index({ ledgerid: 1 });
 
 const universalpaymentgatewayds = mongoose.models.universalpaymentgatewayds || mongoose.model('universalpaymentgatewayds', universalpaymentgatewaydsschema);
 module.exports = universalpaymentgatewayds;

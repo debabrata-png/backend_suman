@@ -77,6 +77,17 @@ exports.initiateEasebuzzPayment = async (req, res) => {
       paymentpurpose,
       email,
       phone,
+      type,
+      ledgerid,
+      ledgerbalance,
+      feegroup,
+      feeitem,
+      feecategory,
+      semester,
+      installment,
+      academicyear,
+      classdate,
+      ledgerdetails,
       frontendcallbackurl
     } = req.body;
 
@@ -137,6 +148,17 @@ exports.initiateEasebuzzPayment = async (req, res) => {
       accountno,
       paymenttype,
       paymentpurpose,
+      type,
+      ledgerid,
+      ledgerbalance,
+      feegroup,
+      feeitem,
+      feecategory,
+      semester,
+      installment,
+      academicyear,
+      classdate,
+      ledgerdetails,
       status: 'INITIATED',
       frontendcallbackurl: frontendcallbackurl // STORED IN DB
     });
@@ -219,4 +241,3 @@ exports.handleEasebuzzCallback = async (req, res) => {
     res.redirect(`${process.env.FRONTEND_URL}/payment-error?message=${encodeURIComponent(err.message)}`);
   }
 };
-
