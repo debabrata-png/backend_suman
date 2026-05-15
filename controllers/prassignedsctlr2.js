@@ -2,20 +2,27 @@ const prassigneds2 = require("../Models/prassigneds2");
 
 exports.addprassigneds2 = async (req, res) => {
     try {
-        const newAssignment = await prassigneds2.create(req.body);
+        const { storereqid } = req.body;
+        
+        // Use findOneAndUpdate with upsert: true to handle reassignment (overwrite previous assignment for the same PR)
+        const assignment = await prassigneds2.findOneAndUpdate(
+            { storereqid: storereqid },
+            req.body,
+            { new: true, upsert: true }
+        );
 
         // CRITICAL: Update the status of the original store requisition
-        if (req.body.storereqid) {
+        if (storereqid) {
             await storerequisationds2.findByIdAndUpdate(
-                req.body.storereqid,
+                storereqid,
                 { reqstatus: 'Assigned' }
             );
         }
 
         res.status(201).json({
             success: true,
-            message: "PR Assigned successfully",
-            data: newAssignment
+            message: "PR Assigned/Reassigned successfully",
+            data: assignment
         });
     } catch (error) {
         res.status(500).json({
