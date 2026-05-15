@@ -3,7 +3,7 @@ const crmh1 = require('../Models/crmh1');
 // Get all leads (USER-BASED ACCESS)
 exports.getallleadsdsadmin = async (req, res) => {
   try {
-    const { colid, user, pipeline_stage, lead_temperature, source, search, page = 1, pageSize = 10 } = req.query;
+    const { colid, user, pipeline_stage, lead_temperature, source, search, page = 1, pageSize = 10, isExport } = req.query;
 
     // Base query: Match leads where:
     // 1. Lead belongs to this organization (colid matches)
@@ -36,7 +36,83 @@ exports.getallleadsdsadmin = async (req, res) => {
           ]
         }
       ];
-      // Remove any $or key that might conflict (though here it's simple)
+    }
+
+    // Handle X-DataGrid filterModel
+    if (req.query.filterModel) {
+      try {
+        const filterModel = JSON.parse(req.query.filterModel);
+        if (filterModel.items && filterModel.items.length > 0) {
+          const filterQueries = filterModel.items.map(item => {
+            const { field, operatorValue, value } = item;
+            
+            // Skip if no value for operators that require one
+            if ((value === undefined || value === null || value === '') && 
+                !['isEmpty', 'isNotEmpty'].includes(operatorValue)) {
+              return null;
+            }
+
+            let mongoOp = {};
+            let actualField = field;
+            let isCustomField = false;
+
+            if (field.startsWith('custom_')) {
+              actualField = field.replace('custom_', '');
+              isCustomField = true;
+            }
+
+            // Operator mapping
+            let condition;
+            switch (operatorValue) {
+              case 'contains': condition = { $regex: value, $options: 'i' }; break;
+              case 'equals': condition = value; break;
+              case 'startsWith': condition = { $regex: `^${value}`, $options: 'i' }; break;
+              case 'endsWith': condition = { $regex: `${value}$`, $options: 'i' }; break;
+              case 'isEmpty': condition = { $exists: false }; break; // Simplified, or could check for empty string
+              case 'isNotEmpty': condition = { $exists: true, $ne: "" }; break;
+              case 'isAnyOf': condition = { $in: Array.isArray(value) ? value : [value] }; break;
+              default: condition = { $regex: value, $options: 'i' };
+            }
+
+            if (isCustomField) {
+              mongoOp = { 
+                custom_fields: { 
+                  $elemMatch: { 
+                    field_name: actualField, 
+                    field_value: condition 
+                  } 
+                } 
+              };
+            } else {
+              mongoOp = { [actualField]: condition };
+            }
+            return mongoOp;
+          }).filter(Boolean);
+
+          if (filterQueries.length > 0) {
+            if (filterModel.linkOperator === 'or') {
+              if (!query.$or) query.$or = [];
+              query.$or.push(...filterQueries);
+            } else {
+              if (!query.$and) query.$and = [];
+              query.$and.push(...filterQueries);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing filterModel:", e);
+      }
+    }
+
+    // Handle export request - skip pagination
+    if (isExport === 'true') {
+      const leads = await crmh1.find(query).sort({ updatedAt: -1 }).lean();
+      return res.status(200).json({ 
+        success: true, 
+        data: leads, 
+        count: leads.length,
+        isExport: true
+      });
     }
 
     const skip = (parseInt(page) - 1) * parseInt(pageSize);

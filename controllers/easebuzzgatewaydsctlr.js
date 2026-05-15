@@ -1,6 +1,7 @@
 const easebuzzgatewayds = require('../Models/easebuzzgatewayds');
 const universalpaymentgatewayds = require('../Models/universalpaymentgatewayds');
 const EasebuzzPaymentHandler = require('../utils/easebuzzgatewayhandler');
+const { updateLedgerAfterPayment } = require('../utils/paymentledgerupdater');
 
 // @desc    Create Easebuzz Config
 // @route   POST /api/v2/easebuzzgatewayds/create
@@ -69,14 +70,17 @@ exports.initiateEasebuzzPayment = async (req, res) => {
   try {
     const {
       colid,
-      studentname,
+      studentname: _studentname,
+      studentName: _studentName,
       regno,
       amount,
       accountno,
       paymenttype,
       paymentpurpose,
-      email,
-      phone,
+      email: _email,
+      studentemail: _studentemail,
+      phone: _phone,
+      studentphone: _studentphone,
       type,
       ledgerid,
       ledgerbalance,
@@ -90,6 +94,10 @@ exports.initiateEasebuzzPayment = async (req, res) => {
       ledgerdetails,
       frontendcallbackurl
     } = req.body;
+
+    const resolvedStudentName = _studentname || _studentName || 'Student';
+    const resolvedEmail = _email || _studentemail || 'no-email@provided.com';
+    const resolvedPhone = _phone || _studentphone || '9999999999';
 
     if (!colid) throw new Error('colid is required');
 
@@ -109,18 +117,18 @@ exports.initiateEasebuzzPayment = async (req, res) => {
 
     // 3. Prepare Easebuzz Params
     // Sanitize phone: ensure it is 10 digits
-    const sanitizedPhone = (phone || '').toString().replace(/\D/g, '').slice(-10);
+    const sanitizedPhone = (resolvedPhone || '').toString().replace(/\D/g, '').slice(-10);
 
     const easebuzzParams = {
       key: handler.key,
       txnid: txnid,
       amount: parseFloat(amount).toFixed(2),
       productinfo: paymentpurpose || 'General Payment',
-      firstname: studentname,
-      email: email,
+      firstname: resolvedStudentName,
+      email: resolvedEmail,
       phone: sanitizedPhone,
-      surl: `https://backend-suman.onrender.com/api/v2/easebuzz/callback`,
-      furl: `https://backend-suman.onrender.com/api/v2/easebuzz/callback`,
+      surl: `${process.env.BACKEND_URL || 'https://backend-suman.onrender.com'}/api/v2/easebuzz/callback`,
+      furl: `${process.env.BACKEND_URL || 'https://backend-suman.onrender.com'}/api/v2/easebuzz/callback`,
       udf1: 'Easebuzz',
       udf2: accountno,
       udf3: ''
@@ -134,13 +142,13 @@ exports.initiateEasebuzzPayment = async (req, res) => {
 
     // 4. Create Universal History Record
     await universalpaymentgatewayds.create({
-      name: studentname,
+      name: resolvedStudentName,
       user: req.body.user || 'STUDENT',
       colid,
-      studentname,
+      studentname: resolvedStudentName,
       regno,
-      studentemail: email,
-      studentphone: phone,
+      studentemail: resolvedEmail,
+      studentphone: resolvedPhone,
       orderid,
       txnid,
       amount,
@@ -229,6 +237,15 @@ exports.handleEasebuzzCallback = async (req, res) => {
     history.gatewayresponse = params;
     history.completedat = new Date();
     await history.save();
+
+    // Update student ledger if payment was successful and type is Student
+    if (history.status === 'SUCCESS' && history.type === 'Student' && history.ledgerid) {
+      await updateLedgerAfterPayment({
+        ledgerid: history.ledgerid,
+        amount: history.amount,
+        gatewayname: 'Easebuzz'
+      });
+    }
 
     // 5. Redirect back to frontend (Using stored URL from DB)
     const frontendUrl = history.frontendcallbackurl || `${process.env.FRONTEND_URL}/payment-status`;

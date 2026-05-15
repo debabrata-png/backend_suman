@@ -1,6 +1,7 @@
 const omniwaregatewayds = require('../Models/omniwaregatewayds');
 const universalpaymentgatewayds = require('../Models/universalpaymentgatewayds');
 const OmniwarePaymentHandler = require('../utils/omniwaregatewayhandler');
+const { updateLedgerAfterPayment } = require('../utils/paymentledgerupdater');
 
 // @desc    Create Omniware Config
 // @route   POST /api/v2/omniwaregatewayds/create
@@ -69,14 +70,17 @@ exports.initiateOmniwarePayment = async (req, res) => {
   try {
     const {
       colid,
-      studentname,
+      studentname: _studentname,
+      studentName: _studentName,
       regno,
       amount,
       accountno,
       paymenttype,
       paymentpurpose,
-      email,
-      phone,
+      email: _email,
+      studentemail: _studentemail,
+      phone: _phone,
+      studentphone: _studentphone,
       address_line_1,
       city,
       state,
@@ -96,6 +100,10 @@ exports.initiateOmniwarePayment = async (req, res) => {
       frontendcallbackurl
     } = req.body;
 
+    const resolvedStudentName = _studentname || _studentName || 'Student';
+    const resolvedEmail = _email || _studentemail || 'no-email@provided.com';
+    const resolvedPhone = _phone || _studentphone || '9999999999';
+
     if (!colid) throw new Error('colid is required');
 
     // 1. Fetch Credentials
@@ -112,31 +120,31 @@ exports.initiateOmniwarePayment = async (req, res) => {
     const order_id = `OMN_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
     // 3. Prepare Omniware Params
-      const protocol = req.protocol;
-      const host = req.get('host');
-      const return_url = `${protocol}://${host}/api/v2/omniwaregatewayds/callback`;
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const return_url = `${process.env.BACKEND_URL || 'https://backend-suman.onrender.com'}/api/v2/omniwaregatewayds/callback`;
 
-      const omniwareParams = {
-        api_key: handler.apiKey,
-        order_id: order_id,
-        amount: parseFloat(amount).toFixed(2),
-        currency: 'INR',
-        description: paymentpurpose || 'Fees Payment',
-        name: studentname,
-        email: email,
-        phone: (phone || '').toString().replace(/\D/g, '').slice(-10),
-        address_line_1: address_line_1 || 'N/A',
-        city: city || 'Bhopal',
-        state: state || 'MP',
-        zip_code: zip_code || '462001',
-        country: country || 'IND',
-        mode: config.environment === 'prod' ? 'LIVE' : 'TEST',
-        return_url: return_url,
-        udf1: 'Omniware',
-        udf2: accountno || '',
-        udf3: regno || '',
-        udf4: paymenttype || ''
-      };
+    const omniwareParams = {
+      api_key: handler.apiKey,
+      order_id: order_id,
+      amount: parseFloat(amount).toFixed(2),
+      currency: 'INR',
+      description: paymentpurpose || 'Fees Payment',
+      name: resolvedStudentName,
+      email: resolvedEmail,
+      phone: (resolvedPhone || '').toString().replace(/\D/g, '').slice(-10),
+      address_line_1: address_line_1 || 'N/A',
+      city: city || 'Bhopal',
+      state: state || 'MP',
+      zip_code: zip_code || '462001',
+      country: country || 'IND',
+      mode: config.environment === 'prod' ? 'LIVE' : 'TEST',
+      return_url: return_url,
+      udf1: 'Omniware',
+      udf2: accountno || '',
+      udf3: regno || '',
+      udf4: paymenttype || ''
+    };
 
     // 4. Generate Hash
     const hash = handler.generateHash(omniwareParams);
@@ -144,13 +152,13 @@ exports.initiateOmniwarePayment = async (req, res) => {
 
     // 5. Create History Record
     await universalpaymentgatewayds.create({
-      name: studentname,
+      name: resolvedStudentName,
       user: req.body.user || 'STUDENT',
       colid,
-      studentname,
+      studentname: resolvedStudentName,
       regno,
-      studentemail: email,
-      studentphone: phone,
+      studentemail: resolvedEmail,
+      studentphone: resolvedPhone,
       orderid: order_id,
       txnid: order_id, // Same as order_id for Omniware
       amount,
@@ -225,6 +233,15 @@ exports.handleOmniwareCallback = async (req, res) => {
     history.gatewayresponse = params;
     history.completedat = new Date();
     await history.save();
+
+    // Update student ledger if payment was successful and type is Student
+    if (history.status === 'SUCCESS' && history.type === 'Student' && history.ledgerid) {
+      await updateLedgerAfterPayment({
+        ledgerid: history.ledgerid,
+        amount: history.amount,
+        gatewayname: 'Omniware'
+      });
+    }
 
     // 5. Redirect back to frontend
     const frontendUrl = history.frontendcallbackurl || `${process.env.FRONTEND_URL}/payment-status`;

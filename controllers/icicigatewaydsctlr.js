@@ -1,6 +1,7 @@
 const icicigatewayds = require('../Models/icicigatewayds');
 const universalpaymentgatewayds = require('../Models/universalpaymentgatewayds');
 const ICICIPaymentHandler = require('../utils/icicigatewayhandler');
+const { updateLedgerAfterPayment } = require('../utils/paymentledgerupdater');
 
 const buildHandler = (config) => new ICICIPaymentHandler({
   merchantId: config.merchantid,
@@ -66,17 +67,19 @@ exports.initiateICICIPayment = async (req, res) => {
   try {
     const {
       colid,
-      studentname,
-      studentName,
+      studentname: _studentname,
+      studentName: _studentName,
       regno,
       amount,
       accountno,
-      paymenttype,
-      paymentType,
-      paymentpurpose,
-      paymentPurpose,
-      email,
-      phone,
+      paymenttype: _paymenttype,
+      paymentType: _paymentType,
+      paymentpurpose: _paymentpurpose,
+      paymentPurpose: _paymentPurpose,
+      email: _email,
+      studentemail: _studentemail,
+      phone: _phone,
+      studentphone: _studentphone,
       type,
       ledgerid,
       ledgerbalance,
@@ -91,6 +94,12 @@ exports.initiateICICIPayment = async (req, res) => {
       frontendcallbackurl
     } = req.body;
 
+    const resolvedStudentName = _studentname || _studentName || 'Student';
+    const resolvedEmail = _email || _studentemail || 'no-email@provided.com';
+    const resolvedPhone = _phone || _studentphone || '9999999999';
+    const resolvedPaymentType = _paymenttype || _paymentType || 'Fee';
+    const resolvedPaymentPurpose = _paymentpurpose || _paymentPurpose || 'Fee Payment';
+
     if (!colid) throw new Error('colid is required');
     if (!amount) throw new Error('amount is required');
 
@@ -99,17 +108,14 @@ exports.initiateICICIPayment = async (req, res) => {
 
     const handler = buildHandler(config);
     const merchantTxnNo = `ICI${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(0, 20);
-    const returnURL = `${req.protocol}://${req.get('host')}/api/v2/icicigatewayds/callback`;
-    const resolvedStudentName = studentname || studentName || 'Student';
-    const resolvedPaymentPurpose = paymentpurpose || paymentPurpose || 'Fees Payment';
-    const resolvedPaymentType = paymenttype || paymentType;
+    const returnURL = `${process.env.BACKEND_URL || 'https://backend-suman.onrender.com'}/api/v2/icicigatewayds/callback`;
 
     const result = await handler.initiateSale({
       merchantTxnNo,
       amount,
       returnURL,
-      customerEmailID: email,
-      customerMobileNo: phone,
+      customerEmailID: _email,
+      customerMobileNo: _phone,
       customerName: resolvedStudentName,
       addlParam1: accountno || '',
       addlParam2: regno || ''
@@ -123,8 +129,8 @@ exports.initiateICICIPayment = async (req, res) => {
       colid,
       studentname: resolvedStudentName,
       regno: regno || merchantTxnNo,
-      studentemail: email,
-      studentphone: phone,
+      studentemail: resolvedEmail,
+      studentphone: resolvedPhone,
       orderid: merchantTxnNo,
       txnid: merchantTxnNo,
       amount,
@@ -193,6 +199,15 @@ exports.handleICICICallback = async (req, res) => {
     };
     history.completedat = new Date();
     await history.save();
+
+    // Update student ledger if payment was successful and type is Student
+    if (history.status === 'SUCCESS' && history.type === 'Student' && history.ledgerid) {
+      await updateLedgerAfterPayment({
+        ledgerid: history.ledgerid,
+        amount: history.amount,
+        gatewayname: 'ICICI'
+      });
+    }
 
     const frontendUrl = history.frontendcallbackurl || `${process.env.FRONTEND_URL}/universalpaymentcallbackds`;
     const redirectUrl = `${frontendUrl}?orderid=${merchantTxnNo}&txnid=${history.txnid}&status=${history.status}&msg=${encodeURIComponent(params.respDescription || params.respdescription || '')}`;

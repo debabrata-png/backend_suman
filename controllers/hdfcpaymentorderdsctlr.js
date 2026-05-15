@@ -5,22 +5,34 @@ const Coupon = require('../Models/couponds');
 const { HDFCPaymentHandler, HDFCAPIException } = require('../utils/hdfcpaymenthandler');
 const crypto = require('crypto');
 const Ledgerstud = require('../Models/ledgerstud');
+const { updateLedgerAfterPayment } = require('../utils/paymentledgerupdater');
 
 // Create HDFC payment order
 exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
+  //console.log('[HDFC Create Order] Request Body:', JSON.stringify(req.body, null, 2));
   try {
     const {
       name,
       user,
       colid,
-      studentName,
+      // Accept both camelCase and lowercase field names
+      studentName: _studentName,
+      studentname: _studentname,
       regno,
-      studentEmail,
-      studentPhone,
-      originalAmount,
+      studentEmail: _studentEmail,
+      studentemail: _studentemail,
+      email: _email,
+      studentPhone: _studentPhone,
+      studentphone: _studentphone,
+      phone: _phone,
+      originalAmount: _originalAmount,
+      amount: _amount,
       paymentType,
+      paymenttype,
       paymentPurpose,
+      paymentpurpose,
       academicYear,
+      academicyear,
       semester,
       course,
       department,
@@ -36,24 +48,44 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       ledgerbalance,
       ledgerdetails,
       frontendCallbackUrl,
+      frontendcallbackurl,
       backendReturnUrl,
       comments,
       notes
     } = req.body;
 
+    // Resolve fields with fallbacks
+    const studentName = _studentName || _studentname || '';
+    const studentEmail = _studentEmail || _studentemail || _email || '';
+    const studentPhone = _studentPhone || _studentphone || _phone || '';
+    const originalAmount = _originalAmount || _amount || '';
+    const resolvedPaymentType = paymentType || paymenttype || 'OTHER';
+    const resolvedPaymentPurpose = paymentPurpose || paymentpurpose || 'Fee Payment';
+    const resolvedAcademicYear = academicYear || academicyear || '';
+    const resolvedFrontendCallbackUrl = frontendCallbackUrl || frontendcallbackurl || '';
+    const resolvedBackendReturnUrl = backendReturnUrl || `${process.env.BACKEND_URL || 'https://backend-suman.onrender.com'}/api/v2/hdfcpaymentorderds/return`;
+
     // Validate required fields
-    if (!studentName || !regno || !studentEmail || !studentPhone || !originalAmount) {
+    const missingFields = [];
+    if (!studentName) missingFields.push('studentName');
+    if (!regno) missingFields.push('regno');
+    if (!studentEmail) missingFields.push('studentEmail');
+    if (!studentPhone) missingFields.push('studentPhone');
+    if (!originalAmount) missingFields.push('originalAmount');
+
+    if (missingFields.length > 0) {
+      //console.error('[HDFC Validation Failed] Missing fields:', missingFields);
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: studentName, regno, studentEmail, studentPhone, originalAmount'
+        message: `Missing required fields: ${missingFields.join(', ')}`
       });
     }
 
-    // Validate URLs
-    if (!frontendCallbackUrl || !backendReturnUrl) {
+    // Validate frontend callback URL
+    if (!resolvedFrontendCallbackUrl) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required URLs: frontendCallbackUrl, backendReturnUrl'
+        message: 'Missing required URL: frontendCallbackUrl'
       });
     }
 
@@ -102,7 +134,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
           : finalcharge;
       }
     } catch (err) {
-      // // console.log('Platform charges not configured:', err.message);
+      // // //console.log('Platform charges not configured:', err.message);
     }
 
     // Handle coupon
@@ -128,7 +160,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
           }
         }
       } catch (err) {
-        // // console.log('Coupon validation failed:', err.message);
+        // // //console.log('Coupon validation failed:', err.message);
       }
     }
 
@@ -156,10 +188,10 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       discount,
       platformcharges: platformcharges,
       amount: finalamount,
-      paymenttype: paymentType || 'OTHER',
-      paymentpurpose: paymentPurpose || 'Fee Payment',
+      paymenttype: resolvedPaymentType,
+      paymentpurpose: resolvedPaymentPurpose,
       type,
-      academicyear: academicYear,
+      academicyear: resolvedAcademicYear,
       semester,
       course,
       department,
@@ -171,8 +203,8 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       status: 'INITIATED',
       initiatedat: new Date(),
       expiresat: new Date(Date.now() + 30 * 60 * 1000),
-      redirecturl: backendReturnUrl,
-      frontendcallbackurl: frontendCallbackUrl,
+      redirecturl: resolvedBackendReturnUrl,
+      frontendcallbackurl: resolvedFrontendCallbackUrl,
       callbackurl: gatewayconfig.callbackurl,
       feegroup,
       feeitem,
@@ -193,7 +225,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
         const coupon = await Coupon.findById(couponid);
         await coupon.applyCoupon(studentName, regno, orderid, discount);
       } catch (err) {
-        // // console.log('Coupon apply failed:', err.message);
+        // // //console.log('Coupon apply failed:', err.message);
       }
     }
 
@@ -205,8 +237,8 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       customer_id: regno,
       customer_email: studentEmail,
       customer_phone: studentPhone,
-      return_url: backendReturnUrl,
-      order_note: paymentPurpose || 'Fee Payment'
+      return_url: resolvedBackendReturnUrl,
+      order_note: resolvedPaymentPurpose
     };
 
     // Initialize HDFC Payment Handler
@@ -243,13 +275,15 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
         throw new Error('No payment URL received from HDFC');
       }
     } catch (hdfcerror) {
-      //console.error('HDFC API Error:', hdfcerror);
+      //console.error('[HDFC Create Order] API/Inner Crash:', hdfcerror);
 
       // Update order status to failed
-      neworder.status = 'FAILED';
-      neworder.errordetails = hdfcerror;
-      neworder.failedat = new Date();
-      await neworder.save();
+      if (neworder) {
+        neworder.status = 'FAILED';
+        neworder.errordetails = hdfcerror.message || hdfcerror;
+        neworder.failedat = new Date();
+        await neworder.save();
+      }
 
       if (hdfcerror instanceof HDFCAPIException) {
         const statuscode = (hdfcerror.httpresponsecode > 0 && hdfcerror.httpresponsecode < 600)
@@ -274,7 +308,7 @@ exports.createhdfcpaymentorderdsdatabyds = async (req, res) => {
       });
     }
   } catch (err) {
-    // // console.error('Create HDFC Order Error:', err);
+    //console.error('[HDFC Create Order] Outer Crash:', err);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -369,7 +403,7 @@ exports.checkhdfcpaymentstatusbyds = async (req, res) => {
             order.ledgerentryid = ledgerEntry._id;
             // order saved below
           } catch (ledgerError) {
-            console.error("Error creating ledger entry:", ledgerError);
+            //console.error("Error creating ledger entry:", ledgerError);
           }
         }
       } else if (orderstatus === 'PENDING' || orderstatus === 'PENDING_VBV') {
@@ -401,7 +435,7 @@ exports.checkhdfcpaymentstatusbyds = async (req, res) => {
         }
       });
     } catch (hdfcerror) {
-      // // console.error('HDFC Status Check Error:', hdfcerror);
+      // // //console.error('HDFC Status Check Error:', hdfcerror);
 
       if (hdfcerror instanceof HDFCAPIException) {
         return res.status(hdfcerror.httpresponsecode || 500).json({
@@ -422,7 +456,7 @@ exports.checkhdfcpaymentstatusbyds = async (req, res) => {
       });
     }
   } catch (err) {
-    // // console.error('Check Status Error:', err);
+    // // //console.error('Check Status Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -457,7 +491,7 @@ exports.gethdfcpaymentorderdsdatabyds = async (req, res) => {
       data: order
     });
   } catch (err) {
-    // // console.error('Get Order Error:', err);
+    // // //console.error('Get Order Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch order',
@@ -515,7 +549,7 @@ exports.getallhdfcpaymentorderdsdatabyds = async (req, res) => {
       data: orders
     });
   } catch (err) {
-    // // console.error('Get All Orders Error:', err);
+    // // //console.error('Get All Orders Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch orders',
@@ -562,7 +596,7 @@ exports.updatehdfcpaymentorderdsdatabyds = async (req, res) => {
       data: order
     });
   } catch (err) {
-    // // console.error('Update Order Error:', err);
+    // // //console.error('Update Order Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Failed to update order',
@@ -608,7 +642,7 @@ exports.deletehdfcpaymentorderdsdatabyds = async (req, res) => {
       });
     }
   } catch (err) {
-    // // console.error('Delete Order Error:', err);
+    // // //console.error('Delete Order Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Failed to cancel order',
@@ -691,7 +725,7 @@ exports.initiatehdfcrefundbyds = async (req, res) => {
         }
       });
     } catch (hdfcerror) {
-      // // console.error('HDFC Refund Error:', hdfcerror);
+      // // //console.error('HDFC Refund Error:', hdfcerror);
 
       if (hdfcerror instanceof HDFCAPIException) {
         return res.status(hdfcerror.httpresponsecode || 500).json({
@@ -712,7 +746,7 @@ exports.initiatehdfcrefundbyds = async (req, res) => {
       });
     }
   } catch (err) {
-    // // console.error('Refund Error:', err);
+    // // //console.error('Refund Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -769,14 +803,14 @@ exports.hdfcwebhookhandler = async (req, res) => {
       );
 
       if (!isvalid) {
-        // // console.error('HDFC Webhook signature validation failed');
+        // // //console.error('HDFC Webhook signature validation failed');
         return res.status(400).json({
           success: false,
           message: 'Signature validation failed'
         });
       }
     } catch (signatureerror) {
-      // // console.error('Signature validation error:', signatureerror);
+      // // //console.error('Signature validation error:', signatureerror);
       return res.status(400).json({
         success: false,
         message: 'Signature validation error'
@@ -828,8 +862,18 @@ exports.hdfcwebhookhandler = async (req, res) => {
         order.ledgerentrycreated = true;
         order.ledgerentryid = ledgerEntry._id;
       } catch (ledgerError) {
-        console.error("Error creating ledger entry in webhook:", ledgerError);
+        //console.error("Error creating ledger entry in webhook:", ledgerError);
       }
+    }
+
+    // Update student ledger if payment was successful and type is Student
+    if (order.status === 'SUCCESS' && order.type === 'Student' && order.ledgerid) {
+      //console.log(`[HDFC Webhook] Updating student ledger: ${order.ledgerid} for amount ${order.originalamount}`);
+      await updateLedgerAfterPayment({
+        ledgerid: order.ledgerid,
+        amount: order.originalamount || order.amount,
+        gatewayname: 'HDFC'
+      });
     }
 
     await order.save();
@@ -839,7 +883,7 @@ exports.hdfcwebhookhandler = async (req, res) => {
       message: 'Webhook processed successfully'
     });
   } catch (err) {
-    // // console.error('Webhook Handler Error:', err);
+    // // //console.error('Webhook Handler Error:', err);
     return res.status(500).json({
       success: false,
       message: 'Webhook processing failed',
@@ -850,12 +894,17 @@ exports.hdfcwebhookhandler = async (req, res) => {
 // HDFC Return URL handler - Handles POST from HDFC after payment
 exports.hdfcreturnurlhandler = async (req, res) => {
   try {
-    const callbackdata = req.body;
-    const hdfcorderid = callbackdata.order_id || callbackdata.orderid;
+    const callbackdata = { ...req.query, ...req.body };
+    //console.log('[HDFC Return Handler] Callback Data Received:', callbackdata);
+
+    const hdfcorderid = callbackdata.order_id || callbackdata.orderid || callbackdata.merchantOrderId;
 
     if (!hdfcorderid) {
+      //console.error('[HDFC Return Handler] Error: Order ID missing in callback data');
       return res.status(400).send('Order ID missing');
     }
+
+    //console.log(`[HDFC Return Handler] Processing order: ${hdfcorderid}`);
 
     const order = await hdfcpaymentorderds.findOne({
       merchanttransactionid: hdfcorderid
@@ -932,8 +981,18 @@ exports.hdfcreturnurlhandler = async (req, res) => {
         order.ledgerentrycreated = true;
         order.ledgerentryid = ledgerEntry._id;
       } catch (ledgerError) {
-        console.error("Error creating ledger entry in return handler:", ledgerError);
+        //console.error("Error creating ledger entry in return handler:", ledgerError);
       }
+    }
+
+    // Update student ledger if payment was successful and type is Student
+    if (order.status === 'SUCCESS' && order.type === 'Student' && order.ledgerid) {
+      //console.log(`[HDFC Return Handler] Updating student ledger: ${order.ledgerid} for amount ${order.originalamount}`);
+      await updateLedgerAfterPayment({
+        ledgerid: order.ledgerid,
+        amount: order.originalamount || order.amount,
+        gatewayname: 'HDFC'
+      });
     }
 
     await order.save();
@@ -945,7 +1004,7 @@ exports.hdfcreturnurlhandler = async (req, res) => {
     return res.redirect(frontendurl);
 
   } catch (err) {
-    // // console.error('Return URL Handler Error:', err);
+    // // //console.error('Return URL Handler Error:', err);
     return res.status(500).send('Payment processing failed');
   }
 };

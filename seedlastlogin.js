@@ -27,16 +27,17 @@ const connectDB = async () => {
 const seeduser = async () => {
     await connectDB();
     try {
-        //const user = await User.find({ email: "v.geetika@peoplesuniversity.edu.in" });
-        const lastLoginDate = new Date('2030-01-01T09:00:00Z');
-        console.log(`Updating lastlogin for colids: ${colid.join(', ')} to ${lastLoginDate}`);
+        const user = await User.find({ email: "7979938921" });
+        // const lastLoginDate = new Date('2030-01-01T09:00:00Z');
+        // console.log(`Updating lastlogin for colids: ${colid.join(', ')} to ${lastLoginDate}`);
 
-        const result = await User.updateMany(
-            { colid: { $in: colid } },
-            { $set: { lastlogin: lastLoginDate, status: 1 } }
-        );
+        // const result = await User.updateMany(
+        //     { colid: { $in: colid } },
+        //     { $set: { lastlogin: lastLoginDate, status: 1 } }
+        // );
 
-        console.log(`✅ Update Summary: ${result.modifiedCount} users updated.`);
+        // console.log(`✅ Update Summary: ${result.modifiedCount} users updated.`);
+        console.log(user)
         mongoose.connection.close();
     } catch (err) {
         console.error("❌ Error during update:", err);
