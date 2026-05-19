@@ -29,6 +29,7 @@ const storerequisationds = require("./Models/storerequisationds");
 
 const crmh1 = require("./Models/crmh1")
 const departmentindentds = require("./Models/departmentindentds");
+const neplmstimetableds = require("./Models/neplmstimetableds");
 
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -151,7 +152,10 @@ const deleteData = async () => {
         // console.log(`Deleted ${r8.deletedCount}`);
 
 
-        const r19 = await departmentindentds.deleteMany({ colid: 3090 });
+        // const r19 = await departmentindentds.deleteMany({ colid: 3090 });
+        // console.log(`Deleted Leads in ${r19.deletedCount} records from crmh1`)
+        // console.log("\n✅ All selected deletions complete.");
+        const r19 = await neplmstimetableds.deleteMany({ colid: 5050 });
         console.log(`Deleted Leads in ${r19.deletedCount} records from crmh1`)
         console.log("\n✅ All selected deletions complete.");
 
