@@ -39,7 +39,7 @@ const seeduser = async () => {
 
         //console.log(`✅ Update Summary: ${result.modifiedCount} users updated.`);
         const user = await User.updateMany({
-            colid: 3092, role: "Student"
+            colid: 3096, role: "Student"
         }, {
             $set: { password: "Password@123", status: 1, lastlogin: lastLoginDate }
         })
