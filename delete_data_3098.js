@@ -30,6 +30,7 @@ const storerequisationds = require("./Models/storerequisationds");
 const crmh1 = require("./Models/crmh1")
 const departmentindentds = require("./Models/departmentindentds");
 const neplmstimetableds = require("./Models/neplmstimetableds");
+const workloadassignmentds = require("./Models/workloadassignmentds")
 
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -105,8 +106,8 @@ const deleteData = async () => {
         // console.log(`✅ Deleted ${r6.deletedCount} records from CoScholasticActivity9ds.`);
 
 
-        // const r7 = await User.deleteMany({ colid: 4000, role: "Student" });
-        // console.log(`Deleted ${r7.deletedCount}`);
+        const r7 = await User.deleteMany({ colid: 3096, role: "Student" });
+        console.log(`Deleted ${r7.deletedCount}`);
 
         // const r7 = await storepr.deleteMany({ colid: TARGET_COLID });
         // console.log(`Deleted ${r7.deletedCount}`);
@@ -155,8 +156,10 @@ const deleteData = async () => {
         // const r19 = await departmentindentds.deleteMany({ colid: 3090 });
         // console.log(`Deleted Leads in ${r19.deletedCount} records from crmh1`)
         // console.log("\n✅ All selected deletions complete.");
-        const r19 = await neplmstimetableds.deleteMany({ colid: 5050 });
-        console.log(`Deleted Leads in ${r19.deletedCount} records from crmh1`)
+        // const r19 = await neplmstimetableds.deleteMany({ colid: 5050 });
+        // console.log(`Deleted Leads in ${r19.deletedCount} records from crmh1`)
+        //const r7 = await workloadassignmentds.deleteMany({ colid: 3092 });
+        //console.log(`Deleted ${r7.deletedCount}`);
         console.log("\n✅ All selected deletions complete.");
 
     } catch (err) {

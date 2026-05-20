@@ -702,7 +702,7 @@ exports.crmdsDailyCallingReportV2 = async (req, res) => {
         ];
 
         if (counselor && counselor !== "ALL") {
-            pipeline.push({ $match: { "leadInfo.assignedto": counselor } });
+            pipeline.push({ $match: { performed_by: counselor } });
         }
 
         pipeline.push({
