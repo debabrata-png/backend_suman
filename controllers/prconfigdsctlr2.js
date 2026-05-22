@@ -17,9 +17,23 @@ exports.addprconfigds2 = async (req, res) => {
 
 exports.getprconfigds2 = async (req, res) => {
     try {
-        const { colid } = req.query;
-        // Assuming one config per colid, or get the latest/active one
-        const config = await prconfigds2.findOne({ colid }).sort({ _id: -1 });
+        const { colid, storeid } = req.query;
+        let query = { colid };
+        
+        if (storeid && storeid !== 'global') {
+            query.storeid = storeid;
+        } else {
+            // Find global config (where storeid does not exist or is null)
+            query.$or = [{ storeid: { $exists: false } }, { storeid: null }, { storeid: "" }];
+        }
+        
+        let config = await prconfigds2.findOne(query).sort({ _id: -1 });
+        
+        // If searching for a specific store and not found, fallback to global config
+        if (!config && storeid && storeid !== 'global') {
+            config = await prconfigds2.findOne({ colid, $or: [{ storeid: { $exists: false } }, { storeid: null }, { storeid: "" }] }).sort({ _id: -1 });
+        }
+        
         res.status(200).json({
             success: true,
             data: config

@@ -961,6 +961,12 @@ const poconfigdsctlr2 = require('./controllers/poconfigdsctlr2');
 app.post('/api/v2/addpoconfigds2', poconfigdsctlr2.addpoconfigds2);
 app.get('/api/v2/getpoconfigds2', poconfigdsctlr2.getpoconfigds2);
 app.post('/api/v2/updatepoconfigds2', poconfigdsctlr2.updatepoconfigds2);
+
+const poprintconfigdsctlr2 = require('./controllers/poprintconfigdsctlr2');
+app.post('/api/v2/addpoprintconfigds2', poprintconfigdsctlr2.addpoprintconfigds2);
+app.get('/api/v2/getallpoprintconfigds2', poprintconfigdsctlr2.getallpoprintconfigds2);
+app.post('/api/v2/updatepoprintconfigds2', poprintconfigdsctlr2.updatepoprintconfigds2);
+app.get('/api/v2/deletepoprintconfigds2', poprintconfigdsctlr2.deletepoprintconfigds2);
 // Cash Approval Routes
 // Cash Approval Routes
 const CashApprovaldsctlr2 = require('./controllers/CashApprovaldsctlr2');

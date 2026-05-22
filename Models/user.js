@@ -242,7 +242,10 @@ const userschema = new mongoose.Schema({
     },
     Major: {
         type: String
-    }
+    },
+    Minor: {
+        type: String
+    },
 
 })
 

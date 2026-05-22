@@ -4,6 +4,8 @@ const prconfigdsSchema = new mongoose.Schema({
     name: { type: String }, // from global1.name
     user: { type: String }, // from global1.user
     colid: { type: String }, // from global1.colid
+    storeid: { type: String },
+    storename: { type: String },
     institutionname: { type: String },
     address: { type: String },
     phone: { type: String },
