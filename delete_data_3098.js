@@ -159,10 +159,10 @@ const deleteData = async () => {
         // console.log("\n✅ All selected deletions complete.");
         // const r19 = await neplmstimetableds.deleteMany({ colid: 5050 });
         // console.log(`Deleted Leads in ${r19.deletedCount} records from crmh1`)
-        const r7 = await workloadassignmentds.deleteMany({ colid: 3094 });
+        const r7 = await workloadassignmentds.deleteMany({ colid: 4004 });
         console.log(`Deleted ${r7.deletedCount}`);
 
-           const r20 = await regulationcoursemapds.deleteMany({ colid: 3094 });
+           const r20 = await regulationcoursemapds.deleteMany({ colid: 4004 });
            console.log(`Deleted ${r20.deletedCount} records from regulationcoursemapds.`);
         console.log("\n✅ All selected deletions complete.");
 
