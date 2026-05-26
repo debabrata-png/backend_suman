@@ -1,4 +1,5 @@
 const prassigneds2 = require("../Models/prassigneds2");
+const storerequisationds2 = require("../Models/storerequisationds2");
 
 exports.addprassigneds2 = async (req, res) => {
     try {
@@ -140,8 +141,6 @@ exports.getOEUsers2 = async (req, res) => {
         });
     }
 };
-
-const storerequisationds2 = require("../Models/storerequisationds2");
 
 exports.getAssignedRequisitions2 = async (req, res) => {
     try {
