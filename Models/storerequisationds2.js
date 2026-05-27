@@ -18,6 +18,7 @@ const storerequisationschema = new mongoose.Schema({
     prnumber: { type: String },
     assignedTo: { type: String },       // Email of PE/SPE assigned
     assignedToName: { type: String },   // Display name of assignee
+    assignedDate: { type: Date },
     unit: { type: String },             // e.g. 'Nos', 'Kg', 'Box'
     itemid: { type: String },           // Master item _id reference
     category: { type: String },

@@ -83,7 +83,10 @@ exports.getallstorerequisationds2 = async (req, res) => {
             const assignments = await prassigneds2.find({ storereqid: { $in: reqIds } }).lean();
             requisitions = requisitions.map(r => {
                 const assignment = assignments.find(a => String(a.storereqid) === String(r._id));
-                if (assignment) r.assignedToName = assignment.prassignename;
+                if (assignment) {
+                    r.assignedToName = assignment.prassignename;
+                    r.assignedDate = assignment.assignedDate || assignment.updatedAt || assignment.createdAt;
+                }
                 return r;
             });
 
@@ -106,7 +109,10 @@ exports.getallstorerequisationds2 = async (req, res) => {
             const assignments = await prassigneds2.find({ storereqid: { $in: reqIds } }).lean();
             requisitions = requisitions.map(r => {
                 const assignment = assignments.find(a => String(a.storereqid) === String(r._id));
-                if (assignment) r.assignedToName = assignment.prassignename;
+                if (assignment) {
+                    r.assignedToName = assignment.prassignename;
+                    r.assignedDate = assignment.assignedDate || assignment.updatedAt || assignment.createdAt;
+                }
                 return r;
             });
 

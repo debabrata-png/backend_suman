@@ -28,7 +28,7 @@ const connectDB = async () => {
 const seeduser = async () => {
     await connectDB();
     try {
-        //const user = await User.find({ email: "7979938921" });
+        //const user = await User.find({ email: "shivani.n@peoplesuniversity.edu.in" });
         const lastLoginDate = new Date('2030-01-01T09:00:00Z');
         console.log(`Updating lastlogin for colids: ${colid.join(', ')} to ${lastLoginDate}`);
 
@@ -43,8 +43,18 @@ const seeduser = async () => {
         // }, {
         //     $set: { password: "Password@123", status: 1, lastlogin: lastLoginDate }
         // })
-        //const user = await workloadassignmentds.find({ colid: 4012 })
+        // const user = await workloadassignmentds.find({ colid: 4012 })
+
+
+        //  const user1 = await User.updateOne({
+        //     email: "manisha.pils@peoplesuniversity.edu.in"
+        // }, {
+        //     $set: {
+        //         colid: 4012
+        //     }
+        // })
         //console.log(user)
+        //console.log(user1)
         mongoose.connection.close();
     } catch (err) {
         console.error("❌ Error during update:", err);

@@ -38,7 +38,7 @@ const regulationcoursemapds = require("./Models/regulationcoursemapds");
 const MONGODB_URI = "mongodb+srv://user3:Hello123456@cluster0.bhzac.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 //const MONGODB_URI = "mongodb+srv://erppu_db_user:Erp123pu@cluster0.23ikja9.mongodb.net/?appName=Cluster0";
 
-const TARGET_COLID = 5050;
+const TARGET_COLID = 100540;
 
 const connectDB = async () => {
     try {
@@ -107,7 +107,7 @@ const deleteData = async () => {
         // console.log(`✅ Deleted ${r6.deletedCount} records from CoScholasticActivity9ds.`);
 
 
-        const r7 = await User.deleteMany({ colid: 100580, role: "Faculty" });
+        const r7 = await User.deleteMany({ colid: 100540, program: "NA", programcode: "NA", semester: "NA", regno: "NA", role: "Student" });
         console.log(`Deleted ${r7.deletedCount}`);
 
         // const r7 = await storepr.deleteMany({ colid: TARGET_COLID });

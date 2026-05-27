@@ -4,11 +4,16 @@ const storerequisationds2 = require("../Models/storerequisationds2");
 exports.addprassigneds2 = async (req, res) => {
     try {
         const { storereqid } = req.body;
+        const assignedDate = new Date();
+        const assignmentPayload = {
+            ...req.body,
+            assignedDate
+        };
         
         // Use findOneAndUpdate with upsert: true to handle reassignment (overwrite previous assignment for the same PR)
         const assignment = await prassigneds2.findOneAndUpdate(
             { storereqid: storereqid },
-            req.body,
+            assignmentPayload,
             { new: true, upsert: true }
         );
 
@@ -16,7 +21,12 @@ exports.addprassigneds2 = async (req, res) => {
         if (storereqid) {
             await storerequisationds2.findByIdAndUpdate(
                 storereqid,
-                { reqstatus: 'Assigned' }
+                {
+                    reqstatus: 'Assigned',
+                    assignedTo: req.body.prassigneemail,
+                    assignedToName: req.body.prassignename,
+                    assignedDate
+                }
             );
         }
 
@@ -149,7 +159,7 @@ exports.getAssignedRequisitions2 = async (req, res) => {
         // 1. Find all assignments for this user
         // We fetch ALL assignments first to get the full list of IDs. 
         // If the list is massive this might be slow, but for a single user it should be fine.
-        const assignments = await prassigneds2.find({ colid, prassigneemail: user }).select('storereqid prassignename').lean();
+        const assignments = await prassigneds2.find({ colid, prassigneemail: user }).select('storereqid prassignename assignedDate createdAt updatedAt').lean();
         const assignedIds = assignments.map(a => a.storereqid);
 
         // 2. Query Store Requisitions using these IDs with pagination
@@ -170,7 +180,10 @@ exports.getAssignedRequisitions2 = async (req, res) => {
 
             requisitions = requisitions.map(r => {
                 const assignment = assignments.find(a => String(a.storereqid) === String(r._id));
-                if (assignment) r.assignedToName = assignment.prassignename;
+                if (assignment) {
+                    r.assignedToName = assignment.prassignename;
+                    r.assignedDate = assignment.assignedDate || assignment.updatedAt || assignment.createdAt;
+                }
                 return r;
             });
 
@@ -191,7 +204,10 @@ exports.getAssignedRequisitions2 = async (req, res) => {
             
             requisitions = requisitions.map(r => {
                 const assignment = assignments.find(a => String(a.storereqid) === String(r._id));
-                if (assignment) r.assignedToName = assignment.prassignename;
+                if (assignment) {
+                    r.assignedToName = assignment.prassignename;
+                    r.assignedDate = assignment.assignedDate || assignment.updatedAt || assignment.createdAt;
+                }
                 return r;
             });
             res.status(200).json({

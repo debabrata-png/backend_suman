@@ -8,6 +8,7 @@ const prassignedSchema = new mongoose.Schema({
     prassignename: { type: String },
     storereqid: { type: String },
     storename: { type: String },
+    assignedDate: { type: Date },
     status: { type: String }
 }, {
     timestamps: true
