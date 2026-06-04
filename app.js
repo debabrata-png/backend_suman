@@ -935,6 +935,7 @@ const stockregisterdsctlr2 = require('./controllers/stockregisterdsctlr2');
 const vendordsctlr12 = require('./controllers/vendordsctlr12'); // Renamed to avoid conflict
 const approvalconfigdsctlr2 = require('./controllers/approvalconfigdsctlr2');
 const prapproverctlr2 = require('./controllers/prapproverctlr2');
+const purchaseReportsdsctlr2 = require('./controllers/purchaseReportsdsctlr2');
 
 const prassignedsctlr2 = require('./controllers/prassignedsctlr2');
 app.post('/api/v2/addprassigneds2', prassignedsctlr2.addprassigneds2);
@@ -1007,6 +1008,8 @@ app.get('/api/v2/getallstoreitemds2', storeitemdsctlr2.getallstoreitemds2);
 app.get('/api/v2/getstoreitemdsbyid2', storeitemdsctlr2.getstoreitemdsbyid2);
 app.post('/api/v2/allotitem2', storeitemdsctlr2.allotItem2);
 app.get('/api/v2/getstockreportds2', storeitemdsctlr2.getStockReportds2);
+app.get('/api/v2/getprreportds2', purchaseReportsdsctlr2.getPRReportds2);
+app.get('/api/v2/getporeportds2', purchaseReportsdsctlr2.getPOReportds2);
 
 // 3b. Vendors
 const vendordsctlr2 = require('./controllers/vendordsctlr2');
