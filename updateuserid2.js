@@ -28,8 +28,8 @@ const connectDB = async () => {
 const seeduser = async () => {
     await connectDB();
     try {
-        const user = await User.find({ email: "sh123g4@gmail.com" });
-         //const lastLoginDate = new Date('2030-01-01T09:00:00Z');
+        const user = await User.find({ email: "8821884410" });
+        // const lastLoginDate = new Date('2030-01-01T09:00:00Z');
         // console.log(`Updating lastlogin for colids: ${colid.join(', ')} to ${lastLoginDate}`);
 
         // const result = await User.updateMany(
@@ -37,19 +37,20 @@ const seeduser = async () => {
         //     { $set: { lastlogin: lastLoginDate, status: 1 } }
         // );
 
-        //console.log(`✅ Update Summary: ${result.modifiedCount} users updated.`);
-        //  
+        // console.log(`✅ Update Summary: ${result.modifiedCount} users updated.`);
+        // const user = await User.updateMany({
+        //     colid: 4014, role: "Student"
+        // }, {
+        //     $set: { password: "Password@123", status: 1, lastlogin: lastLoginDate }
+        // })
         // const user = await workloadassignmentds.find({ colid: 4012 })
 
 
         //  const user1 = await User.updateOne({
-        //     email: "patrali.sort@peoplesuniversity.edu.in"
+        //     email: "manisha.pils@peoplesuniversity.edu.in"
         // }, {
         //     $set: {
-        //         colid: 3098,
-        //         lastlogin: new Date('2030-01-01T09:00:00Z'),
-        //         status: 1,
-        //         password: "Password@123"
+        //         colid: 4012
         //     }
         // })
         console.log(user)

@@ -81,22 +81,32 @@ function passMark(maxMarks) {
     return max > 0 ? Number((max * 0.33).toFixed(2)) : 0;
 }
 
-function passesComponent(obtained, maxMarks, absentFlag) {
-    const max = toNumber(maxMarks);
-    if (max <= 0) return true;
+function getFallbackComponentPassMarks(mark = {}) {
+    const subjectText = `${mark.subjectname || ''} ${mark.subjectcode || ''}`.toUpperCase();
+    if (subjectText.includes('PAINTING')) return { theory: 10, practical: 23 };
+    if (/(PHYSICS|CHEMISTRY|BIOLOGY|PHYSICAL EDUCATION|COMPUTER SCIENCE)/.test(subjectText)) {
+        return { theory: 23, practical: 10 };
+    }
+    return { theory: 33, practical: 0 };
+}
+
+function passesComponent(obtained, maxMarks, absentFlag, explicitPassMark = 0) {
+    const requiredPassMark = toNumber(explicitPassMark) || passMark(maxMarks);
+    if (requiredPassMark <= 0) return true;
     if (isAbsent(absentFlag)) return false;
-    return toNumber(obtained) >= passMark(max);
+    return toNumber(obtained) >= requiredPassMark;
 }
 
 function getClass11PassInfo(mark, config = {}) {
     const theoryMax = toNumber(config.annualth);
     const practicalMax = toNumber(config.annualpractical);
-    const theoryPassMark = passMark(theoryMax);
-    const practicalPassMark = passMark(practicalMax);
+    const fallbackPassMarks = getFallbackComponentPassMarks(mark);
+    const theoryPassMark = passMark(theoryMax) || fallbackPassMarks.theory;
+    const practicalPassMark = passMark(practicalMax) || fallbackPassMarks.practical;
     const subjectPassMark = 33;
 
-    const theoryPassed = passesComponent(mark.annualthobtain, theoryMax, mark.annualthabsent);
-    const practicalPassed = passesComponent(mark.annualpracticalobtain, practicalMax, mark.annualpracticalabsent);
+    const theoryPassed = passesComponent(mark.annualthobtain, theoryMax, mark.annualthabsent, theoryPassMark);
+    const practicalPassed = passesComponent(mark.annualpracticalobtain, practicalMax, mark.annualpracticalabsent, practicalPassMark);
     const subjectPassed = toNumber(mark.total) >= subjectPassMark;
     const gradeFailed = isFailingGrade(mark.totalgrade);
 
@@ -633,6 +643,7 @@ exports.getMarksheetPDFData11ds = async (req, res) => {
             .filter(s => !s.isAdditional && s.hasFail)
             .map(s => ({
                 subjectname: s.subjectname,
+                subjectcode: s.subjectcode,
                 finalScore: toNumber(s.grandTotal),
                 compartmentobtained: s.compartmentobtained,
                 theoryPassed: s.theoryPassed,
