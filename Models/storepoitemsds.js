@@ -47,6 +47,9 @@ const storepoitemsdsschema = new mongoose.Schema({
     itemname: {
         type: String
     },
+    dimension: {
+        type: String
+    },
     storeid: {
         type: String
     },
@@ -77,4 +80,3 @@ const storepoitemsdsschema = new mongoose.Schema({
 const storepoitemsds = mongoose.model('storepoitemsds', storepoitemsdsschema);
 
 module.exports = storepoitemsds;
-

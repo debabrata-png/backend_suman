@@ -50,6 +50,9 @@ const storepoitemsdsschema = new mongoose.Schema({
     make: {
         type: String
     },
+    dimension: {
+        type: String
+    },
     storeid: {
         type: String
     },
