@@ -105,7 +105,10 @@ exports.updatestorepoorderds2 = async (req, res) => {
 
 exports.deletestorepoorderds2 = async (req, res) => {
     try {
-        const { id } = req.query;
+        const { id, role } = req.query;
+        if (role !== 'Purchasepu') {
+            return res.status(403).json({ success: false, message: "Only Purchasepu role can delete PO" });
+        }
 
         // Find the PO first to get its poid
         const po = await storepoorderds2.findById(id);
