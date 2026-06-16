@@ -61,11 +61,27 @@ exports.addstorerequisationds2 = async (req, res) => {
 
 exports.getallstorerequisationds2 = async (req, res) => {
     try {
-        const { colid, page, limit, reqstatus, storeid } = req.query;
+        const { colid, page, limit, reqstatus, storeid, search, excludePendingApproval } = req.query;
         const prassigneds2 = require("../Models/prassigneds2");
         const query = { colid };
         if (reqstatus) query.reqstatus = reqstatus;
+        else if (excludePendingApproval === 'true') query.reqstatus = { $ne: 'Pending Approval' };
         if (storeid) query.storeid = storeid;
+        if (search && search.trim()) {
+            const regex = new RegExp(search.trim(), 'i');
+            query.$or = [
+                { itemname: regex },
+                { itemcode: regex },
+                { store: regex },
+                { storeid: regex },
+                { reqstatus: regex },
+                { prnumber: regex },
+                { name: regex },
+                { category: regex },
+                { itemtype: regex },
+                { departmentname: regex }
+            ];
+        }
 
         if (page && limit) {
             const pageNum = parseInt(page);

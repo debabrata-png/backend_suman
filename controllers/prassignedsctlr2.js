@@ -154,7 +154,7 @@ exports.getOEUsers2 = async (req, res) => {
 
 exports.getAssignedRequisitions2 = async (req, res) => {
     try {
-        const { colid, page, limit, user, reqstatus } = req.query;
+        const { colid, page, limit, user, reqstatus, search, excludePendingApproval } = req.query;
 
         // 1. Find all assignments for this user
         // We fetch ALL assignments first to get the full list of IDs. 
@@ -165,6 +165,22 @@ exports.getAssignedRequisitions2 = async (req, res) => {
         // 2. Query Store Requisitions using these IDs with pagination
         const query = { _id: { $in: assignedIds } };
         if (reqstatus) query.reqstatus = reqstatus;
+        else if (excludePendingApproval === 'true') query.reqstatus = { $ne: 'Pending Approval' };
+        if (search && search.trim()) {
+            const regex = new RegExp(search.trim(), 'i');
+            query.$or = [
+                { itemname: regex },
+                { itemcode: regex },
+                { store: regex },
+                { storeid: regex },
+                { reqstatus: regex },
+                { prnumber: regex },
+                { name: regex },
+                { category: regex },
+                { itemtype: regex },
+                { departmentname: regex }
+            ];
+        }
 
         if (page && limit) {
             const pageNum = parseInt(page);

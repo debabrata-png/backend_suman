@@ -33,8 +33,10 @@ exports.addstorepoorderds2 = async (req, res) => {
 
 exports.getallstorepoorderds2 = async (req, res) => {
     try {
-        const { colid, page, limit, poType, excludeLocal } = req.query;
+        const { colid, page, limit, poType, excludeLocal, user } = req.query;
         const query = { colid };
+
+        if (user) query.user = user;
 
         if (poType) {
             query.poType = poType;
