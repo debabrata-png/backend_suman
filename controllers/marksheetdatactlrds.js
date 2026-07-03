@@ -17,6 +17,21 @@ function calculateGrade(obtained, max) {
   return 'E';
 }
 
+function normalizeGrade(grade) {
+  return String(grade || '').trim().toUpperCase() === 'F' ? 'E' : grade;
+}
+
+function normalizeSubjectsGrades(subjects = []) {
+  return subjects.map(subject => {
+    const plainSubject = subject.toObject?.() || subject;
+    return {
+      ...plainSubject,
+      term1Grade: normalizeGrade(plainSubject.term1Grade),
+      term2Grade: normalizeGrade(plainSubject.term2Grade)
+    };
+  });
+}
+
 function toRoman(num) {
   if (!num || isNaN(num) || num === '-') return num;
   const lookup = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 };
@@ -331,13 +346,13 @@ exports.getmarksheetforpdfds = async (req, res) => {
         photo: userData.photo || ''
       },
       attendance: attendanceData,
-      subjects: marksheetData.subjects,
+      subjects: normalizeSubjectsGrades(marksheetData.subjects),
       coScholastic: marksheetData.coScholastic,
       term1TotalMarks: marksheetData.term1TotalMarks,
       term2TotalMarks: marksheetData.term2TotalMarks,
       grandTotal: marksheetData.grandTotal,
       percentage: marksheetData.percentage,
-      overallGrade: marksheetData.overallGrade,
+      overallGrade: normalizeGrade(marksheetData.overallGrade),
       rank: toRoman(marksheetData.rank),
       remarks: marksheetData.remarks,
       promotedToClass: marksheetData.promotedToClass,
@@ -424,13 +439,13 @@ exports.getbulkmarksheetforpdfds = async (req, res) => {
           photo: userData.photo || ''
         },
         attendance: attendanceData,
-        subjects: marksheetData.subjects,
+        subjects: normalizeSubjectsGrades(marksheetData.subjects),
         coScholastic: marksheetData.coScholastic,
         term1TotalMarks: marksheetData.term1TotalMarks,
         term2TotalMarks: marksheetData.term2TotalMarks,
         grandTotal: marksheetData.grandTotal,
         percentage: marksheetData.percentage,
-        overallGrade: marksheetData.overallGrade,
+        overallGrade: normalizeGrade(marksheetData.overallGrade),
         rank: toRoman(marksheetData.rank),
         remarks: marksheetData.remarks,
         promotedToClass: marksheetData.promotedToClass,
